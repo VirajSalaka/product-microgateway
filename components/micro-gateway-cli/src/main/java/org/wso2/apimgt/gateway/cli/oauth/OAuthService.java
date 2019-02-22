@@ -20,7 +20,7 @@ package org.wso2.apimgt.gateway.cli.oauth;
 public interface OAuthService {
 
     /**
-     * Generate access token using password grant
+     * Generate access token using password grant for api_view scope
      *
      * @param tokenEndpoint token endpoint
      * @param username      userid
@@ -41,4 +41,19 @@ public interface OAuthService {
      * @param inSecure
      */
     String[] generateClientIdAndSecret(String dcrEndpoint, String username, char[] password, boolean inSecure);
+
+    /**
+     * Generate access token using password grant for api_create scope
+     *
+     * @param tokenEndpoint token endpoint
+     * @param username      userid
+     * @param password      password
+     * @param clientId      client consumer key
+     * @param clientSecret  client consumer secret
+     * @param inSecure
+     * @return access token
+     */
+    String generateAccessTokenAPICreate(String tokenEndpoint, String username, char[] password, String clientId,
+                                        String clientSecret, boolean inSecure);
+
 }

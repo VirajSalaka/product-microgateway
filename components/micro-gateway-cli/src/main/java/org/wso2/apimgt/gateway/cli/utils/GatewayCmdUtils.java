@@ -30,19 +30,14 @@ import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.exception.CliLauncherException;
 import org.wso2.apimgt.gateway.cli.exception.ConfigParserException;
+import org.wso2.apimgt.gateway.cli.model.config.BasicAuth;
 import org.wso2.apimgt.gateway.cli.model.config.Config;
 import org.wso2.apimgt.gateway.cli.model.config.ContainerConfig;
 import org.wso2.apimgt.gateway.cli.model.rest.APICorsConfigurationDTO;
 import org.wso2.apimgt.gateway.cli.model.config.Etcd;
 
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -892,5 +887,41 @@ public class GatewayCmdUtils {
         if (!file.delete()) {
             throw new IOException();
         }
+    }
+
+    public static String promptForTextInput(PrintStream outStream, String msg) {
+        outStream.println(msg);
+        return System.console().readLine();
+    }
+
+    public static String promptForPasswordInput(PrintStream outStream, String msg) {
+        outStream.println(msg);
+        return new String(System.console().readPassword());
+    }
+
+    public static void setSecuritySchemas(String schemas) {
+        Config config = GatewayCmdUtils.getConfig();
+        BasicAuth basicAuth = new BasicAuth();
+        boolean basic = false;
+        boolean oauth2 = false;
+        String[] schemasArray = schemas.trim().split("\\s*,\\s*");
+        for (int i = 0; i < schemasArray.length; i++) {
+            if (schemasArray[i].equalsIgnoreCase("basic")) {
+                basic = true;
+            } else if (schemasArray[i].equalsIgnoreCase("oauth2")) {
+                oauth2 = true;
+            }
+        }
+        if (basic && oauth2) {
+            basicAuth.setOptional(true);
+            basicAuth.setRequired(false);
+        } else if (basic && !oauth2) {
+            basicAuth.setRequired(true);
+            basicAuth.setOptional(false);
+        } else if (!basic && oauth2) {
+            basicAuth.setOptional(false);
+            basicAuth.setRequired(false);
+        }
+        config.setBasicAuth(basicAuth);
     }
 }

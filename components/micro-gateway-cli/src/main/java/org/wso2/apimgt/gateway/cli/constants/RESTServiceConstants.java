@@ -32,6 +32,7 @@ public class RESTServiceConstants {
     public static final String AUTHORIZATION = "Authorization";
     public static final String BEARER = "Bearer";
     public static final String GET = "GET";
+    public static final String POST = "POST";
     public static final String APIS_GET_URI =
             "apis?query=label:" + GatewayCliConstants.LABEL_PLACEHOLDER + "%20status:PUBLISHED&expand=true&limit=500";
     public static final String API_GET_BY_NAME_VERSION_URI =
@@ -51,4 +52,8 @@ public class RESTServiceConstants {
 
     public static final String CERTIFICATE_ALIAS = "Alias";
     public static final String CERTIFICATE_TIER = "Tier";
+
+    public static final String CONTENT_TYPE = "Content-Type";
+    public static final String CONTENT_TYPE_APPLICATION_JSON = "application/json";
+
 }

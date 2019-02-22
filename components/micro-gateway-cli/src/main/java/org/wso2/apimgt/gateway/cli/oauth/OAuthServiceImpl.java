@@ -38,12 +38,9 @@ public class OAuthServiceImpl implements OAuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(OAuthServiceImpl.class);
 
-    /**
-     * @see OAuthService#generateAccessToken(String, String, char[], String, String, boolean)
-     */
-    public String generateAccessToken(String tokenEndpoint, String username, char[] password, String clientId,
-                                      String clientSecret, boolean inSecure) {
 
+    private String generateAccessTokenSpecific(String tokenEndpoint, String username, char[] password, String clientId,
+                                               String clientSecret, boolean inSecure, String[] scopes){
         URL url;
         HttpsURLConnection urlConn = null;
         try {
@@ -53,6 +50,7 @@ public class OAuthServiceImpl implements OAuthService {
                 urlConn.setHostnameVerifier((s, sslSession) -> true);
             }
             urlConn.setRequestMethod(TokenManagementConstants.POST);
+
             urlConn.setRequestProperty(TokenManagementConstants.CONTENT_TYPE,
                     TokenManagementConstants.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED);
             String clientEncoded = DatatypeConverter
@@ -62,9 +60,8 @@ public class OAuthServiceImpl implements OAuthService {
             urlConn.setDoOutput(true);
             String postBody = new OAuthTokenRequestBuilder().setClientKey(clientId)
                     .setClientSecret(clientSecret.toCharArray()).setGrantType(TokenManagementConstants.PASSWORD)
-                    .setPassword(password).setScopes(new String[]{TokenManagementConstants.POLICY_VIEW_TOKEN_SCOPE,
-                            TokenManagementConstants.VIEW_API_SCOPE}).setUsername(username).requestBody();
-            urlConn.getOutputStream().write((postBody).getBytes(TokenManagementConstants.UTF_8));
+                    .setPassword(password).setScopes(scopes).setUsername(username).requestBody();
+            urlConn.getOutputStream().write((postBody).getBytes(StandardCharsets.UTF_8));
             int responseCode = urlConn.getResponseCode();
             if (responseCode == 200) {
                 ObjectMapper mapper = new ObjectMapper();
@@ -85,6 +82,27 @@ public class OAuthServiceImpl implements OAuthService {
                 urlConn.disconnect();
             }
         }
+    }
+
+
+    /**
+     * @see OAuthService#generateAccessToken(String, String, char[], String, String, boolean)
+     */
+    public String generateAccessToken(String tokenEndpoint, String username, char[] password, String clientId,
+                                      String clientSecret, boolean inSecure) {
+        return generateAccessTokenSpecific(tokenEndpoint, username, password, clientId, clientSecret, inSecure,
+                new String[] {TokenManagementConstants.VIEW_API_SCOPE,
+                        TokenManagementConstants.POLICY_VIEW_TOKEN_SCOPE});
+
+    }
+
+    /**
+     * @see OAuthService#generateAccessTokenAPICreate(String, String, char[], String, String, boolean)
+     */
+    public String generateAccessTokenAPICreate(String tokenEndpoint, String username, char[] password, String clientId,
+                                               String clientSecret, boolean inSecure) {
+        return generateAccessTokenSpecific(tokenEndpoint, username, password, clientId, clientSecret, inSecure,
+                new String[] {TokenManagementConstants.CREATE_API_SCOPE});
     }
 
     /**
@@ -156,4 +174,6 @@ public class OAuthServiceImpl implements OAuthService {
         return String.join("/",
                 Arrays.copyOfRange(serverUrlParts, 0, serverUrlParts.length >= 3 ? 3 : serverUrlParts.length));
     }
+
+
 }
