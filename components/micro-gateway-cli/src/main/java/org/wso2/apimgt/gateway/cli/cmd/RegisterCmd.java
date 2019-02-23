@@ -96,6 +96,7 @@ public class RegisterCmd implements GatewayLauncherCmd {
 
     @Override
     public void execute() {
+        //to check the availability of openAPI Definition argument
         boolean openApiAvailable = StringUtils.isNotEmpty(openApi);
 
         if(!openApiAvailable){
@@ -111,6 +112,7 @@ public class RegisterCmd implements GatewayLauncherCmd {
         Config config = GatewayCmdUtils.getConfig();
         boolean isOverwriteRequired = false;
 
+        //to setup the endpointconfig
         if (StringUtils.isEmpty(endpointConfig)) {
             if (StringUtils.isEmpty(endpoint)) {
                 /*
@@ -121,10 +123,12 @@ public class RegisterCmd implements GatewayLauncherCmd {
                     throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty endpoint.");
                 }
             }
+            //todo:  change endpoint type accordingly
             endpointConfig = "{\"production_endpoints\":{\"url\":\"" + endpoint.trim() +
                     "\"},\"endpoint_type\":\"http\"}";
         }
 
+        //to setup the username
         String configuredUser = config.getToken().getUsername();
         if (StringUtils.isEmpty(configuredUser)) {
             if (StringUtils.isEmpty(username)) {
@@ -137,6 +141,7 @@ public class RegisterCmd implements GatewayLauncherCmd {
             username = configuredUser;
         }
 
+        //to setup the password
         if (StringUtils.isEmpty(password)) {
             if ((password = GatewayCmdUtils.promptForPasswordInput(outStream, "Enter Password for " + username + ": ")).trim().isEmpty()) {
                 if (StringUtils.isEmpty(password)) {
@@ -149,6 +154,7 @@ public class RegisterCmd implements GatewayLauncherCmd {
             }
         }
 
+        //to configure endpoints for publisher, admin, registration, and token
         publisherEndpoint = config.getToken().getPublisherEndpoint();
         adminEndpoint = config.getToken().getAdminEndpoint();
         registrationEndpoint = config.getToken().getRegistrationEndpoint();
@@ -157,9 +163,8 @@ public class RegisterCmd implements GatewayLauncherCmd {
                 StringUtils.isEmpty(tokenEndpoint)) {
             if (StringUtils.isEmpty(baseUrl)) {
                 isOverwriteRequired = true;
-                if ((baseUrl = GatewayCmdUtils.promptForTextInput(outStream, "Enter APIM base URL [" + RESTServiceConstants.DEFAULT_HOST
-                        + "]: "))
-                        .trim().isEmpty()) {
+                if ((baseUrl = GatewayCmdUtils.promptForTextInput(outStream, "Enter APIM base URL [" +
+                        RESTServiceConstants.DEFAULT_HOST + "]: ")).trim().isEmpty()) {
                     baseUrl = RESTServiceConstants.DEFAULT_HOST;
                 }
             }
@@ -232,6 +237,7 @@ public class RegisterCmd implements GatewayLauncherCmd {
         }
         GatewayCmdUtils.setSecuritySchemas(security);
 
+        //Authentication
         OAuthService manager = new OAuthServiceImpl();
         clientID = config.getToken().getClientId();
         String encryptedSecret = config.getToken().getClientSecret();
@@ -255,10 +261,11 @@ public class RegisterCmd implements GatewayLauncherCmd {
                 .generateAccessTokenAPICreate(tokenEndpoint, username, password.toCharArray(), clientID, clientSecret,
                         isInsecure);
 
+        //to call the publisher API
         RESTAPIService service = new RESTAPIServiceImpl(publisherEndpoint, adminEndpoint, isInsecure);
 
+        //to generate the json for the Publisher API as required
         String jsonPayload = generatePayLoad(OpenApiCodegenUtils.readApi(openApi), endpointConfig);
-
         if(service.pushAPIToPublisher(jsonPayload,accessToken)){
             outStream.println("API Registeration is Successfull");
         }
@@ -288,8 +295,7 @@ public class RegisterCmd implements GatewayLauncherCmd {
 
     }
 
-
-
+    //to populate the endpoints if all the endpoints are in the same host
     private void populateHosts(String host) {
         try {
             publisherEndpoint = new URL(new URL(host), RESTServiceConstants.PUB_RESOURCE_PATH).toString();
@@ -303,6 +309,8 @@ public class RegisterCmd implements GatewayLauncherCmd {
         }
     }
 
+    //todo: this is minimum detailed definition to create an API. Remove the hard coded segments
+    //to generate the json payload as required for the Publisher API using swagger and endpoint info
     private String generatePayLoad(String apiDef, String endpointDef){
         SwaggerParser parser;
         Swagger swagger;

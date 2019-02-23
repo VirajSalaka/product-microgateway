@@ -38,6 +38,7 @@ public class RESTServiceConstants {
     public static final String API_GET_BY_NAME_VERSION_URI =
             "apis?query=name:" + GatewayCliConstants.API_NAME_PLACEHOLDER + "%20version:"
                     + GatewayCliConstants.VERSION_PLACEHOLDER + "%20status:PUBLISHED&expand=true";
+    //todo: Publisher path should contain "/apis" as well. APIS_GET_URI should be changed accordingly
     public static final String PUB_RESOURCE_PATH = "/api/am/publisher/v0.14";
     public static final String PUB_CLIENT_CERT_PATH = "/api/am/publisher/v0.14/clientCertificates";
     public static final String ADMIN_RESOURCE_PATH = "/api/am/admin/v0.14";

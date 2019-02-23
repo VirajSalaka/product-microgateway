@@ -38,7 +38,7 @@ public class OAuthServiceImpl implements OAuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(OAuthServiceImpl.class);
 
-
+    //to represent the common code segments for api_create and api_view
     private String generateAccessTokenSpecific(String tokenEndpoint, String username, char[] password, String clientId,
                                                String clientSecret, boolean inSecure, String[] scopes){
         URL url;

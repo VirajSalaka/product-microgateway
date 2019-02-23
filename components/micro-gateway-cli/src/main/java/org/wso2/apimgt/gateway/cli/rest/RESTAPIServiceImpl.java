@@ -438,12 +438,16 @@ public class RESTAPIServiceImpl implements RESTAPIService {
         return selectedCertificates;
     }
 
+    /**
+     * @see RESTAPIService#pushAPIToPublisher(String, String)
+     */
     public Boolean pushAPIToPublisher(String swaggerDefinition, String accessToken){
 
         URL url;
         HttpsURLConnection urlConn = null;
         publisherEp = publisherEp.endsWith("/") ? publisherEp : publisherEp + "/";
         try {
+            //todo: update the publisher path properly in the constants.RESTServiceConstants
             String urlStr = publisherEp + "apis";
             url = new URL(urlStr);
             urlConn = (HttpsURLConnection) url.openConnection();
