@@ -28,9 +28,11 @@ import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
 import org.wso2.apimgt.gateway.cli.utils.OpenApiCodegenUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -100,8 +102,11 @@ public class RegisterCmd implements GatewayLauncherCmd {
         boolean openApiAvailable = StringUtils.isNotEmpty(openApi);
 
         if(!openApiAvailable){
-            throw GatewayCmdUtils.createUsageException("Swagger definition is not provided");
+            throw GatewayCmdUtils.createUsageException("Swagger definition is not provided as an argument");
         }
+
+        //to validate the input file
+        validateInput(openApi);
 
         if (StringUtils.isEmpty(toolkitConfigPath)) {
             toolkitConfigPath = GatewayCmdUtils.getMainConfigLocation();
@@ -356,5 +361,35 @@ public class RegisterCmd implements GatewayLauncherCmd {
     @Override
     public void setParentCmdParser(JCommander parentCmdParser) {
 
+    }
+
+    private static void validateInput(String path_to_apiDef){
+
+        //to check if the file is available
+        OpenApiCodegenUtils.readApi(path_to_apiDef);
+
+        Swagger swagger;
+        SwaggerParser parser = new SwaggerParser();
+        swagger = parser.parse(path_to_apiDef);
+
+        //to check the availability of the API name
+        if(StringUtils.isEmpty(swagger.getInfo().getTitle())){
+            throw new CLIInternalException("API name is not available.");
+        }
+
+        //to check whether the API name contains any spaces
+        if(swagger.getInfo().getTitle().contains(" ")){
+            throw new CLIInternalException("Spaces are not allowed in the API name at the moment. Please reformat the API name");
+        }
+
+        //to check the availability of version number
+        if(StringUtils.isEmpty(swagger.getInfo().getVersion())){
+            throw new CLIInternalException("Version is not specified. Please include the version");
+        }
+
+        //to check the availability of the context
+        if(StringUtils.isEmpty(swagger.getBasePath())){
+            throw new CLIInternalException("Basepath is not available");
+        }
     }
 }
