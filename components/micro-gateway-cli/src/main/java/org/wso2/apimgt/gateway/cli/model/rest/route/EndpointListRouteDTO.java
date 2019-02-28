@@ -2,6 +2,7 @@ package org.wso2.apimgt.gateway.cli.model.rest.route;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -9,7 +10,7 @@ import java.util.List;
  */
 public class EndpointListRouteDTO {
     private List<String> endpointList = null;
-    private TransportTypeEnum transport = null;
+    private List<TransportTypeEnum> transport = null;
     private EndpointConfigRouteDTO config = null;
 
     @JsonProperty("endpoints")
@@ -22,12 +23,12 @@ public class EndpointListRouteDTO {
     }
 
     @JsonProperty("transport")
-    public TransportTypeEnum getTransport() {
+    public List<TransportTypeEnum> getTransport() {
         return transport;
     }
 
-    public void setTransport(TransportTypeEnum type) {
-        this.transport = type;
+    public void setTransport(List<TransportTypeEnum> transportTypeEnumList) {
+        this.transport = transportTypeEnumList;
     }
 
     @JsonProperty("config")
@@ -37,5 +38,22 @@ public class EndpointListRouteDTO {
 
     public void setConfig(EndpointConfigRouteDTO config) {
         this.config = config;
+    }
+
+    public void addTransportType(TransportTypeEnum transportTypeEnum){
+        if(transport == null){
+            transport = new ArrayList<>();
+        }
+        if(!transport.contains(transportTypeEnum)){
+            transport.add(transportTypeEnum);
+        }
+    }
+
+    public void addEndpoint(String endpoint){
+        if(endpointList == null){
+            endpointList = new ArrayList<>();
+        }
+        //todo: validate if there are any duplicates
+        endpointList.add(endpoint);
     }
 }

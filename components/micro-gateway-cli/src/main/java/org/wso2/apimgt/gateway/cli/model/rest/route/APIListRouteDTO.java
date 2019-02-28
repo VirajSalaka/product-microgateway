@@ -2,10 +2,11 @@ package org.wso2.apimgt.gateway.cli.model.rest.route;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class APIListRouteDTO {
-    private List<APIRouteDTO> apiRouteList;
+    private List<APIRouteDTO> apiRouteList = null;
 
     @JsonProperty("apis")
     public List<APIRouteDTO> getApiRouteList() {
@@ -14,5 +15,13 @@ public class APIListRouteDTO {
 
     public void setApiRouteList(List<APIRouteDTO> apiRouteList) {
         this.apiRouteList = apiRouteList;
+    }
+
+    public void addAPIDTO(APIRouteDTO apiRouteDTO){
+        if(apiRouteList == null){
+            apiRouteList = new ArrayList<>();
+        }
+        //todo: handle adding an existing apiName
+        apiRouteList.add(apiRouteDTO);
     }
 }

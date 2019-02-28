@@ -88,4 +88,7 @@ public class GatewayCliConstants {
             GW_TARGET_DIST,
             "Ballerina.lock"
     };
+
+    public static final String PROJECTS_API_FILES_DIRECTORY_NAME = "API-files";
+    public static final String ROUTES_FILE = "routes.yaml";
 }

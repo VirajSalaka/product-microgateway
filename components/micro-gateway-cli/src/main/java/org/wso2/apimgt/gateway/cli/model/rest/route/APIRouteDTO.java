@@ -34,6 +34,7 @@ public class APIRouteDTO {
         if(apiVersionList == null){
             apiVersionList = new ArrayList<>();
         }
+        //todo: handle if existing version is added
         apiVersionList.add(apiVersionRouteDTO);
     }
 }

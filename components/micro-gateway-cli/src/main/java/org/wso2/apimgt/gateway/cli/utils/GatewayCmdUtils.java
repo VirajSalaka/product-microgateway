@@ -19,6 +19,7 @@ package org.wso2.apimgt.gateway.cli.utils;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.config.cipher.AESCipherTool;
 import org.ballerinalang.config.cipher.AESCipherToolException;
 import org.slf4j.Logger;
@@ -30,11 +31,8 @@ import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.exception.CliLauncherException;
 import org.wso2.apimgt.gateway.cli.exception.ConfigParserException;
-import org.wso2.apimgt.gateway.cli.model.config.BasicAuth;
-import org.wso2.apimgt.gateway.cli.model.config.Config;
-import org.wso2.apimgt.gateway.cli.model.config.ContainerConfig;
+import org.wso2.apimgt.gateway.cli.model.config.*;
 import org.wso2.apimgt.gateway.cli.model.rest.APICorsConfigurationDTO;
-import org.wso2.apimgt.gateway.cli.model.config.Etcd;
 
 
 import java.io.*;
@@ -284,6 +282,11 @@ public class GatewayCmdUtils {
 
         String confDirPath = projectDir + File.separator + GatewayCliConstants.CONF_DIRECTORY_NAME;
         createFolderIfNotExist(confDirPath);
+
+        String apiFilesDirPath = projectDir + File.separator + GatewayCliConstants.PROJECTS_API_FILES_DIRECTORY_NAME;
+        createFolderIfNotExist(apiFilesDirPath);
+
+        createFileIfNotExist(projectDir.getPath(), GatewayCliConstants.ROUTES_FILE);
     }
 
     /**
@@ -924,4 +927,21 @@ public class GatewayCmdUtils {
         }
         config.setBasicAuth(basicAuth);
     }
+
+//    public static String usernameConfiguration(String username, Config config, PrintStream outStream){
+//        String configuredUser = config.getToken().getUsername();
+//        if (StringUtils.isEmpty(configuredUser)) {
+//            if (StringUtils.isEmpty(username)) {
+//                //isOverwriteRequired = true;
+//                String usernameInput = GatewayCmdUtils.promptForTextInput(outStream,"Enter Username: ");
+//                if (usernameInput.trim().isEmpty()) {
+//                    throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty username.");
+//                }
+//                return usernameInput;
+//            }
+//            return username;
+//        }
+//        return configuredUser;
+//    }
+
 }

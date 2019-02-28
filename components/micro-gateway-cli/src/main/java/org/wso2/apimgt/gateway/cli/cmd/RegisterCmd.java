@@ -129,8 +129,13 @@ public class RegisterCmd implements GatewayLauncherCmd {
                 }
             }
             //todo:  change endpoint type accordingly
-            endpointConfig = "{\"production_endpoints\":{\"url\":\"" + endpoint.trim() +
-                    "\"},\"endpoint_type\":\"http\"}";
+            if(endpoint.contains("https")){
+                endpointConfig = "{\"production_endpoints\":{\"url\":\"" + endpoint.trim() +
+                        "\"},\"endpoint_type\":\"http\"}";
+            } else{
+                endpointConfig = "{\"production_endpoints\":{\"url\":\"" + endpoint.trim() +
+                        "\"},\"endpoint_type\":\"https\"}";
+            }
         }
 
         //to setup the username
@@ -325,7 +330,7 @@ public class RegisterCmd implements GatewayLauncherCmd {
         APIDetailedDTO api = new APIDetailedDTO();
         api.setName(swagger.getInfo().getTitle());
         api.setVersion(swagger.getInfo().getVersion());
-        api.setContext(swagger.getBasePath());
+        api.setContext(formattedContext(swagger.getBasePath(),swagger.getInfo().getVersion()));
         api.setApiDefinition(apiDef);
         api.setEndpointConfig(endpointDef);
         api.setTransport(Arrays.asList("http", "https"));
@@ -363,7 +368,14 @@ public class RegisterCmd implements GatewayLauncherCmd {
 
     }
 
-    private static void validateInput(String path_to_apiDef){
+    private String formattedContext(String basePath, String version){
+        if(basePath.contains("/"+version)){
+            return basePath.substring(0,basePath.indexOf("/"+version));
+        }
+        return basePath;
+    }
+
+    private void validateInput(String path_to_apiDef){
 
         //to check if the file is available
         OpenApiCodegenUtils.readApi(path_to_apiDef);
