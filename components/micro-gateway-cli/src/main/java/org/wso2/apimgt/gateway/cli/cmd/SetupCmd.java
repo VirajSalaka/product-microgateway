@@ -21,8 +21,10 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.swagger.models.Swagger;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.packerina.init.InitHandler;
 import org.slf4j.Logger;
@@ -225,6 +227,11 @@ public class SetupCmd implements GatewayLauncherCmd {
                 outStream.println("Setting up project " + projectName + " is successful.");
             } else {
                 logger.debug("Successfully read the api definition file");
+                Swagger swagger = GatewayCmdUtils.parseAPIDef(api);
+                /*
+                * to validate swagger file
+                 */
+                GatewayCmdUtils.validateSwaggerFile(swagger);
                 CodeGenerator codeGenerator = new CodeGenerator();
                 try {
                     if (StringUtils.isEmpty(endpointConfig)) {
@@ -241,6 +248,15 @@ public class SetupCmd implements GatewayLauncherCmd {
                         endpointConfig = "{\"production_endpoints\":{\"url\":\"" + endpoint.trim() +
                                 "\"},\"endpoint_type\":\"http\"}";
                     }
+                    /*
+                     * generate routes.yaml
+                     */
+                    //todo: create this file properly
+                    File file =new File(GatewayCmdUtils.getProjectDirectoryPath(projectName)+"/routes.yaml");
+                    file.createNewFile();
+                    //todo: configure this using endpointconfig (instead of endpoint)
+                    GatewayCmdUtils.writeContent(generateRoutesConfiguration(swagger,endpoint,
+                            TransportTypeEnum.HTTP), file);
                     codeGenerator.generate(projectName, api, endpointConfig, true);
                     //Initializing the ballerina project and creating .bal folder.
                     logger.debug("Creating source artifacts");
@@ -555,37 +571,61 @@ public class SetupCmd implements GatewayLauncherCmd {
     }
 
     //todo: handle complex route configurations
-    private String generateRoutesConfiguration(String apiName, String version, String endpoint, TransportTypeEnum
-            transport){
-        APIListRouteDTO apiList = new APIListRouteDTO();
+//    private String generateRoutesConfiguration(Swagger swagger, String endpoint, TransportTypeEnum
+//            transport){
+//
+//        String apiName = swagger.getInfo().getTitle();
+//        String version = swagger.getInfo().getVersion();
+//        APIListRouteDTO apiList = new APIListRouteDTO();
+//
+//        //todo: implement all these using constructors
+//        EndpointListRouteDTO endpointListRouteDTO = new EndpointListRouteDTO();
+//        endpointListRouteDTO.addEndpoint(endpoint);
+//        endpointListRouteDTO.addTransportType(transport);
+//
+//        EnvDTO env = new EnvDTO();
+//        env.setBasicEndpoint(endpointListRouteDTO);
+//
+//        //todo: remove the default setting : production environment
+//        APIVersionRouteDTO apiVersion = new APIVersionRouteDTO();
+//        apiVersion.setVersion(version);
+//        apiVersion.setProdLoadBalance(env);
+//
+//        APIRouteDTO api = new APIRouteDTO();
+//        api.setAPI_name(apiName);
+//        api.addAPIVersion(apiVersion);
+//
+//        apiList.addAPIDTO(api);
+//
+//        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+//        String yamlString = null;
+//        try {
+//            yamlString = objectMapper.writeValueAsString(apiList);
+//        } catch (JsonProcessingException e) {
+//            e.printStackTrace();
+//        }
+//        return yamlString;
+//    }
 
-        //todo: implement all these using constructors
-        EndpointListRouteDTO endpointListRouteDTO = new EndpointListRouteDTO();
-        endpointListRouteDTO.addEndpoint(endpoint);
-        endpointListRouteDTO.addTransportType(transport);
+    //todo: cannot implement at the moment because the endpoint configuration is not clearly defined yet
+    private void endpointConfiguration(String endpointConfig) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode root = objectMapper.readTree(endpointConfig);
 
-        EnvDTO env = new EnvDTO();
-        env.setBasicEndpoint(endpointListRouteDTO);
+        String endpointType = root.get("endpoint_type").textValue().trim();
+        switch(endpointType){
+            case "load_balance":
+                break;
 
-        //todo: remove the default setting : production environment
-        APIVersionRouteDTO apiVersion = new APIVersionRouteDTO();
-        apiVersion.setVersion(version);
-        apiVersion.setProdLoadBalance(env);
+            case "failover":
+                break;
 
-        APIRouteDTO api = new APIRouteDTO();
-        api.setAPI_name(apiName);
-        api.addAPIVersion(apiVersion);
+            case "http":
+                break;
 
-        apiList.addAPIDTO(api);
-
-        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        String yamlString = null;
-        try {
-            yamlString = objectMapper.writeValueAsString(apiList);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            default:
+                break;
         }
-        return yamlString;
     }
 }
 

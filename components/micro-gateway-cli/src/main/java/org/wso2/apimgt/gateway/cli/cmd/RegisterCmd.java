@@ -105,8 +105,8 @@ public class RegisterCmd implements GatewayLauncherCmd {
             throw GatewayCmdUtils.createUsageException("Swagger definition is not provided as an argument");
         }
 
-        //to validate the input file
-        validateInput(openApi);
+        Swagger swagger = GatewayCmdUtils.parseAPIDef(openApi);
+        GatewayCmdUtils.validateSwaggerFile(swagger);
 
         if (StringUtils.isEmpty(toolkitConfigPath)) {
             toolkitConfigPath = GatewayCmdUtils.getMainConfigLocation();
@@ -131,10 +131,10 @@ public class RegisterCmd implements GatewayLauncherCmd {
             //todo:  change endpoint type accordingly
             if(endpoint.contains("https")){
                 endpointConfig = "{\"production_endpoints\":{\"url\":\"" + endpoint.trim() +
-                        "\"},\"endpoint_type\":\"http\"}";
+                        "\"},\"endpoint_type\":\"https\"}";
             } else{
                 endpointConfig = "{\"production_endpoints\":{\"url\":\"" + endpoint.trim() +
-                        "\"},\"endpoint_type\":\"https\"}";
+                        "\"},\"endpoint_type\":\"http\"}";
             }
         }
 
@@ -275,7 +275,7 @@ public class RegisterCmd implements GatewayLauncherCmd {
         RESTAPIService service = new RESTAPIServiceImpl(publisherEndpoint, adminEndpoint, isInsecure);
 
         //to generate the json for the Publisher API as required
-        String jsonPayload = generatePayLoad(OpenApiCodegenUtils.readApi(openApi), endpointConfig);
+        String jsonPayload = generatePayLoad(OpenApiCodegenUtils.readApi(openApi), swagger, endpointConfig);
         if(service.pushAPIToPublisher(jsonPayload,accessToken)){
             outStream.println("API Registeration is Successfull");
         }
@@ -319,13 +319,10 @@ public class RegisterCmd implements GatewayLauncherCmd {
         }
     }
 
+    //todo: remove taking apiDef as a parameter, solve that using swagger object
     //todo: this is minimum detailed definition to create an API. Remove the hard coded segments
     //to generate the json payload as required for the Publisher API using swagger and endpoint info
-    private String generatePayLoad(String apiDef, String endpointDef){
-        SwaggerParser parser;
-        Swagger swagger;
-        parser = new SwaggerParser();
-        swagger = parser.parse(apiDef);
+    private String generatePayLoad(String apiDef, Swagger swagger, String endpointDef){
 
         APIDetailedDTO api = new APIDetailedDTO();
         api.setName(swagger.getInfo().getTitle());
@@ -373,35 +370,5 @@ public class RegisterCmd implements GatewayLauncherCmd {
             return basePath.substring(0,basePath.indexOf("/"+version));
         }
         return basePath;
-    }
-
-    private void validateInput(String path_to_apiDef){
-
-        //to check if the file is available
-        OpenApiCodegenUtils.readApi(path_to_apiDef);
-
-        Swagger swagger;
-        SwaggerParser parser = new SwaggerParser();
-        swagger = parser.parse(path_to_apiDef);
-
-        //to check the availability of the API name
-        if(StringUtils.isEmpty(swagger.getInfo().getTitle())){
-            throw new CLIInternalException("API name is not available.");
-        }
-
-        //to check whether the API name contains any spaces
-        if(swagger.getInfo().getTitle().contains(" ")){
-            throw new CLIInternalException("Spaces are not allowed in the API name at the moment. Please reformat the API name");
-        }
-
-        //to check the availability of version number
-        if(StringUtils.isEmpty(swagger.getInfo().getVersion())){
-            throw new CLIInternalException("Version is not specified. Please include the version");
-        }
-
-        //to check the availability of the context
-        if(StringUtils.isEmpty(swagger.getBasePath())){
-            throw new CLIInternalException("Basepath is not available");
-        }
     }
 }

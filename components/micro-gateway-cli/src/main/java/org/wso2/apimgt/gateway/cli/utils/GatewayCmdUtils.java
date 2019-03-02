@@ -17,6 +17,8 @@
  */
 package org.wso2.apimgt.gateway.cli.utils;
 
+import io.swagger.models.Swagger;
+import io.swagger.parser.SwaggerParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -285,8 +287,6 @@ public class GatewayCmdUtils {
 
         String apiFilesDirPath = projectDir + File.separator + GatewayCliConstants.PROJECTS_API_FILES_DIRECTORY_NAME;
         createFolderIfNotExist(apiFilesDirPath);
-
-        createFileIfNotExist(projectDir.getPath(), GatewayCliConstants.ROUTES_FILE);
     }
 
     /**
@@ -719,7 +719,7 @@ public class GatewayCmdUtils {
      * @param file    file object initialized with path
      * @throws IOException error while writing content to file
      */
-    private static void writeContent(String content, File file) throws IOException {
+    public static void writeContent(String content, File file) throws IOException {
         FileWriter writer = null;
         try {
             writer = new FileWriter(file);
@@ -927,6 +927,39 @@ public class GatewayCmdUtils {
         }
         config.setBasicAuth(basicAuth);
     }
+
+    public static Swagger parseAPIDef(String pathToAPIDefinition){
+
+        Swagger swagger;
+        SwaggerParser parser = new SwaggerParser();
+        swagger = parser.parse(pathToAPIDefinition);
+        return swagger;
+    }
+
+    public static void validateSwaggerFile(Swagger swagger){
+
+        //to check the availability of the API name
+        if(StringUtils.isEmpty(swagger.getInfo().getTitle())){
+            throw new CLIInternalException("API name is not available.");
+        }
+
+        //to check whether the API name contains any spaces
+        if(swagger.getInfo().getTitle().contains(" ")){
+            throw new CLIInternalException("Spaces are not allowed in the API name at the moment. Please reformat the API name");
+        }
+
+        //to check the availability of version number
+        if(StringUtils.isEmpty(swagger.getInfo().getVersion())){
+            throw new CLIInternalException("Version is not specified. Please include the version");
+        }
+
+        //to check the availability of the context
+        if(StringUtils.isEmpty(swagger.getBasePath())){
+            throw new CLIInternalException("Basepath is not available");
+        }
+    }
+
+
 
 //    public static String usernameConfiguration(String username, Config config, PrintStream outStream){
 //        String configuredUser = config.getToken().getUsername();
