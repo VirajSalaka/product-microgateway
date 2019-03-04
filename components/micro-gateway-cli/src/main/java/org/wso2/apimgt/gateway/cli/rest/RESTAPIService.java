@@ -69,4 +69,12 @@ public interface RESTAPIService {
      * @return list of  client certificates
      */
     List<ClientCertMetadataDTO> getClientCertificates(String accessToken);
+
+    /**
+     * Create the API in publisher
+     *
+     * @param swaggerDefinition swagger definition of the API
+     * @param accessToken access token
+     */
+    Boolean pushAPIToPublisher(String swaggerDefinition, String accessToken);
 }

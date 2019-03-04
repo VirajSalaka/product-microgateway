@@ -100,6 +100,10 @@ public class Main {
             cmdParser.addCommand(GatewayCliCommands.RESET, resetCmd);
             resetCmd.setParentCmdParser(cmdParser);
 
+            RegisterCmd registerCmd = new RegisterCmd();
+            cmdParser.addCommand(GatewayCliCommands.REGISTER, registerCmd);
+            registerCmd.setParentCmdParser(cmdParser);
+
             cmdParser.setProgramName(MICRO_GW);
             cmdParser.parse(args);
             String parsedCmdName = cmdParser.getParsedCommand();

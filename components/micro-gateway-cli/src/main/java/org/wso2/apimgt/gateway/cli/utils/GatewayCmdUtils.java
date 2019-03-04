@@ -17,6 +17,8 @@
  */
 package org.wso2.apimgt.gateway.cli.utils;
 
+import io.swagger.models.Swagger;
+import io.swagger.parser.SwaggerParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -31,22 +33,11 @@ import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.exception.CliLauncherException;
 import org.wso2.apimgt.gateway.cli.exception.ConfigParserException;
-<<<<<<< HEAD
-import org.wso2.apimgt.gateway.cli.model.config.Config;
-import org.wso2.apimgt.gateway.cli.model.config.ContainerConfig;
-=======
 import org.wso2.apimgt.gateway.cli.model.config.*;
->>>>>>> 3fb905f... yamlString generation completed
 import org.wso2.apimgt.gateway.cli.model.rest.APICorsConfigurationDTO;
 
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -296,8 +287,11 @@ public class GatewayCmdUtils {
 
         String apiFilesDirPath = projectDir + File.separator + GatewayCliConstants.PROJECTS_API_FILES_DIRECTORY_NAME;
         createFolderIfNotExist(apiFilesDirPath);
+<<<<<<< HEAD
 
         createFileIfNotExist(projectDir.getPath(), GatewayCliConstants.ROUTES_FILE);
+=======
+>>>>>>> 65791341a95d6346cd966499f95c107d21e4e23a
     }
 
     /**
@@ -730,7 +724,7 @@ public class GatewayCmdUtils {
      * @param file    file object initialized with path
      * @throws IOException error while writing content to file
      */
-    private static void writeContent(String content, File file) throws IOException {
+    public static void writeContent(String content, File file) throws IOException {
         FileWriter writer = null;
         try {
             writer = new FileWriter(file);
@@ -902,4 +896,90 @@ public class GatewayCmdUtils {
             throw new IOException();
         }
     }
+
+    public static String promptForTextInput(PrintStream outStream, String msg) {
+        outStream.println(msg);
+        return System.console().readLine();
+    }
+
+    public static String promptForPasswordInput(PrintStream outStream, String msg) {
+        outStream.println(msg);
+        return new String(System.console().readPassword());
+    }
+
+    public static void setSecuritySchemas(String schemas) {
+        Config config = GatewayCmdUtils.getConfig();
+        BasicAuth basicAuth = new BasicAuth();
+        boolean basic = false;
+        boolean oauth2 = false;
+        String[] schemasArray = schemas.trim().split("\\s*,\\s*");
+        for (int i = 0; i < schemasArray.length; i++) {
+            if (schemasArray[i].equalsIgnoreCase("basic")) {
+                basic = true;
+            } else if (schemasArray[i].equalsIgnoreCase("oauth2")) {
+                oauth2 = true;
+            }
+        }
+        if (basic && oauth2) {
+            basicAuth.setOptional(true);
+            basicAuth.setRequired(false);
+        } else if (basic && !oauth2) {
+            basicAuth.setRequired(true);
+            basicAuth.setOptional(false);
+        } else if (!basic && oauth2) {
+            basicAuth.setOptional(false);
+            basicAuth.setRequired(false);
+        }
+        config.setBasicAuth(basicAuth);
+    }
+
+    public static Swagger parseAPIDef(String pathToAPIDefinition){
+
+        Swagger swagger;
+        SwaggerParser parser = new SwaggerParser();
+        swagger = parser.parse(pathToAPIDefinition);
+        return swagger;
+    }
+
+    public static void validateSwaggerFile(Swagger swagger){
+
+        //to check the availability of the API name
+        if(StringUtils.isEmpty(swagger.getInfo().getTitle())){
+            throw new CLIInternalException("API name is not available.");
+        }
+
+        //to check whether the API name contains any spaces
+        if(swagger.getInfo().getTitle().contains(" ")){
+            throw new CLIInternalException("Spaces are not allowed in the API name at the moment. Please reformat the API name");
+        }
+
+        //to check the availability of version number
+        if(StringUtils.isEmpty(swagger.getInfo().getVersion())){
+            throw new CLIInternalException("Version is not specified. Please include the version");
+        }
+
+        //to check the availability of the context
+        if(StringUtils.isEmpty(swagger.getBasePath())){
+            throw new CLIInternalException("Basepath is not available");
+        }
+    }
+
+
+
+//    public static String usernameConfiguration(String username, Config config, PrintStream outStream){
+//        String configuredUser = config.getToken().getUsername();
+//        if (StringUtils.isEmpty(configuredUser)) {
+//            if (StringUtils.isEmpty(username)) {
+//                //isOverwriteRequired = true;
+//                String usernameInput = GatewayCmdUtils.promptForTextInput(outStream,"Enter Username: ");
+//                if (usernameInput.trim().isEmpty()) {
+//                    throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty username.");
+//                }
+//                return usernameInput;
+//            }
+//            return username;
+//        }
+//        return configuredUser;
+//    }
+
 }

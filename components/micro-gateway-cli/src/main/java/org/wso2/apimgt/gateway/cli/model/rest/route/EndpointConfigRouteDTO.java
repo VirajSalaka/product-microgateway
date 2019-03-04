@@ -3,7 +3,7 @@ package org.wso2.apimgt.gateway.cli.model.rest.route;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * This class represents the endpoint configurations in the routes.yaml
+ * This class represents the endpoint configurations in the routes.yaml //todo: Rename this class
  */
 public class EndpointConfigRouteDTO {
     private String username;

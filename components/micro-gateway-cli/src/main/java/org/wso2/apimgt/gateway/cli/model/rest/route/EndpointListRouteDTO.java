@@ -2,34 +2,18 @@ package org.wso2.apimgt.gateway.cli.model.rest.route;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * This class hold the available endpoints, transport_type and config details (in the routes.yaml)
  */
-public class EndpointListRouteDTO {
-    private List<String> endpointList = null;
-    private List<TransportTypeEnum> transport = null;
+public abstract class EndpointListRouteDTO {
+
     private EndpointConfigRouteDTO config = null;
-
-    @JsonProperty("endpoints")
-    public List<String> getEndpointList() {
-        return endpointList;
-    }
-
-    public void setEndpointList(List<String> endpointList) {
-        this.endpointList = endpointList;
-    }
-
-    @JsonProperty("transport")
-    public List<TransportTypeEnum> getTransport() {
-        return transport;
-    }
-
-    public void setTransport(List<TransportTypeEnum> transportTypeEnumList) {
-        this.transport = transportTypeEnumList;
-    }
+    /*
+    This field's purpose is to identify the type of Endpoint as we need to cast while reading the yaml
+    //todo: but this will create a redundant type feature as "type" and "@type" as the jackson library is used
+    //todo: solution: have all the methods exposed in this abstract class
+     */
+    private String type = null; //todo: Bring Enum type
 
     @JsonProperty("config")
     public EndpointConfigRouteDTO getConfig() {
@@ -40,20 +24,15 @@ public class EndpointListRouteDTO {
         this.config = config;
     }
 
-    public void addTransportType(TransportTypeEnum transportTypeEnum){
-        if(transport == null){
-            transport = new ArrayList<>();
-        }
-        if(!transport.contains(transportTypeEnum)){
-            transport.add(transportTypeEnum);
-        }
+
+    public abstract void addEndpoint(String endpoint);
+
+    @JsonProperty("type")
+    public String getType() {
+        return type;
     }
 
-    public void addEndpoint(String endpoint){
-        if(endpointList == null){
-            endpointList = new ArrayList<>();
-        }
-        //todo: validate if there are any duplicates
-        endpointList.add(endpoint);
+    public void setType(String type) {
+        this.type = type;
     }
 }
