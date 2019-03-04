@@ -42,10 +42,8 @@ import org.wso2.apimgt.gateway.cli.utils.TokenManagementUtil;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -436,55 +434,5 @@ public class RESTAPIServiceImpl implements RESTAPIService {
             config.setMutualSSL(clientDetails);
         }
         return selectedCertificates;
-    }
-
-    /**
-     * @see RESTAPIService#pushAPIToPublisher(String, String)
-     */
-    public Boolean pushAPIToPublisher(String swaggerDefinition, String accessToken){
-
-        URL url;
-        HttpsURLConnection urlConn = null;
-        publisherEp = publisherEp.endsWith("/") ? publisherEp : publisherEp + "/";
-        try {
-            //todo: update the publisher path properly in the constants.RESTServiceConstants
-            String urlStr = publisherEp + "apis";
-            url = new URL(urlStr);
-            urlConn = (HttpsURLConnection) url.openConnection();
-
-            if (inSecure) {
-                urlConn.setHostnameVerifier((s, sslSession) -> true);
-            }
-            urlConn.setRequestMethod(RESTServiceConstants.POST);
-            urlConn.setRequestProperty(RESTServiceConstants.AUTHORIZATION,
-                    RESTServiceConstants.BEARER + " " + accessToken);
-            urlConn.setRequestProperty(RESTServiceConstants.CONTENT_TYPE,
-                    RESTServiceConstants.CONTENT_TYPE_APPLICATION_JSON);
-            urlConn.setDoOutput(true);
-            urlConn.getOutputStream().write(swaggerDefinition.getBytes(StandardCharsets.UTF_8));
-
-            int responseCode = urlConn.getResponseCode();
-            if(responseCode == 201){
-                return true;
-            }else if(responseCode == 401){
-                throw new CLIRuntimeException(
-                        "Invalid user credentials or the user does not have required permissions");
-            }else if(responseCode == 400){
-                throw new RuntimeException("Bad/Invalid Request. Status Code : " + responseCode);
-            }else{
-                throw new RuntimeException("Bad/Invalid Request. Status Code : "+responseCode);
-            }
-
-        } catch (MalformedURLException e) {
-            String msg = "URL is malformed.";
-            throw new RuntimeException(msg, e);
-        } catch (IOException e) {
-            String msg = "Error while sending the POST request to the publisher";
-            throw new RuntimeException(msg, e);
-        }finally {
-            if (urlConn != null) {
-                urlConn.disconnect();
-            }
-        }
     }
 }

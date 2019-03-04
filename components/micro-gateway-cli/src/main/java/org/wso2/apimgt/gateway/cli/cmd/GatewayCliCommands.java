@@ -25,5 +25,4 @@ public class GatewayCliCommands {
     public static final String BUILD = "build";
     public static final String RUN = "run";
     public static final String RESET = "reset";
-    public static final String REGISTER = "register";
 }
