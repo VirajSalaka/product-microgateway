@@ -19,6 +19,7 @@ package org.wso2.apimgt.gateway.cli.utils;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.config.cipher.AESCipherTool;
 import org.ballerinalang.config.cipher.AESCipherToolException;
 import org.slf4j.Logger;
@@ -30,10 +31,13 @@ import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.exception.CliLauncherException;
 import org.wso2.apimgt.gateway.cli.exception.ConfigParserException;
+<<<<<<< HEAD
 import org.wso2.apimgt.gateway.cli.model.config.Config;
 import org.wso2.apimgt.gateway.cli.model.config.ContainerConfig;
+=======
+import org.wso2.apimgt.gateway.cli.model.config.*;
+>>>>>>> 3fb905f... yamlString generation completed
 import org.wso2.apimgt.gateway.cli.model.rest.APICorsConfigurationDTO;
-import org.wso2.apimgt.gateway.cli.model.config.Etcd;
 
 
 import java.io.File;
@@ -289,6 +293,11 @@ public class GatewayCmdUtils {
 
         String confDirPath = projectDir + File.separator + GatewayCliConstants.CONF_DIRECTORY_NAME;
         createFolderIfNotExist(confDirPath);
+
+        String apiFilesDirPath = projectDir + File.separator + GatewayCliConstants.PROJECTS_API_FILES_DIRECTORY_NAME;
+        createFolderIfNotExist(apiFilesDirPath);
+
+        createFileIfNotExist(projectDir.getPath(), GatewayCliConstants.ROUTES_FILE);
     }
 
     /**
