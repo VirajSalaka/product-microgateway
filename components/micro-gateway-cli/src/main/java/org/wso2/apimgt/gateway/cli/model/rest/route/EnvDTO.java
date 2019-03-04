@@ -8,8 +8,10 @@ import java.util.List;
  * This class represents the endpoint configurations for the given environment. (in the routes.yaml)
  */
 public class EnvDTO {
+
     private EndpointListRouteDTO basicEndpoint = null;
     private List<ResourceRouteDTO> resourceRouteDTOList = null;
+
 
     @JsonProperty("basicURL")
     public EndpointListRouteDTO getBasicEndpoint() {

@@ -21,6 +21,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.commons.lang3.StringUtils;
@@ -49,6 +50,7 @@ import org.wso2.apimgt.gateway.cli.model.config.TokenBuilder;
 import org.wso2.apimgt.gateway.cli.model.config.Etcd;
 import org.wso2.apimgt.gateway.cli.model.config.BasicAuth;
 import org.wso2.apimgt.gateway.cli.model.rest.ClientCertMetadataDTO;
+import org.wso2.apimgt.gateway.cli.model.rest.Endpoint;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyDTO;
@@ -207,7 +209,7 @@ public class SetupCmd implements GatewayLauncherCmd {
                              * if an endpoint config or an endpoint is not provided as an argument, it is prompted from
                              * the user
                              */
-                            if ((endpoint = GatewayCmdUtils.promptForTextInput(outStream,"Enter Endpoint URL: "))
+                            if ((endpoint = promptForTextInput("Enter Endpoint URL: "))
                                     .trim().isEmpty()) {
                                 throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty endpoint.");
                             }
@@ -233,7 +235,7 @@ public class SetupCmd implements GatewayLauncherCmd {
                              * if an endpoint config or an endpoint is not provided as an argument, it is prompted from
                              * the user
                              */
-                            if ((endpoint = GatewayCmdUtils.promptForTextInput(outStream, "Enter Endpoint URL: "))
+                            if ((endpoint = promptForTextInput( "Enter Endpoint URL: "))
                                     .trim().isEmpty()) {
                                 throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty endpoint.");
                             }
@@ -242,15 +244,19 @@ public class SetupCmd implements GatewayLauncherCmd {
                                 "\"},\"endpoint_type\":\"http\"}";
                     }
                     codeGenerator.generate(projectName, api, endpointConfig, true);
+
                     //Initializing the ballerina project and creating .bal folder.
                     logger.debug("Creating source artifacts");
                     InitHandler.initialize(Paths.get(GatewayCmdUtils.getProjectDirectoryPath(projectName)), null,
                             new ArrayList<>(), null);
+                    GatewayCmdUtils.writeContent(generateRoutesConfiguration(projectName,"v1.2.3",endpointConfig), new File(GatewayCmdUtils.getProjectDirectoryPath(projectName)+"/routes.yaml"));
+
                 } catch (IOException | BallerinaServiceGenException e) {
                     logger.error("Error while generating ballerina source.", e);
                     throw new CLIInternalException("Error while generating ballerina source.");
                 }
                 outStream.println("Setting up project " + projectName + " is successful.");
+
             }
 
         } else {
@@ -261,7 +267,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             if (StringUtils.isEmpty(configuredUser)) {
                 if (StringUtils.isEmpty(username)) {
                     isOverwriteRequired = true;
-                    if ((username = GatewayCmdUtils.promptForTextInput(outStream,"Enter Username: "))
+                    if ((username = promptForTextInput("Enter Username: "))
                             .trim().isEmpty()) {
                         throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty username.");
                     }
@@ -272,10 +278,10 @@ public class SetupCmd implements GatewayLauncherCmd {
 
             //Setup password
             if (StringUtils.isEmpty(password)) {
-                if ((password = GatewayCmdUtils.promptForPasswordInput(outStream, "Enter Password for " +
+                if ((password = promptForPasswordInput("Enter Password for " +
                         username + ": ")).trim().isEmpty()) {
                     if (StringUtils.isEmpty(password)) {
-                        password = GatewayCmdUtils.promptForPasswordInput(outStream,
+                        password = promptForPasswordInput(
                                 "Password can't be empty; enter password for " + username + ": ");
                         if (password.trim().isEmpty()) {
                             throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty password.");
@@ -293,7 +299,7 @@ public class SetupCmd implements GatewayLauncherCmd {
                     .isEmpty(registrationEndpoint) || StringUtils.isEmpty(tokenEndpoint)) {
                 if (StringUtils.isEmpty(baseUrl)) {
                     isOverwriteRequired = true;
-                    if ((baseUrl = GatewayCmdUtils.promptForTextInput(outStream, "Enter APIM base URL [" +
+                    if ((baseUrl = promptForTextInput("Enter APIM base URL [" +
                             RESTServiceConstants.DEFAULT_HOST + "]: "))
                             .trim().isEmpty()) {
                         baseUrl = RESTServiceConstants.DEFAULT_HOST;
@@ -307,7 +313,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             if (StringUtils.isEmpty(configuredTrustStore)) {
                 if (StringUtils.isEmpty(trustStoreLocation)) {
                     isOverwriteRequired = true;
-                    if ((trustStoreLocation = GatewayCmdUtils.promptForTextInput(outStream,
+                    if ((trustStoreLocation = promptForTextInput(
                             "Enter Trust store location: [" + RESTServiceConstants.DEFAULT_TRUSTSTORE_PATH +
                                     "]")).trim()
                             .isEmpty()) {
@@ -335,7 +341,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             if (StringUtils.isEmpty(configuredTrustStorePass)) {
                 if (StringUtils.isEmpty(trustStorePassword)) {
                     isOverwriteRequired = true;
-                    if ((trustStorePassword = GatewayCmdUtils.promptForPasswordInput(outStream,
+                    if ((trustStorePassword = promptForPasswordInput(
                             "Enter Trust store password: " + "[ use default? ]")).trim()
                             .isEmpty()) {
                         trustStorePassword = RESTServiceConstants.DEFAULT_TRUSTSTORE_PASS;
@@ -367,7 +373,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             } else if (security == "") {
                 security = "oauth2";
             }
-            GatewayCmdUtils.setSecuritySchemas(security);
+            setSecuritySchemas(security);
 
             OAuthService manager = new OAuthServiceImpl();
             clientID = config.getToken().getClientId();
@@ -511,6 +517,16 @@ public class SetupCmd implements GatewayLauncherCmd {
     public void setParentCmdParser(JCommander parentCmdParser) {
     }
 
+    private String promptForTextInput(String msg) {
+        outStream.println(msg);
+        return System.console().readLine();
+    }
+
+    private String promptForPasswordInput(String msg) {
+        outStream.println(msg);
+        return new String(System.console().readPassword());
+    }
+
     private void populateHosts(String host) {
         try {
             publisherEndpoint = new URL(new URL(host), RESTServiceConstants.PUB_RESOURCE_PATH).toString();
@@ -554,38 +570,183 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
     }
 
+    public void setSecuritySchemas(String schemas) {
+        Config config = GatewayCmdUtils.getConfig();
+        BasicAuth basicAuth = new BasicAuth();
+        boolean basic = false;
+        boolean oauth2 = false;
+        String[] schemasArray = schemas.trim().split("\\s*,\\s*");
+        for (int i = 0; i < schemasArray.length; i++) {
+            if (schemasArray[i].equalsIgnoreCase("basic")) {
+                basic = true;
+            } else if (schemasArray[i].equalsIgnoreCase("oauth2")) {
+                oauth2 = true;
+            }
+        }
+        if (basic && oauth2) {
+            basicAuth.setOptional(true);
+            basicAuth.setRequired(false);
+        } else if (basic && !oauth2) {
+            basicAuth.setRequired(true);
+            basicAuth.setOptional(false);
+        } else if (!basic && oauth2) {
+            basicAuth.setOptional(false);
+            basicAuth.setRequired(false);
+        }
+        config.setBasicAuth(basicAuth);
+    }
+
     //todo: handle complex route configurations
-    private String generateRoutesConfiguration(String apiName, String version, String endpoint, TransportTypeEnum
-            transport){
-        APIListRouteDTO apiList = new APIListRouteDTO();
+    private String generateRoutesConfiguration(String apiName, String version, String endpointConfig){
+        APIListRouteDTO apiListRouteDTO = new APIListRouteDTO();
 
-        //todo: implement all these using constructors
-        EndpointListRouteDTO endpointListRouteDTO = new EndpointListRouteDTO();
-        endpointListRouteDTO.addEndpoint(endpoint);
-        endpointListRouteDTO.addTransportType(transport);
+        APIRouteDTO apiRouteDTO = new APIRouteDTO();
+        apiRouteDTO.setAPI_name(apiName);
 
-        EnvDTO env = new EnvDTO();
-        env.setBasicEndpoint(endpointListRouteDTO);
+        APIVersionRouteDTO apiVersionRouteDTO = new APIVersionRouteDTO();
+        apiVersionRouteDTO.setVersion(version);
 
-        //todo: remove the default setting : production environment
-        APIVersionRouteDTO apiVersion = new APIVersionRouteDTO();
-        apiVersion.setVersion(version);
-        apiVersion.setProdLoadBalance(env);
+        EnvDTO prodEnv = new EnvDTO();
+        EnvDTO sandboxEnv = new EnvDTO();
 
-        APIRouteDTO api = new APIRouteDTO();
-        api.setAPI_name(apiName);
-        api.addAPIVersion(apiVersion);
+        try{
+            EndpointListRouteDTO[] prodAndSandEndpointLists = generateEndpointListRouteDTO(endpointConfig);
+            prodEnv.setBasicEndpoint(prodAndSandEndpointLists[0]);
+            sandboxEnv.setBasicEndpoint(prodAndSandEndpointLists[1]);
+        }
+        catch(IOException e){
+            throw new CLIRuntimeException("endpointConfig format cannot be parsed");
+        }
 
-        apiList.addAPIDTO(api);
+        apiVersionRouteDTO.setProd(prodEnv);
+        apiVersionRouteDTO.setSandbox(sandboxEnv);
+
+        apiRouteDTO.addAPIVersion(apiVersionRouteDTO);
+        apiListRouteDTO.addAPIDTO(apiRouteDTO);
 
         ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
         String yamlString = null;
         try {
-            yamlString = objectMapper.writeValueAsString(apiList);
+            yamlString = objectMapper.writeValueAsString(apiListRouteDTO);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
         return yamlString;
     }
+
+    //todo: add security scheme
+    private EndpointListRouteDTO[] generateEndpointListRouteDTO(String endpointConfig) throws IOException {
+        //todo: we can use one object mapper
+        final ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(endpointConfig);
+        String type = root.get("endpoint_type").asText();
+
+        switch (type){
+            case "load_balance":
+                return generateLoadBalanceEndpointListDTO(root);
+            case "failover":
+                return generateFailoverEndpointListDTO(root);
+            case "http":
+                return generateDefaultEndpointListDTO(root);
+            default:
+                //todo: throw an exception
+                return null;
+        }
+
+    }
+
+    //todo: rename this method
+    private LoadBalanceEndpointListDTO[] generateLoadBalanceEndpointListDTO(JsonNode endpointConfig){
+        JsonNode productionArr = endpointConfig.get("production_endpoints");
+        LoadBalanceEndpointListDTO productionEndpoint = new LoadBalanceEndpointListDTO();
+        if(productionArr != null){
+            if(!productionArr.isArray()){
+                //todo: throw exception
+            }
+            for(JsonNode element: productionArr){
+                productionEndpoint.addEndpoint(element.get("url").asText());
+                productionEndpoint.setType(EndpointType.LOAD_BALANCE);
+            }
+        }
+
+        JsonNode sandboxArr = endpointConfig.get("sandbox_endpoints");
+        LoadBalanceEndpointListDTO sandboxEndpoint = new LoadBalanceEndpointListDTO();
+        if(sandboxArr != null){
+            if(!sandboxArr.isArray()){
+                //todo: throw exception
+            }
+            for(JsonNode element: sandboxArr){
+                sandboxEndpoint.addEndpoint(element.get("url").asText());
+                sandboxEndpoint.setType(EndpointType.LOAD_BALANCE);
+            }
+        }
+        return new LoadBalanceEndpointListDTO[] {productionEndpoint, sandboxEndpoint};
+    }
+
+    //todo: rename this method
+    //todo: check the logically possible setups, with the defn of failover
+    private FailoverEndpointListDTO[] generateFailoverEndpointListDTO(JsonNode endpointConfig){
+
+        FailoverEndpointListDTO productionEndpoint = new FailoverEndpointListDTO();
+        JsonNode productionUrl = endpointConfig.get("production_endpoints");
+        JsonNode productionFailovers = endpointConfig.get("production_failovers");
+
+        if(productionUrl != null){
+            productionEndpoint.setDefaultEndpoint(productionUrl.get("url").asText());
+            productionEndpoint.setType(EndpointType.FAILOVER);
+        }
+        if(productionFailovers != null){
+            if(!productionFailovers.isArray()){
+                //todo: throw exception
+            }
+            for(JsonNode element: productionFailovers){
+                productionEndpoint.addEndpoint(element.get("url").asText());
+            }
+        }
+
+        FailoverEndpointListDTO sandboxEndpoint = new FailoverEndpointListDTO();
+        JsonNode sandboxUrl = endpointConfig.get("sandbox_endpoints");
+        JsonNode sandboxFailovers = endpointConfig.get("sandbox_failovers");
+
+        if(sandboxUrl != null){
+            sandboxEndpoint.setDefaultEndpoint(sandboxUrl.get("sandbox_failovers").asText());
+            sandboxEndpoint.setType(EndpointType.FAILOVER);
+        }
+
+        if(sandboxFailovers != null){
+            if(!sandboxFailovers.isArray()){
+                //todo: throw exception
+            }
+            for(JsonNode element: sandboxFailovers){
+                sandboxEndpoint.addEndpoint(element.get("url").asText());
+            }
+        }
+
+        return new FailoverEndpointListDTO[] {productionEndpoint, sandboxEndpoint};
+    }
+
+    //todo: rename this method
+    //todo: bring "nothing to add" exception
+    private DefaultEndpointListDTO[] generateDefaultEndpointListDTO(JsonNode endpointConfig){
+
+        DefaultEndpointListDTO productionEndpoint = new DefaultEndpointListDTO();
+        JsonNode productionUrl = endpointConfig.get("production_endpoints");
+
+        if(productionUrl != null){
+            productionEndpoint.setEndpoint(productionUrl.get("url").asText());
+            productionEndpoint.setType(EndpointType.DEFAULT);
+        }
+
+        DefaultEndpointListDTO sandboxEndpoint = new DefaultEndpointListDTO();
+        JsonNode sandboxUrl = endpointConfig.get("sandbox_endpoints");
+
+        if(sandboxUrl != null){
+            sandboxEndpoint.setEndpoint(sandboxUrl.get("url").asText());
+            sandboxEndpoint.setType(EndpointType.DEFAULT);
+        }
+
+        return new DefaultEndpointListDTO[] {productionEndpoint, sandboxEndpoint};
+    }
+
 }
 

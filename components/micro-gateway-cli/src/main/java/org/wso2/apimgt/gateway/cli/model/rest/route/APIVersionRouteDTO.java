@@ -2,15 +2,15 @@ package org.wso2.apimgt.gateway.cli.model.rest.route;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 /**
  * This class holds the route details for a single version of the API (in the routes.yaml)
  */
 public class APIVersionRouteDTO {
     private String version = null;
-    private EnvDTO prodLoadBalance = null;
-    private EnvDTO prodFailover = null;
-    private EnvDTO sandboxLoadBalance = null;
-    private EnvDTO sandboxFailover = null;
+    private EnvDTO prod = null;
+    private EnvDTO sandbox = null;
 
     @JsonProperty("version")
     public String getVersion() {
@@ -21,39 +21,21 @@ public class APIVersionRouteDTO {
         this.version = version;
     }
 
-    @JsonProperty("prod_load_balance")
-    public EnvDTO getProdLoadBalance() {
-        return prodLoadBalance;
+    @JsonProperty("production") //todo: provide a constant
+    public EnvDTO getProd() {
+        return prod;
     }
 
-    public void setProdLoadBalance(EnvDTO prodLoadBalance) {
-        this.prodLoadBalance = prodLoadBalance;
+    public void setProd(EnvDTO prod) {
+        this.prod = prod;
     }
 
-    @JsonProperty("prod_failover")
-    public EnvDTO getProdFailover() {
-        return prodFailover;
+    @JsonProperty("sandbox") //todo: provide a constant
+    public EnvDTO getSandbox() {
+        return sandbox;
     }
 
-    public void setProdFailover(EnvDTO prodFailover) {
-        this.prodFailover = prodFailover;
-    }
-
-    @JsonProperty("sandbox_load_balance")
-    public EnvDTO getSandboxLoadBalance() {
-        return sandboxLoadBalance;
-    }
-
-    public void setSandboxLoadBalance(EnvDTO sandboxLoadBalance) {
-        this.sandboxLoadBalance = sandboxLoadBalance;
-    }
-
-    @JsonProperty("sandbox_failover")
-    public EnvDTO getSandboxFailover() {
-        return sandboxFailover;
-    }
-
-    public void setSandboxFailover(EnvDTO sandboxFailover) {
-        this.sandboxFailover = sandboxFailover;
+    public void setSandbox(EnvDTO sandbox) {
+        this.sandbox = sandbox;
     }
 }

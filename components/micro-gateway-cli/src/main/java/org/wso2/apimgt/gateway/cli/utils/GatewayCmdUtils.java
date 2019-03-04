@@ -31,12 +31,7 @@ import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.exception.CliLauncherException;
 import org.wso2.apimgt.gateway.cli.exception.ConfigParserException;
-<<<<<<< HEAD
-import org.wso2.apimgt.gateway.cli.model.config.Config;
-import org.wso2.apimgt.gateway.cli.model.config.ContainerConfig;
-=======
 import org.wso2.apimgt.gateway.cli.model.config.*;
->>>>>>> 3fb905f... yamlString generation completed
 import org.wso2.apimgt.gateway.cli.model.rest.APICorsConfigurationDTO;
 
 
@@ -730,7 +725,7 @@ public class GatewayCmdUtils {
      * @param file    file object initialized with path
      * @throws IOException error while writing content to file
      */
-    private static void writeContent(String content, File file) throws IOException {
+    public static void writeContent(String content, File file) throws IOException {
         FileWriter writer = null;
         try {
             writer = new FileWriter(file);
