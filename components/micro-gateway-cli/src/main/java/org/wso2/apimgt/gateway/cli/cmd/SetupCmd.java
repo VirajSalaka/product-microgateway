@@ -48,9 +48,7 @@ import org.wso2.apimgt.gateway.cli.model.config.ContainerConfig;
 import org.wso2.apimgt.gateway.cli.model.config.Token;
 import org.wso2.apimgt.gateway.cli.model.config.TokenBuilder;
 import org.wso2.apimgt.gateway.cli.model.config.Etcd;
-import org.wso2.apimgt.gateway.cli.model.config.BasicAuth;
 import org.wso2.apimgt.gateway.cli.model.rest.ClientCertMetadataDTO;
-import org.wso2.apimgt.gateway.cli.model.rest.Endpoint;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyDTO;
@@ -249,7 +247,7 @@ public class SetupCmd implements GatewayLauncherCmd {
                     logger.debug("Creating source artifacts");
                     InitHandler.initialize(Paths.get(GatewayCmdUtils.getProjectDirectoryPath(projectName)), null,
                             new ArrayList<>(), null);
-                    GatewayCmdUtils.writeContent(generateRoutesConfiguration(projectName,"v1.2.3",endpointConfig), new File(GatewayCmdUtils.getProjectDirectoryPath(projectName)+"/routes.yaml"));
+                    GatewayCmdUtils.writeContent(generateRoutesConfiguration(projectName,"v1.2.3",endpointConfig,null), new File(GatewayCmdUtils.getProjectDirectoryPath(projectName)+"/routes.yaml"));
 
                 } catch (IOException | BallerinaServiceGenException e) {
                     logger.error("Error while generating ballerina source.", e);
@@ -597,7 +595,8 @@ public class SetupCmd implements GatewayLauncherCmd {
     }
 
     //todo: handle complex route configurations
-    private String generateRoutesConfiguration(String apiName, String version, String endpointConfig){
+    private String generateRoutesConfiguration(String apiName, String version, String endpointConfig,
+                                               String endpointSecurity){
         APIListRouteDTO apiListRouteDTO = new APIListRouteDTO();
 
         APIRouteDTO apiRouteDTO = new APIRouteDTO();
@@ -610,7 +609,8 @@ public class SetupCmd implements GatewayLauncherCmd {
         EnvDTO sandboxEnv = new EnvDTO();
 
         try{
-            EndpointListRouteDTO[] prodAndSandEndpointLists = generateEndpointListRouteDTO(endpointConfig);
+            EndpointListRouteDTO[] prodAndSandEndpointLists = generateEndpointListRouteDTO(endpointConfig,
+                    endpointSecurity);
             prodEnv.setBasicEndpoint(prodAndSandEndpointLists[0]);
             sandboxEnv.setBasicEndpoint(prodAndSandEndpointLists[1]);
         }
@@ -635,19 +635,25 @@ public class SetupCmd implements GatewayLauncherCmd {
     }
 
     //todo: add security scheme
-    private EndpointListRouteDTO[] generateEndpointListRouteDTO(String endpointConfig) throws IOException {
+    private EndpointListRouteDTO[] generateEndpointListRouteDTO(String endpointConfig, String endpointSecurityJson)
+            throws IOException {
         //todo: we can use one object mapper
-        final ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(endpointConfig);
         String type = root.get("endpoint_type").asText();
 
+        EndpointSecurityRouteDTO endpointSecurity = null;
+        if(endpointSecurityJson != null){
+            endpointSecurity = mapper.readValue(endpointSecurityJson, EndpointSecurityRouteDTO.class);
+        }
+
         switch (type){
             case "load_balance":
-                return generateLoadBalanceEndpointListDTO(root);
+                return generateLoadBalanceEpListDTO(root, endpointSecurity);
             case "failover":
-                return generateFailoverEndpointListDTO(root);
+                return generateFailoverEpListDTO(root, endpointSecurity);
             case "http":
-                return generateDefaultEndpointListDTO(root);
+                return generateDefaultEndpointListDTO(root, endpointSecurity);
             default:
                 //todo: throw an exception
                 return null;
@@ -656,7 +662,8 @@ public class SetupCmd implements GatewayLauncherCmd {
     }
 
     //todo: rename this method
-    private LoadBalanceEndpointListDTO[] generateLoadBalanceEndpointListDTO(JsonNode endpointConfig){
+    private LoadBalanceEndpointListDTO[] generateLoadBalanceEpListDTO(JsonNode endpointConfig,
+                                                                      EndpointSecurityRouteDTO endpointSecurity){
         JsonNode productionArr = endpointConfig.get("production_endpoints");
         LoadBalanceEndpointListDTO productionEndpoint = new LoadBalanceEndpointListDTO();
         if(productionArr != null){
@@ -666,6 +673,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             for(JsonNode element: productionArr){
                 productionEndpoint.addEndpoint(element.get("url").asText());
                 productionEndpoint.setType(EndpointType.LOAD_BALANCE);
+                productionEndpoint.setSecurityConfig(endpointSecurity);
             }
         }
 
@@ -678,6 +686,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             for(JsonNode element: sandboxArr){
                 sandboxEndpoint.addEndpoint(element.get("url").asText());
                 sandboxEndpoint.setType(EndpointType.LOAD_BALANCE);
+                sandboxEndpoint.setSecurityConfig(endpointSecurity);
             }
         }
         return new LoadBalanceEndpointListDTO[] {productionEndpoint, sandboxEndpoint};
@@ -685,7 +694,8 @@ public class SetupCmd implements GatewayLauncherCmd {
 
     //todo: rename this method
     //todo: check the logically possible setups, with the defn of failover
-    private FailoverEndpointListDTO[] generateFailoverEndpointListDTO(JsonNode endpointConfig){
+    private FailoverEndpointListDTO[] generateFailoverEpListDTO(JsonNode endpointConfig,
+                                                                EndpointSecurityRouteDTO endpointSecurity){
 
         FailoverEndpointListDTO productionEndpoint = new FailoverEndpointListDTO();
         JsonNode productionUrl = endpointConfig.get("production_endpoints");
@@ -694,6 +704,7 @@ public class SetupCmd implements GatewayLauncherCmd {
         if(productionUrl != null){
             productionEndpoint.setDefaultEndpoint(productionUrl.get("url").asText());
             productionEndpoint.setType(EndpointType.FAILOVER);
+            productionEndpoint.setSecurityConfig(endpointSecurity);
         }
         if(productionFailovers != null){
             if(!productionFailovers.isArray()){
@@ -711,6 +722,7 @@ public class SetupCmd implements GatewayLauncherCmd {
         if(sandboxUrl != null){
             sandboxEndpoint.setDefaultEndpoint(sandboxUrl.get("sandbox_failovers").asText());
             sandboxEndpoint.setType(EndpointType.FAILOVER);
+            sandboxEndpoint.setSecurityConfig(endpointSecurity);
         }
 
         if(sandboxFailovers != null){
@@ -727,7 +739,8 @@ public class SetupCmd implements GatewayLauncherCmd {
 
     //todo: rename this method
     //todo: bring "nothing to add" exception
-    private DefaultEndpointListDTO[] generateDefaultEndpointListDTO(JsonNode endpointConfig){
+    private DefaultEndpointListDTO[] generateDefaultEndpointListDTO(JsonNode endpointConfig,
+                                                                    EndpointSecurityRouteDTO endpointSecurity){
 
         DefaultEndpointListDTO productionEndpoint = new DefaultEndpointListDTO();
         JsonNode productionUrl = endpointConfig.get("production_endpoints");
@@ -735,6 +748,7 @@ public class SetupCmd implements GatewayLauncherCmd {
         if(productionUrl != null){
             productionEndpoint.setEndpoint(productionUrl.get("url").asText());
             productionEndpoint.setType(EndpointType.DEFAULT);
+            productionEndpoint.setSecurityConfig(endpointSecurity);
         }
 
         DefaultEndpointListDTO sandboxEndpoint = new DefaultEndpointListDTO();
@@ -743,6 +757,7 @@ public class SetupCmd implements GatewayLauncherCmd {
         if(sandboxUrl != null){
             sandboxEndpoint.setEndpoint(sandboxUrl.get("url").asText());
             sandboxEndpoint.setType(EndpointType.DEFAULT);
+            sandboxEndpoint.setSecurityConfig(endpointSecurity);
         }
 
         return new DefaultEndpointListDTO[] {productionEndpoint, sandboxEndpoint};

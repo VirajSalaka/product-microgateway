@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * This class represents the endpoint configurations in the routes.yaml //todo: Rename this class
  */
-public class EndpointConfigRouteDTO {
+public class EndpointSecurityRouteDTO {
     private String username;
     private String password;
     private AuthTypeEnum auth;
