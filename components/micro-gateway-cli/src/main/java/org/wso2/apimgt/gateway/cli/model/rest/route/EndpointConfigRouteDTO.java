@@ -28,7 +28,7 @@ public class EndpointConfigRouteDTO {
         this.password = password;
     }
 
-    @JsonProperty("auth")
+    @JsonProperty("type")
     public AuthTypeEnum getAuth() {
         return auth;
     }

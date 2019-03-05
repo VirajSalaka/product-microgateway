@@ -6,7 +6,7 @@ public class DefaultEndpointListDTO extends EndpointListRouteDTO {
     private String endpoint = null;
 
     @JsonProperty("endpoint")
-    public String setEndpoint() {
+    public String getEndpoint() {
         return endpoint;
     }
 

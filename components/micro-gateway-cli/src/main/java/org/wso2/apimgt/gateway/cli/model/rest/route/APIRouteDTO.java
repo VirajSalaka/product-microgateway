@@ -37,4 +37,18 @@ public class APIRouteDTO {
         //todo: handle if existing version is added
         apiVersionList.add(apiVersionRouteDTO);
     }
+
+    public APIVersionRouteDTO findByAPIVersion(String apiVersion){
+        if(apiVersionList == null){
+            return null;
+        }
+
+        int index = apiVersionList.indexOf(apiVersion);
+        if(index == -1){
+            return null;
+        }
+
+        return apiVersionList.get(index);
+
+    }
 }

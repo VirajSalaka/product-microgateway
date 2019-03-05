@@ -34,4 +34,6 @@ public abstract class EndpointListRouteDTO {
     public void setType(EndpointType type) {
         this.type = type;
     }
+
+
 }

@@ -24,4 +24,16 @@ public class APIListRouteDTO {
         //todo: handle adding an existing apiName
         apiRouteList.add(apiRouteDTO);
     }
+
+    public APIRouteDTO findByAPIName(String apiName){
+        if(apiRouteList == null){
+            return null;
+        }
+
+        int index = apiRouteList.indexOf(apiName);
+        if(index == -1){
+            return null;
+        }
+        return apiRouteList.get(index);
+    }
 }

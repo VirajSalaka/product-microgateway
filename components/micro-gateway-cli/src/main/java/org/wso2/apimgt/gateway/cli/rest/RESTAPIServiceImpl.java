@@ -19,6 +19,7 @@ package org.wso2.apimgt.gateway.cli.rest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.cli.constants.GatewayCliConstants;
@@ -27,20 +28,18 @@ import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.model.config.Config;
 import org.wso2.apimgt.gateway.cli.model.config.MutualSSL;
-import org.wso2.apimgt.gateway.cli.model.rest.APIListDTO;
-import org.wso2.apimgt.gateway.cli.model.rest.ClientCertMetadataDTO;
-import org.wso2.apimgt.gateway.cli.model.rest.ClientCertificatesDTO;
-import org.wso2.apimgt.gateway.cli.model.rest.Endpoint;
-import org.wso2.apimgt.gateway.cli.model.rest.EndpointConfig;
+import org.wso2.apimgt.gateway.cli.model.rest.*;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyListDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyListDTO;
+import org.wso2.apimgt.gateway.cli.model.rest.route.*;
 import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
 import org.wso2.apimgt.gateway.cli.utils.TokenManagementUtil;
 
 import javax.net.ssl.HttpsURLConnection;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -375,6 +374,84 @@ public class RESTAPIServiceImpl implements RESTAPIService {
             }
         }
         return endpointConf;
+    }
+
+    private EndpointConfig getEndpointConfig(String projectName, String apiName, String version){
+        //todo: bring a constant for routes.yaml
+        String routesPath = GatewayCmdUtils.getProjectDirectoryPath(projectName)+"/routes.yaml";
+        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+        APIListRouteDTO apiListRouteDTO = null;
+        try {
+            apiListRouteDTO = objectMapper.readValue(new File(routesPath), APIListRouteDTO.class);
+        } catch (IOException e) {
+            new CLIInternalException("cannot parse routes.yaml");
+        }
+
+        APIRouteDTO api = apiListRouteDTO.findByAPIName(apiName);
+        if(api == null){
+            new CLIRuntimeException("found no api named "+ apiName + " in routes.yaml");
+        }
+
+        APIVersionRouteDTO apiVersionRouteDTO = api.findByAPIVersion(version);
+        if(apiVersionRouteDTO == null){
+            new CLIRuntimeException("found no version named " + apiVersionRouteDTO + " in routes.yaml");
+        }
+        EndpointConfig endpointConfig = new EndpointConfig();
+        EndpointList[] endpointLists = generateEpListFromEnvDTO(apiVersionRouteDTO);
+
+        endpointConfig.setProdEndpoints(endpointLists[0]);
+        endpointConfig.setProdFailoverEndpoints(endpointLists[1]);
+        endpointConfig.setSandEndpoints(endpointLists[2]);
+        endpointConfig.setSandFailoverEndpoints(endpointLists[3]);
+
+        return endpointConfig;
+    }
+
+    private EndpointList[] generateEpListFromEnvDTO(APIVersionRouteDTO api){
+        EndpointListRouteDTO basicProdEp = api.getProd().getBasicEndpoint();
+        EndpointListRouteDTO basicSandEp = api.getSandbox().getBasicEndpoint();
+
+        EndpointList prodEpList = new EndpointList(EndpointUrlTypeEnum.PROD);
+        EndpointList prodFailoverEpList = new EndpointList(EndpointUrlTypeEnum.PROD);
+        EndpointList sandboxEpList = new EndpointList(EndpointUrlTypeEnum.SAND);
+        EndpointList sandboxFailoverEpList = new EndpointList(EndpointUrlTypeEnum.SAND);
+
+        //todo: remove the redundant code
+        if(basicProdEp != null){
+            if(basicProdEp.getType().equals(EndpointType.DEFAULT)){
+                prodEpList.addEndpoint(new Endpoint(((DefaultEndpointListDTO) basicProdEp).getEndpoint()));
+            }else if(basicProdEp.getType().equals(EndpointType.LOAD_BALANCE)){
+                List<String> epList = ((LoadBalanceEndpointListDTO) basicProdEp).getEndpointList();
+                for(String epUrl : epList){
+                    prodEpList.addEndpoint(new Endpoint(epUrl));
+                }
+            }else if(basicProdEp.getType().equals(EndpointType.FAILOVER)){
+                prodEpList.addEndpoint(new Endpoint(((FailoverEndpointListDTO) basicProdEp).getDefaultEndpoint()));
+                List<String> epList = ((FailoverEndpointListDTO) basicProdEp).getEndpointList();
+                for(String epUrl : epList){
+                    prodFailoverEpList.addEndpoint(new Endpoint(epUrl));
+                }
+            }
+        }
+
+        if(basicSandEp != null){
+            if(basicSandEp.getType().equals(EndpointType.DEFAULT)){
+                sandboxEpList.addEndpoint(new Endpoint(((DefaultEndpointListDTO) basicSandEp).getEndpoint()));
+            }else if(basicSandEp.getType().equals(EndpointType.LOAD_BALANCE)){
+                List<String> epList = ((LoadBalanceEndpointListDTO) basicSandEp).getEndpointList();
+                for(String epUrl : epList){
+                    sandboxEpList.addEndpoint(new Endpoint(epUrl));
+                }
+            }else if(basicSandEp.getType().equals(EndpointType.FAILOVER)){
+                sandboxEpList.addEndpoint(new Endpoint(((FailoverEndpointListDTO) basicSandEp).getDefaultEndpoint()));
+                List<String> epList = ((FailoverEndpointListDTO) basicSandEp).getEndpointList();
+                for(String epUrl : epList){
+                    sandboxFailoverEpList.addEndpoint(new Endpoint(epUrl));
+                }
+            }
+        }
+
+        return new EndpointList[]{prodEpList, prodFailoverEpList, sandboxEpList, sandboxFailoverEpList};
     }
 
     /**
