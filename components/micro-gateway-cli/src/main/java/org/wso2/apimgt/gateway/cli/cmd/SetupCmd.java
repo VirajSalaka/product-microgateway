@@ -24,7 +24,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.google.gson.Gson;
 import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
 import io.swagger.util.Json;
@@ -411,7 +410,7 @@ public class SetupCmd implements GatewayLauncherCmd {
                 apis = service.getAPIs(label, accessToken);
             } else {
                 ExtendedAPI api = service.getAPI(apiName, version, accessToken);
-                saveSwaggerDefinition(objectMapper, projectName, apiName, version, api.getApiDefinition(),
+                saveSwaggerDefinitionForAPI(projectName, apiName, version, api.getApiDefinition(),
                         api.getContext());
                 if (api != null) {
                     apis.add(api);
@@ -433,9 +432,9 @@ public class SetupCmd implements GatewayLauncherCmd {
             List<ClientCertMetadataDTO> clientCertificates = service.getClientCertificates(accessToken);
             logger.info(String.valueOf(clientCertificates));
 
-            saveApplicationThrottlePolicies(objectMapper, projectName, apiName, version, applicationPolicies);
-            saveSubscriptionThrottlePolicies(new ObjectMapper(), projectName, apiName,version, subscriptionPolicies);
-            saveClientCertMetadata(objectMapper, projectName, apiName, version, clientCertificates);
+            saveApplicationThrottlePolicies(objectMapper, projectName, applicationPolicies);
+            saveSubscriptionThrottlePolicies(objectMapper, projectName, subscriptionPolicies);
+            saveClientCertMetadata(objectMapper, projectName, clientCertificates);
 
             ThrottlePolicyGenerator policyGenerator = new ThrottlePolicyGenerator();
             CodeGenerator codeGenerator = new CodeGenerator();
@@ -777,15 +776,14 @@ public class SetupCmd implements GatewayLauncherCmd {
         return new DefaultEndpointListDTO[] {productionEndpoint, sandboxEndpoint};
     }
 
-    private void saveSubscriptionThrottlePolicies(ObjectMapper objectMapper, String projectName, String apiName,
-                                                  String apiVersion, List<SubscriptionThrottlePolicyDTO> list){
+    private void saveSubscriptionThrottlePolicies(ObjectMapper objectMapper, String projectName,
+                                                  List<SubscriptionThrottlePolicyDTO> list){
         SubscriptionThrottlePolicyListDTO policyList = new SubscriptionThrottlePolicyListDTO();
         policyList.setList(list);
         try {
             String policies = objectMapper.writeValueAsString(policyList);
-            File file = new File(GatewayCmdUtils.getProjectSubscriptionThrottlePoliciesFilePath(projectName, apiName,
-                    apiVersion));
-            GatewayCmdUtils.writeContent(policies, file);
+            GatewayCmdUtils.writeContent(policies,
+                    new File(GatewayCmdUtils.getProjectSubscriptionThrottlePoliciesFilePath(projectName)));
         } catch (JsonProcessingException e) {
             new CLIInternalException("Error: Cannot parse the SubscriptionThrottlePolicies Object to json");
         } catch (IOException e) {
@@ -794,14 +792,14 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
     }
 
-    private void saveApplicationThrottlePolicies(ObjectMapper objectMapper, String projectName, String apiName,
-                                                 String apiVersion, List<ApplicationThrottlePolicyDTO> list){
+    private void saveApplicationThrottlePolicies(ObjectMapper objectMapper, String projectName,
+                                                 List<ApplicationThrottlePolicyDTO> list){
         ApplicationThrottlePolicyListDTO policyList = new ApplicationThrottlePolicyListDTO();
         policyList.setList(list);
         try {
             String policies = objectMapper.writeValueAsString(policyList);
             GatewayCmdUtils.writeContent(policies,
-                    new File(GatewayCmdUtils.getProjectAppThrottlePoliciesFilePath(projectName, apiName, apiVersion)));
+                    new File(GatewayCmdUtils.getProjectAppThrottlePoliciesFilePath(projectName)));
         } catch (JsonProcessingException e) {
             new CLIInternalException("Error: Cannot parse the ApplicationThrottlePolicies Object to json");
         } catch (IOException e) {
@@ -810,13 +808,13 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
     }
 
-    private void saveClientCertMetadata(ObjectMapper objectMapper, String projectName, String apiName,
-                                                 String apiVersion, List<ClientCertMetadataDTO> metadata){
+    private void saveClientCertMetadata(ObjectMapper objectMapper, String projectName,
+                                        List<ClientCertMetadataDTO> metadata){
         try {
             String clientCertMetadata = objectMapper.writeValueAsString(metadata);
             //todo: avoid write content,  instead of that use writevalue function
             GatewayCmdUtils.writeContent(clientCertMetadata,
-                    new File(GatewayCmdUtils.getProjectClientCertMetadataFilePath(projectName, apiName, apiVersion)));
+                    new File(GatewayCmdUtils.getProjectClientCertMetadataFilePath(projectName)));
         } catch (JsonProcessingException e) {
             new CLIInternalException("Error: Cannot parse the ApplicationThrottlePolicies Object to json");
         } catch (IOException e) {
@@ -825,8 +823,8 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
     }
 
-    private void saveSwaggerDefinition(ObjectMapper objectMapper, String projectName, String apiName, String apiVersion,
-                                       String apiDef, String context){
+    private void saveSwaggerDefinitionForAPI(String projectName, String apiName, String apiVersion,
+                                             String apiDef, String context){
         try {
             SwaggerParser parser;
             Swagger swagger;
@@ -844,7 +842,11 @@ public class SetupCmd implements GatewayLauncherCmd {
         catch (IOException e) {
             new CLIInternalException("Error: Cannot map the API Definition Property into a swagger file.");
         }
-
     }
+
+//    private void saveSwaggerDefinitionForMultipleAPIs(String projectName, List<ExtendedAPI> apis){
+//
+//    }
+
 }
 

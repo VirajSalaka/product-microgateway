@@ -310,9 +310,9 @@ public class GatewayCmdUtils {
         String apiVersionDirPath = apiDirPath + File.separator + apiVersion;
         createFolderIfNotExist(apiVersionDirPath);
 
-        createFileIfNotExist(apiVersionDirPath, GatewayCliConstants.APPLICATION_THROTTLE_POLICIES_FILE);
-        createFileIfNotExist(apiVersionDirPath, GatewayCliConstants.SUBSCRIPTION_THROTTLE_POLICIES_FILE);
-        createFileIfNotExist(apiVersionDirPath, GatewayCliConstants.CLIENT_CERT_METADATA_FILE);
+        createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.APPLICATION_THROTTLE_POLICIES_FILE);
+        createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.SUBSCRIPTION_THROTTLE_POLICIES_FILE);
+        createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.CLIENT_CERT_METADATA_FILE);
         createFileIfNotExist(apiVersionDirPath, GatewayCliConstants.API_METADATA_FILE);
 
         if(apiDefPath == null){
@@ -641,39 +641,31 @@ public class GatewayCmdUtils {
     /**
      * Returns the path to the application-throttle-policies.yaml for for a defined version of an API
      * @param projectName name of the project
-     * @param apiName name of the API
-     * @param apiVersion name of the API version
      * @return path to the application-throttle-policies.yaml for for a defined version of an API
      */
-    public static String getProjectAppThrottlePoliciesFilePath(String projectName, String apiName, String apiVersion){
-        return getProjectAPIFilesDirectoryPath(projectName) + File.separator + apiName + File.separator + apiVersion +
-                File.separator + GatewayCliConstants.APPLICATION_THROTTLE_POLICIES_FILE;
+    public static String getProjectAppThrottlePoliciesFilePath(String projectName){
+        return getProjectAPIFilesDirectoryPath(projectName) + File.separator +
+                GatewayCliConstants.APPLICATION_THROTTLE_POLICIES_FILE;
     }
 
     /**
      * Returns the path to the application-throttle-policies.yaml file for a defined version of an API
      * @param projectName name of the project
-     * @param apiName name of the API
-     * @param apiVersion name of the API version
      * @return path to the application-throttle-policies.yaml file for a defined version of an API
      */
-    public static String getProjectSubscriptionThrottlePoliciesFilePath(String projectName, String apiName,
-                                                                        String apiVersion){
-        return getProjectAPIFilesDirectoryPath(projectName) + File.separator + apiName + File.separator + apiVersion +
-                File.separator + GatewayCliConstants.SUBSCRIPTION_THROTTLE_POLICIES_FILE;
+    public static String getProjectSubscriptionThrottlePoliciesFilePath(String projectName){
+        return getProjectAPIFilesDirectoryPath(projectName) + File.separator +
+                GatewayCliConstants.SUBSCRIPTION_THROTTLE_POLICIES_FILE;
     }
 
     /**
      * Returns the path to the client-cert-metadata.yaml for a defined version of an API
      * @param projectName name of the project
-     * @param apiName name of the API
-     * @param apiVersion name of the API version
      * @return path to the client-cert-metadata.yaml for a defined version of an API
      */
-    public static String getProjectClientCertMetadataFilePath(String projectName, String apiName,
-                                                                        String apiVersion){
-        return getProjectAPIFilesDirectoryPath(projectName) + File.separator + apiName + File.separator + apiVersion +
-                File.separator + GatewayCliConstants.CLIENT_CERT_METADATA_FILE;
+    public static String getProjectClientCertMetadataFilePath(String projectName){
+        return getProjectAPIFilesDirectoryPath(projectName) + File.separator +
+                GatewayCliConstants.CLIENT_CERT_METADATA_FILE;
     }
 
     /**
