@@ -229,6 +229,7 @@ public class SetupCmd implements GatewayLauncherCmd {
                 }
                 outStream.println("Setting up project " + projectName + " is successful.");
             } else {
+                //todo: validate the swagger file before start processing
                 logger.debug("Successfully read the api definition file");
                 CodeGenerator codeGenerator = new CodeGenerator();
                 try {
@@ -246,13 +247,16 @@ public class SetupCmd implements GatewayLauncherCmd {
                         endpointConfig = "{\"production_endpoints\":{\"url\":\"" + endpoint.trim() +
                                 "\"},\"endpoint_type\":\"http\"}";
                     }
+                    saveSwaggerDefinitionForSingleAPI(projectName, api);
                     codeGenerator.generate(projectName, api, endpointConfig, true);
 
                     //Initializing the ballerina project and creating .bal folder.
                     logger.debug("Creating source artifacts");
                     InitHandler.initialize(Paths.get(GatewayCmdUtils.getProjectDirectoryPath(projectName)), null,
                             new ArrayList<>(), null);
-                    GatewayCmdUtils.writeContent(generateRoutesConfiguration(projectName,"v1.2.3",endpointConfig,null), new File(GatewayCmdUtils.getProjectDirectoryPath(projectName)+"/routes.yaml"));
+                    GatewayCmdUtils.writeContent(generateRoutesConfiguration(projectName,"v1.2.3",
+                            endpointConfig,null),
+                            new File(GatewayCmdUtils.getProjectDirectoryPath(projectName)+"/routes.yaml"));
 
                 } catch (IOException | BallerinaServiceGenException e) {
                     logger.error("Error while generating ballerina source.", e);
@@ -847,6 +851,24 @@ public class SetupCmd implements GatewayLauncherCmd {
         for(ExtendedAPI api : apis){
             saveSwaggerDefinitionForSingleAPI(projectName, api.getName(), api.getVersion(), api.getApiDefinition(),
                     api.getContext());
+        }
+    }
+
+    private void saveSwaggerDefinitionForSingleAPI(String projectName, String swaggerDefinition){
+        try {
+            SwaggerParser parser;
+            Swagger swagger;
+            parser = new SwaggerParser();
+            swagger = parser.parse(swaggerDefinition);
+
+            String apiName = swagger.getInfo().getTitle();
+            String apiVersion = swagger.getInfo().getVersion();
+
+            GatewayCmdUtils.writeContent(swaggerDefinition,
+                    new File(GatewayCmdUtils.getProjectSwaggerFilePath(projectName, apiName, apiVersion)));
+        }
+        catch (IOException e) {
+            new CLIInternalException("Error: Cannot map the API Definition Property into a swagger file.");
         }
     }
 
