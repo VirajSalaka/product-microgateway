@@ -410,8 +410,6 @@ public class SetupCmd implements GatewayLauncherCmd {
                 apis = service.getAPIs(label, accessToken);
             } else {
                 ExtendedAPI api = service.getAPI(apiName, version, accessToken);
-                saveSwaggerDefinitionForAPI(projectName, apiName, version, api.getApiDefinition(),
-                        api.getContext());
                 if (api != null) {
                     apis.add(api);
                 }
@@ -435,6 +433,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             saveApplicationThrottlePolicies(objectMapper, projectName, applicationPolicies);
             saveSubscriptionThrottlePolicies(objectMapper, projectName, subscriptionPolicies);
             saveClientCertMetadata(objectMapper, projectName, clientCertificates);
+            saveSwaggerDefinitionForMultipleAPIs(projectName, apis);
 
             ThrottlePolicyGenerator policyGenerator = new ThrottlePolicyGenerator();
             CodeGenerator codeGenerator = new CodeGenerator();
@@ -823,8 +822,8 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
     }
 
-    private void saveSwaggerDefinitionForAPI(String projectName, String apiName, String apiVersion,
-                                             String apiDef, String context){
+    private void saveSwaggerDefinitionForSingleAPI(String projectName, String apiName, String apiVersion,
+                                                   String apiDef, String context){
         try {
             SwaggerParser parser;
             Swagger swagger;
@@ -844,9 +843,12 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
     }
 
-//    private void saveSwaggerDefinitionForMultipleAPIs(String projectName, List<ExtendedAPI> apis){
-//
-//    }
+    private void saveSwaggerDefinitionForMultipleAPIs(String projectName, List<ExtendedAPI> apis){
+        for(ExtendedAPI api : apis){
+            saveSwaggerDefinitionForSingleAPI(projectName, api.getName(), api.getVersion(), api.getApiDefinition(),
+                    api.getContext());
+        }
+    }
 
 }
 
