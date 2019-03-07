@@ -21,8 +21,12 @@ package org.wso2.apimgt.gateway.cli.cmd;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import org.ballerinalang.packerina.init.InitHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.apimgt.gateway.cli.codegen.CodeGenerator;
+import org.wso2.apimgt.gateway.cli.codegen.ThrottlePolicyGenerator;
+import org.wso2.apimgt.gateway.cli.exception.BallerinaServiceGenException;
 import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
@@ -30,6 +34,8 @@ import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -63,6 +69,16 @@ public class BuildCmd implements GatewayLauncherCmd {
             projectName = GatewayCmdUtils.getProjectName(mainArgs);
             projectName = projectName.replaceAll("[\\/\\\\]", "");
             File projectLocation = new File(GatewayCmdUtils.getProjectDirectoryPath(projectName));
+            //------
+
+
+
+
+
+
+
+            //-------
+
             if (!projectLocation.exists()) {
                 throw new CLIRuntimeException("Project " + projectName + " does not exist.");
             }

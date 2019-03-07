@@ -139,6 +139,36 @@ public class CodeGenerator {
                 + File.separator + GatewayCliConstants.GW_DIST_POLICIES);
     }
 
+    public void generate(String projectName, boolean overwrite) throws IOException {
+
+        final SwaggerParser parser;
+        String projectSrcPath = GatewayCmdUtils.getProjectSrcDirectoryPath(projectName);
+        String projectAPIFilesPath = GatewayCmdUtils.getProjectAPIFilesDirectoryPath(projectName);
+        List<GenSrcFile> genFiles = new ArrayList<>();
+
+        parser = new SwaggerParser();
+        Files.walk(Paths.get(projectAPIFilesPath)).filter( path -> path.getFileName().toString().equals("swagger.json"))
+                .forEach( path -> {
+                    Swagger swagger = parser.parse(OpenApiCodegenUtils.readApi(path.toString()));
+                    ExtendedAPI api = new ExtendedAPI();
+                    BallerinaService definitionContext;
+                    try {
+                        definitionContext = new BallerinaService().buildContext(swagger, api);
+                    } catch (BallerinaServiceGenException e) {
+                        e.printStackTrace(); //todo: handle error
+                    }
+                    String apiId = UUID.randomUUID().toString();
+                    api.setId(apiId);
+                    outStream.println("ID for API " + api.getName() + " : " + apiId);
+                    api.setName(swagger.getInfo().getTitle());
+                    api.setVersion(swagger.getInfo().getVersion());
+                    api.setContext(swagger.getBasePath());
+                    api.setTransport(Arrays.asList("http", "https"));
+
+
+                });
+    }
+
     /**
      * Generate code for rest ballerina rest.
      *

@@ -377,8 +377,8 @@ public class RESTAPIServiceImpl implements RESTAPIService {
     }
 
     private EndpointConfig getEndpointConfig(String projectName, String apiName, String version){
-        //todo: bring a constant for routes.yaml
-        String routesPath = GatewayCmdUtils.getProjectDirectoryPath(projectName)+"/routes.yaml";
+        //todo: move this method to some other class
+        String routesPath = GatewayCmdUtils.getProjectRoutesConfFilePath(projectName);
         ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
         APIListRouteDTO apiListRouteDTO = null;
         try {
