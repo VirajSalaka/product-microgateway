@@ -668,6 +668,10 @@ public class GatewayCmdUtils {
                 GatewayCliConstants.CLIENT_CERT_METADATA_FILE;
     }
 
+    public static String getProjectRoutesConfFilePath(String projectName){
+        return getProjectDirectoryPath(projectName) + File.separator + GatewayCliConstants.ROUTES_FILE;
+    }
+
     /**
      * This function recursively copy all the sub folder and files from source to destination file paths
      *

@@ -3,6 +3,7 @@ package org.wso2.apimgt.gateway.cli.model.rest.route;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.wso2.apimgt.gateway.cli.model.rest.APIEndpointSecurityDTO;
 
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY;
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
@@ -19,7 +20,7 @@ import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
 })
 public abstract class EndpointListRouteDTO {
 
-    private EndpointSecurityRouteDTO securityConfig = null;
+    private APIEndpointSecurityDTO securityConfig = null;
     /*
     This field's purpose is to identify the type of Endpoint as we need to cast while reading the yaml
     //todo: but this will create a redundant type feature as "type" and "@type" as the jackson library is used
@@ -28,11 +29,11 @@ public abstract class EndpointListRouteDTO {
     private EndpointType type = null;
 
     @JsonProperty("securityConfig")
-    public EndpointSecurityRouteDTO getSecurityConfig() {
+    public APIEndpointSecurityDTO getSecurityConfig() {
         return securityConfig;
     }
 
-    public void setSecurityConfig(EndpointSecurityRouteDTO securityConfig) {
+    public void setSecurityConfig(APIEndpointSecurityDTO securityConfig) {
         this.securityConfig = securityConfig;
 
     }

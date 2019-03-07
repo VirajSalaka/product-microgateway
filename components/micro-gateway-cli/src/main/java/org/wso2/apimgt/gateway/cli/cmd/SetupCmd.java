@@ -51,6 +51,7 @@ import org.wso2.apimgt.gateway.cli.model.config.ContainerConfig;
 import org.wso2.apimgt.gateway.cli.model.config.Token;
 import org.wso2.apimgt.gateway.cli.model.config.TokenBuilder;
 import org.wso2.apimgt.gateway.cli.model.config.Etcd;
+import org.wso2.apimgt.gateway.cli.model.rest.APIEndpointSecurityDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.ClientCertMetadataDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyDTO;
@@ -248,15 +249,13 @@ public class SetupCmd implements GatewayLauncherCmd {
                                 "\"},\"endpoint_type\":\"http\"}";
                     }
                     saveSwaggerDefinitionForSingleAPI(projectName, api);
+                    generateRoutesConfFromSwagger(projectName, api, endpointConfig, null);
                     codeGenerator.generate(projectName, api, endpointConfig, true);
 
                     //Initializing the ballerina project and creating .bal folder.
                     logger.debug("Creating source artifacts");
                     InitHandler.initialize(Paths.get(GatewayCmdUtils.getProjectDirectoryPath(projectName)), null,
                             new ArrayList<>(), null);
-                    GatewayCmdUtils.writeContent(generateRoutesConfiguration(projectName,"v1.2.3",
-                            endpointConfig,null),
-                            new File(GatewayCmdUtils.getProjectDirectoryPath(projectName)+"/routes.yaml"));
 
                 } catch (IOException | BallerinaServiceGenException e) {
                     logger.error("Error while generating ballerina source.", e);
@@ -434,6 +433,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             List<ClientCertMetadataDTO> clientCertificates = service.getClientCertificates(accessToken);
             logger.info(String.valueOf(clientCertificates));
 
+            saveRoutesConfForMultipleAPIs(projectName, apis);
             saveApplicationThrottlePolicies(objectMapper, projectName, applicationPolicies);
             saveSubscriptionThrottlePolicies(objectMapper, projectName, subscriptionPolicies);
             saveClientCertMetadata(objectMapper, projectName, clientCertificates);
@@ -611,10 +611,14 @@ public class SetupCmd implements GatewayLauncherCmd {
         config.setBasicAuth(basicAuth);
     }
 
-    //todo: handle complex route configurations
-    private String generateRoutesConfiguration(String apiName, String version, String endpointConfig,
-                                               String endpointSecurity){
-        APIListRouteDTO apiListRouteDTO = new APIListRouteDTO();
+    private APIListRouteDTO generateRoutesConfForSingleAPI(APIListRouteDTO apiList, String apiName,
+                                                                    String version, String endpointConfig,
+                                                                    APIEndpointSecurityDTO endpointSecurity){
+
+        APIListRouteDTO apiListRouteDTO = apiList;
+        if(apiListRouteDTO == null){
+            apiListRouteDTO = new APIListRouteDTO();
+        }
 
         APIRouteDTO apiRouteDTO = new APIRouteDTO();
         apiRouteDTO.setAPI_name(apiName);
@@ -625,15 +629,12 @@ public class SetupCmd implements GatewayLauncherCmd {
         EnvDTO prodEnv = new EnvDTO();
         EnvDTO sandboxEnv = new EnvDTO();
 
-        try{
-            EndpointListRouteDTO[] prodAndSandEndpointLists = generateEndpointListRouteDTO(endpointConfig,
-                    endpointSecurity);
-            prodEnv.setBasicEndpoint(prodAndSandEndpointLists[0]);
-            sandboxEnv.setBasicEndpoint(prodAndSandEndpointLists[1]);
-        }
-        catch(IOException e){
-            throw new CLIRuntimeException("endpointConfig format cannot be parsed");
-        }
+
+        EndpointListRouteDTO[] prodAndSandEndpointLists = generateEndpointListRouteDTO(endpointConfig,
+                endpointSecurity);
+        prodEnv.setBasicEndpoint(prodAndSandEndpointLists[0]);
+        sandboxEnv.setBasicEndpoint(prodAndSandEndpointLists[1]);
+
 
         apiVersionRouteDTO.setProd(prodEnv);
         apiVersionRouteDTO.setSandbox(sandboxEnv);
@@ -641,27 +642,81 @@ public class SetupCmd implements GatewayLauncherCmd {
         apiRouteDTO.addAPIVersion(apiVersionRouteDTO);
         apiListRouteDTO.addAPIDTO(apiRouteDTO);
 
+        return apiListRouteDTO;
+    }
+
+    private void generateRoutesConfFromSwagger( String projectName, String apiDef, String endpointConfig,
+                                                String endpointSecurity){
+        SwaggerParser parser;
+        Swagger swagger;
+        parser = new SwaggerParser();
+        swagger = parser.parse(apiDef);
+
+        APIListRouteDTO apiListRouteDTO = generateRoutesConfForSingleAPI(null, swagger.getInfo().getTitle(),
+                swagger.getInfo().getVersion(), endpointConfig, parseEndpointSecurityDefinition(endpointSecurity));
+
+        //todo: resolve duplicate code
         ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
         String yamlString = null;
         try {
             yamlString = objectMapper.writeValueAsString(apiListRouteDTO);
+            GatewayCmdUtils.writeContent(yamlString,
+                    new File(GatewayCmdUtils.getProjectRoutesConfFilePath(projectName)));
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            new CLIInternalException("Error: Routes configuration object cannot be parsed into yaml");
+        } catch (IOException e) {
+            new CLIInternalException("Error: cannot write the routes configuration to routes.yaml file");
         }
-        return yamlString;
     }
 
-    private EndpointListRouteDTO[] generateEndpointListRouteDTO(String endpointConfig, String endpointSecurityJson)
-            throws IOException {
-        //todo: we can use one object mapper
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(endpointConfig);
-        String type = root.get("endpoint_type").asText();
-
-        EndpointSecurityRouteDTO endpointSecurity = null;
-        if(endpointSecurityJson != null){
-            endpointSecurity = mapper.readValue(endpointSecurityJson, EndpointSecurityRouteDTO.class);
+    private void saveRoutesConfForMultipleAPIs(String projectName, List<ExtendedAPI> apis){
+        APIListRouteDTO apiListRouteDTO = new APIListRouteDTO();
+        for( ExtendedAPI api : apis){
+            apiListRouteDTO = generateRoutesConfForSingleAPI(apiListRouteDTO, api.getName(), api.getVersion(),
+                    api.getEndpointConfig(), api.getEndpointSecurity());
         }
+
+        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+        String yamlString = null;
+        try {
+            yamlString = objectMapper.writeValueAsString(apiListRouteDTO);
+            GatewayCmdUtils.writeContent(yamlString,
+                    new File(GatewayCmdUtils.getProjectRoutesConfFilePath(projectName)));
+        } catch (JsonProcessingException e) {
+            new CLIInternalException("Error: Routes configuration object cannot be parsed into yaml");
+        } catch (IOException e) {
+            new CLIInternalException("Error: cannot write the routes configuration to routes.yaml file");
+        }
+    }
+
+    private APIEndpointSecurityDTO parseEndpointSecurityDefinition(String endpointSecurityString){
+        ObjectMapper mapper = new ObjectMapper();
+        APIEndpointSecurityDTO endpointSecurity = null;
+        if(endpointSecurityString != null){
+            try {
+                endpointSecurity = mapper.readValue(endpointSecurityString, APIEndpointSecurityDTO.class);
+            } catch (IOException e) {
+                new CLIInternalException("Error: endpoint security string cannot be parsed ");
+            }
+        }
+        return endpointSecurity;
+    }
+
+    private EndpointListRouteDTO[] generateEndpointListRouteDTO(String endpointConfig, String endpointSecurityJson){
+
+        return generateEndpointListRouteDTO(endpointConfig, parseEndpointSecurityDefinition(endpointSecurityJson));
+    }
+
+    private EndpointListRouteDTO[] generateEndpointListRouteDTO(String endpointConfig,
+                                                              APIEndpointSecurityDTO endpointSecurity){
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = null;
+        try {
+            root = mapper.readTree(endpointConfig);
+        } catch (IOException e) {
+            new CLIInternalException("Error: endpointConfig string cannot be parsed");
+        }
+        String type = root.get("endpoint_type").asText();
 
         switch (type){
             case "load_balance":
@@ -679,7 +734,7 @@ public class SetupCmd implements GatewayLauncherCmd {
 
     //todo: rename this method
     private LoadBalanceEndpointListDTO[] generateLoadBalanceEpListDTO(JsonNode endpointConfig,
-                                                                      EndpointSecurityRouteDTO endpointSecurity){
+                                                                      APIEndpointSecurityDTO endpointSecurity){
         JsonNode productionArr = endpointConfig.get("production_endpoints");
         LoadBalanceEndpointListDTO productionEndpoint = new LoadBalanceEndpointListDTO();
         if(productionArr != null){
@@ -711,7 +766,7 @@ public class SetupCmd implements GatewayLauncherCmd {
     //todo: rename this method
     //todo: check the logically possible setups, with the defn of failover
     private FailoverEndpointListDTO[] generateFailoverEpListDTO(JsonNode endpointConfig,
-                                                                EndpointSecurityRouteDTO endpointSecurity){
+                                                                APIEndpointSecurityDTO endpointSecurity){
 
         FailoverEndpointListDTO productionEndpoint = new FailoverEndpointListDTO();
         JsonNode productionUrl = endpointConfig.get("production_endpoints");
@@ -756,7 +811,7 @@ public class SetupCmd implements GatewayLauncherCmd {
     //todo: rename this method
     //todo: bring "nothing to add" exception
     private DefaultEndpointListDTO[] generateDefaultEndpointListDTO(JsonNode endpointConfig,
-                                                                    EndpointSecurityRouteDTO endpointSecurity){
+                                                                    APIEndpointSecurityDTO endpointSecurity){
 
         DefaultEndpointListDTO productionEndpoint = new DefaultEndpointListDTO();
         JsonNode productionUrl = endpointConfig.get("production_endpoints");
