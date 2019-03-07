@@ -19,7 +19,6 @@ package org.wso2.apimgt.gateway.cli.utils;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.config.cipher.AESCipherTool;
 import org.ballerinalang.config.cipher.AESCipherToolException;
 import org.slf4j.Logger;
@@ -289,10 +288,45 @@ public class GatewayCmdUtils {
         String confDirPath = projectDir + File.separator + GatewayCliConstants.CONF_DIRECTORY_NAME;
         createFolderIfNotExist(confDirPath);
 
+        createFileIfNotExist(projectDir.getPath(), GatewayCliConstants.ROUTES_FILE);
+    }
+
+    /**
+     * Create API-Files Directory for a particular project
+     * @param projectName name of the project
+     * @param apiName name of the API
+     * @param apiVersion version of the API
+     * @param apiDefPath File path for the swagger File (API definition)
+     */
+    public static void createAPIFilesStructure(String projectName, String apiName, String apiVersion, String apiDefPath){
+        File projectDir = createFolderIfNotExist(getUserDir() + File.separator + projectName);
+
         String apiFilesDirPath = projectDir + File.separator + GatewayCliConstants.PROJECTS_API_FILES_DIRECTORY_NAME;
         createFolderIfNotExist(apiFilesDirPath);
 
-        createFileIfNotExist(projectDir.getPath(), GatewayCliConstants.ROUTES_FILE);
+        String apiDirPath = apiFilesDirPath + File.separator + apiName;
+        createFolderIfNotExist(apiDirPath);
+
+        String apiVersionDirPath = apiDirPath + File.separator + apiVersion;
+        createFolderIfNotExist(apiVersionDirPath);
+
+        createFileIfNotExist(apiVersionDirPath, GatewayCliConstants.APPLICATION_THROTTLE_POLICIES_FILE);
+        createFileIfNotExist(apiVersionDirPath, GatewayCliConstants.SUBSCRIPTION_THROTTLE_POLICIES_FILE);
+        createFileIfNotExist(apiVersionDirPath, GatewayCliConstants.CLIENT_CERT_METADATA_FILE);
+        createFileIfNotExist(apiVersionDirPath, GatewayCliConstants.API_METADATA_FILE);
+
+        if(apiDefPath == null){
+            createFileIfNotExist(apiVersionDirPath, GatewayCliConstants.API_SWAGGER);
+        }
+        else{
+            try {
+                copyFilesToSources(apiDefPath, apiVersionDirPath + File.separator +
+                        GatewayCliConstants.API_SWAGGER);
+            } catch (IOException e) {
+                new CLIInternalException("Error while copying the swagger to the project directory");
+            }
+        }
+
     }
 
     /**
@@ -580,6 +614,66 @@ public class GatewayCmdUtils {
     private static String getProjectTargetDirectoryPath(String projectName) {
         return getProjectDirectoryPath(projectName) + File.separator
                 + GatewayCliConstants.PROJECTS_TARGET_DIRECTORY_NAME;
+    }
+
+    /**
+     * Returns path to the /API-Files of a given project in the current working directory
+     * @param projectName name of the project
+     * @return path to the /API-Files of a given project in the current working directory
+     */
+    public static String getProjectAPIFilesDirectoryPath(String projectName){
+        return getProjectDirectoryPath(projectName) + File.separator +
+                GatewayCliConstants.PROJECTS_API_FILES_DIRECTORY_NAME;
+    }
+
+    /**
+     * Returns the path to the swagger for a defined version of an API
+     * @param projectName name of the project
+     * @param apiName name of the API
+     * @param apiVersion name of the API version
+     * @return path to the swagger for a defined version of an API
+     */
+    public static String getProjectSwaggerFilePath(String projectName, String apiName, String apiVersion){
+        return getProjectAPIFilesDirectoryPath(projectName) + File.separator + apiName + File.separator + apiVersion +
+                File.separator + GatewayCliConstants.API_SWAGGER;
+    }
+
+    /**
+     * Returns the path to the application-throttle-policies.yaml for for a defined version of an API
+     * @param projectName name of the project
+     * @param apiName name of the API
+     * @param apiVersion name of the API version
+     * @return path to the application-throttle-policies.yaml for for a defined version of an API
+     */
+    public static String getProjectAppThrottlePoliciesFilePath(String projectName, String apiName, String apiVersion){
+        return getProjectAPIFilesDirectoryPath(projectName) + File.separator + apiName + File.separator + apiVersion +
+                File.separator + GatewayCliConstants.APPLICATION_THROTTLE_POLICIES_FILE;
+    }
+
+    /**
+     * Returns the path to the application-throttle-policies.yaml file for a defined version of an API
+     * @param projectName name of the project
+     * @param apiName name of the API
+     * @param apiVersion name of the API version
+     * @return path to the application-throttle-policies.yaml file for a defined version of an API
+     */
+    public static String getProjectSubscriptionThrottlePoliciesFilePath(String projectName, String apiName,
+                                                                        String apiVersion){
+        return getProjectAPIFilesDirectoryPath(projectName) + File.separator + apiName + File.separator + apiVersion +
+                File.separator + GatewayCliConstants.SUBSCRIPTION_THROTTLE_POLICIES_FILE;
+    }
+
+    /**
+     * Returns the path to the client-cert-metadata.yaml for a defined version of an API
+     * @param projectName name of the project
+     * @param apiName name of the API
+     * @param apiVersion name of the API version
+     * @return path to the client-cert-metadata.yaml for a defined version of an API
+     */
+    public static String getProjectClientCertMetadataFilePath(String projectName, String apiName,
+                                                                        String apiVersion){
+        return getProjectAPIFilesDirectoryPath(projectName) + File.separator + apiName + File.separator + apiVersion +
+                File.separator + GatewayCliConstants.CLIENT_CERT_METADATA_FILE;
     }
 
     /**
