@@ -30,10 +30,11 @@ public class APIListRouteDTO {
             return null;
         }
 
-        int index = apiRouteList.indexOf(apiName);
-        if(index == -1){
-            return null;
+        for(APIRouteDTO api : apiRouteList){
+            if(api.getApiName().equals(apiName)){
+                return api;
+            }
         }
-        return apiRouteList.get(index);
+        return null;
     }
 }

@@ -151,12 +151,7 @@ public class CodeGenerator {
                 .forEach( path -> {
                     Swagger swagger = parser.parse(OpenApiCodegenUtils.readApi(path.toString()));
                     ExtendedAPI api = new ExtendedAPI();
-                    BallerinaService definitionContext;
-                    try {
-                        definitionContext = new BallerinaService().buildContext(swagger, api);
-                    } catch (BallerinaServiceGenException e) {
-                        e.printStackTrace(); //todo: handle error
-                    }
+                    BallerinaService definitionContext = null;
                     String apiId = UUID.randomUUID().toString();
                     api.setId(apiId);
                     outStream.println("ID for API " + api.getName() + " : " + apiId);
@@ -165,7 +160,25 @@ public class CodeGenerator {
                     api.setContext(swagger.getBasePath());
                     api.setTransport(Arrays.asList("http", "https"));
 
+                    OpenApiCodegenUtils.setAdditionalConfigs(api, projectName, swagger.getInfo().getTitle(),
+                            swagger.getInfo().getVersion());
 
+                    try {
+                        definitionContext = new BallerinaService().buildContext(swagger, api);
+                        genFiles.add(generateService(definitionContext));
+                        genFiles.add(generateCommonEndpoints());
+                        CodegenUtils.writeGeneratedSources(genFiles, Paths.get(projectSrcPath), overwrite);
+                        GatewayCmdUtils.copyFilesToSources(GatewayCmdUtils.getFiltersFolderLocation() + File.separator
+                                        + GatewayCliConstants.GW_DIST_EXTENSION_FILTER,
+                                projectSrcPath + File.separator + GatewayCliConstants.GW_DIST_EXTENSION_FILTER);
+                        GatewayCmdUtils.copyFolder(GatewayCmdUtils.getPoliciesFolderLocation(), projectSrcPath
+                                + File.separator + GatewayCliConstants.GW_DIST_POLICIES);
+
+                    } catch (BallerinaServiceGenException e) {
+                        e.printStackTrace(); //todo: handle error
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 });
     }
 

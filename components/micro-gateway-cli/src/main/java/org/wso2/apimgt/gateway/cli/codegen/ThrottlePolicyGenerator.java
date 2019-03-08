@@ -17,6 +17,7 @@
  */
 package org.wso2.apimgt.gateway.cli.codegen;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jknack.handlebars.Context;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.context.FieldValueResolver;
@@ -25,12 +26,16 @@ import com.github.jknack.handlebars.context.MapValueResolver;
 import org.wso2.apimgt.gateway.cli.constants.GeneratorConstants;
 import org.wso2.apimgt.gateway.cli.exception.BallerinaServiceGenException;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyDTO;
+import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyListDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyDTO;
+import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyListDTO;
 import org.wso2.apimgt.gateway.cli.model.template.GenSrcFile;
 import org.wso2.apimgt.gateway.cli.model.template.policy.ThrottlePolicy;
 import org.wso2.apimgt.gateway.cli.model.template.policy.ThrottlePolicyInitializer;
 import org.wso2.apimgt.gateway.cli.utils.CodegenUtils;
+import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Paths;
@@ -64,6 +69,17 @@ public class ThrottlePolicyGenerator {
         CodegenUtils.writeGeneratedSources(genFiles, Paths.get(outPath), true);
     }
 
+    public void generate(String outPath, String projectName) throws IOException {
+        List<GenSrcFile> genFiles = generateApplicationPolicies(projectName);
+
+        List<GenSrcFile> genSubsFiles = generateSubscriptionPolicies(projectName);
+        genFiles.addAll(genSubsFiles);
+
+        GenSrcFile initGenFile = generateInitBal(projectName);
+        genFiles.add(initGenFile);
+        CodegenUtils.writeGeneratedSources(genFiles, Paths.get(outPath), true);
+    }
+
     /**
      * Generate application policies source
      *
@@ -80,6 +96,25 @@ public class ThrottlePolicyGenerator {
             sourceFiles.add(generatePolicy(policyContext));
         }
         return sourceFiles;
+    }
+
+    private List<GenSrcFile> generateApplicationPolicies(String projectName) throws IOException {
+
+        ApplicationThrottlePolicyListDTO applicationPolicies = restoreApplicationThrottlePolicy(projectName);
+
+        ThrottlePolicy policyContext;
+        List<GenSrcFile> sourceFiles = new ArrayList<>();
+        for (ApplicationThrottlePolicyDTO applicationPolicy : applicationPolicies.getList()) {
+            policyContext = new ThrottlePolicy().buildContext(applicationPolicy);
+            sourceFiles.add(generatePolicy(policyContext));
+        }
+        return sourceFiles;
+    }
+
+    private ApplicationThrottlePolicyListDTO restoreApplicationThrottlePolicy(String projectName) throws IOException {
+        String applicationPolicyPath = GatewayCmdUtils.getProjectAppThrottlePoliciesFilePath(projectName);
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(new File(applicationPolicyPath), ApplicationThrottlePolicyListDTO.class);
     }
 
     /**
@@ -100,6 +135,25 @@ public class ThrottlePolicyGenerator {
         return sourceFiles;
     }
 
+    private SubscriptionThrottlePolicyListDTO restoreSubscriptionThrottlePolicy(String projectName) throws IOException {
+        String subscriptionPolicyPath = GatewayCmdUtils.getProjectSubscriptionThrottlePoliciesFilePath(projectName);
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(new File(subscriptionPolicyPath), SubscriptionThrottlePolicyListDTO.class);
+    }
+
+    private List<GenSrcFile> generateSubscriptionPolicies(String projectName) throws IOException {
+
+        SubscriptionThrottlePolicyListDTO subscriptionPolicies = restoreSubscriptionThrottlePolicy(projectName);
+
+        ThrottlePolicy policyContext;
+        List<GenSrcFile> sourceFiles = new ArrayList<>();
+        for (SubscriptionThrottlePolicyDTO subscriptionPolicy : subscriptionPolicies.getList()) {
+            policyContext = new ThrottlePolicy().buildContext(subscriptionPolicy);
+            sourceFiles.add(generatePolicy(policyContext));
+        }
+        return sourceFiles;
+    }
+
     /**
      * Generate init ballerina source which start all other policy ballerina
      *
@@ -111,6 +165,16 @@ public class ThrottlePolicyGenerator {
      */
     private GenSrcFile generateInitBal(List<ApplicationThrottlePolicyDTO> applicationPolicies,
             List<SubscriptionThrottlePolicyDTO> subscriptionPolicies) throws IOException {
+        ThrottlePolicyInitializer context = new ThrottlePolicyInitializer().buildAppContext(applicationPolicies)
+                .buildSubsContext(subscriptionPolicies);
+        return generateInitBalFile(context);
+    }
+
+    private GenSrcFile generateInitBal(String projectName) throws IOException {
+        List<ApplicationThrottlePolicyDTO> applicationPolicies = restoreApplicationThrottlePolicy(projectName)
+                .getList();
+        List<SubscriptionThrottlePolicyDTO> subscriptionPolicies = restoreSubscriptionThrottlePolicy(projectName)
+                .getList();
         ThrottlePolicyInitializer context = new ThrottlePolicyInitializer().buildAppContext(applicationPolicies)
                 .buildSubsContext(subscriptionPolicies);
         return generateInitBalFile(context);

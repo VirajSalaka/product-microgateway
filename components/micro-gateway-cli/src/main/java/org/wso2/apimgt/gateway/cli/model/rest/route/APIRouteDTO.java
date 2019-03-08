@@ -9,16 +9,16 @@ import java.util.List;
  * This class holds the all apis in the microgateway (in routes.yaml)
  */
 public class APIRouteDTO {
-    private String API_name = null;
+    private String apiName = null;
     private List<APIVersionRouteDTO> apiVersionList = null;
 
     @JsonProperty("API_name")
-    public String getAPI_name() {
-        return API_name;
+    public String getApiName() {
+        return apiName;
     }
 
-    public void setAPI_name(String API_name) {
-        this.API_name = API_name;
+    public void setApiName(String apiName) {
+        this.apiName = apiName;
     }
 
     @JsonProperty("versions")
@@ -43,12 +43,11 @@ public class APIRouteDTO {
             return null;
         }
 
-        int index = apiVersionList.indexOf(apiVersion);
-        if(index == -1){
-            return null;
+        for(APIVersionRouteDTO api : apiVersionList){
+            if(api.getVersion().equals(apiVersion)){
+                return api;
+            }
         }
-
-        return apiVersionList.get(index);
-
+        return null;
     }
 }

@@ -621,7 +621,7 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
 
         APIRouteDTO apiRouteDTO = new APIRouteDTO();
-        apiRouteDTO.setAPI_name(apiName);
+        apiRouteDTO.setApiName(apiName);
 
         APIVersionRouteDTO apiVersionRouteDTO = new APIVersionRouteDTO();
         apiVersionRouteDTO.setVersion(version);

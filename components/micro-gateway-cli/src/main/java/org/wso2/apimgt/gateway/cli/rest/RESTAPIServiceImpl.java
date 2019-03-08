@@ -376,37 +376,6 @@ public class RESTAPIServiceImpl implements RESTAPIService {
         return endpointConf;
     }
 
-    private EndpointConfig getEndpointConfig(String projectName, String apiName, String version){
-        //todo: move this method to some other class
-        String routesPath = GatewayCmdUtils.getProjectRoutesConfFilePath(projectName);
-        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        APIListRouteDTO apiListRouteDTO = null;
-        try {
-            apiListRouteDTO = objectMapper.readValue(new File(routesPath), APIListRouteDTO.class);
-        } catch (IOException e) {
-            new CLIInternalException("cannot parse routes.yaml");
-        }
-
-        APIRouteDTO api = apiListRouteDTO.findByAPIName(apiName);
-        if(api == null){
-            new CLIRuntimeException("found no api named "+ apiName + " in routes.yaml");
-        }
-
-        APIVersionRouteDTO apiVersionRouteDTO = api.findByAPIVersion(version);
-        if(apiVersionRouteDTO == null){
-            new CLIRuntimeException("found no version named " + apiVersionRouteDTO + " in routes.yaml");
-        }
-        EndpointConfig endpointConfig = new EndpointConfig();
-        EndpointList[] endpointLists = generateEpListFromEnvDTO(apiVersionRouteDTO);
-
-        endpointConfig.setProdEndpoints(endpointLists[0]);
-        endpointConfig.setProdFailoverEndpoints(endpointLists[1]);
-        endpointConfig.setSandEndpoints(endpointLists[2]);
-        endpointConfig.setSandFailoverEndpoints(endpointLists[3]);
-
-        return endpointConfig;
-    }
-
     private EndpointList[] generateEpListFromEnvDTO(APIVersionRouteDTO api){
         EndpointListRouteDTO basicProdEp = api.getProd().getBasicEndpoint();
         EndpointListRouteDTO basicSandEp = api.getSandbox().getBasicEndpoint();
