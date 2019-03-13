@@ -27,6 +27,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
 import io.swagger.util.Json;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.packerina.init.InitHandler;
 import org.slf4j.Logger;
@@ -233,7 +234,7 @@ public class SetupCmd implements GatewayLauncherCmd {
                 //todo: validate the swagger file before start processing
                 logger.debug("Successfully read the api definition file");
                 CodeGenerator codeGenerator = new CodeGenerator();
-                try {
+//                try {
                     if (StringUtils.isEmpty(endpointConfig)) {
                         if (StringUtils.isEmpty(endpoint)) {
                             /*
@@ -249,18 +250,18 @@ public class SetupCmd implements GatewayLauncherCmd {
                                 "\"},\"endpoint_type\":\"http\"}";
                     }
                     saveSwaggerDefinitionForSingleAPI(projectName, api);
-                    generateRoutesConfFromSwagger(projectName, api, endpointConfig, null);
-                    codeGenerator.generate(projectName, api, endpointConfig, true);
-
-                    //Initializing the ballerina project and creating .bal folder.
-                    logger.debug("Creating source artifacts");
-                    InitHandler.initialize(Paths.get(GatewayCmdUtils.getProjectDirectoryPath(projectName)), null,
-                            new ArrayList<>(), null);
-
-                } catch (IOException | BallerinaServiceGenException e) {
-                    logger.error("Error while generating ballerina source.", e);
-                    throw new CLIInternalException("Error while generating ballerina source.");
-                }
+//                    generateRoutesConfFromSwagger(projectName, api, endpointConfig, null);
+//                    codeGenerator.generate(projectName, api, endpointConfig, true);
+//
+//                    //Initializing the ballerina project and creating .bal folder.
+//                    logger.debug("Creating source artifacts");
+//                    InitHandler.initialize(Paths.get(GatewayCmdUtils.getProjectDirectoryPath(projectName)), null,
+//                            new ArrayList<>(), null);
+//
+//                } catch (IOException | BallerinaServiceGenException e) {
+//                    logger.error("Error while generating ballerina source.", e);
+//                    throw new CLIInternalException("Error while generating ballerina source.");
+//                }
                 outStream.println("Setting up project " + projectName + " is successful.");
 
             }
@@ -439,28 +440,41 @@ public class SetupCmd implements GatewayLauncherCmd {
             saveClientCertMetadata(objectMapper, projectName, clientCertificates);
             saveSwaggerDefinitionForMultipleAPIs(projectName, apis);
 
-            ThrottlePolicyGenerator policyGenerator = new ThrottlePolicyGenerator();
-            CodeGenerator codeGenerator = new CodeGenerator();
-            boolean changesDetected;
+            //todo: remove this command : temporary solution
             try {
-                policyGenerator.generate(GatewayCmdUtils.getProjectSrcDirectoryPath(projectName) + File.separator
-                        + GatewayCliConstants.POLICY_DIR, applicationPolicies, subscriptionPolicies);
-                codeGenerator.generate(projectName, apis, true);
-                //Initializing the ballerina project and creating .bal folder.
-                InitHandler.initialize(Paths.get(GatewayCmdUtils.getProjectDirectoryPath(projectName)), null,
-                        new ArrayList<>(), null);
-                try {
-                    changesDetected = HashUtils.detectChanges(apis, subscriptionPolicies,
-                            applicationPolicies, projectName);
-                } catch (HashingException e) {
-                    logger.error("Error while checking for changes of resources. Skipping no-change detection..", e);
-                    throw new CLIInternalException(
-                            "Error while checking for changes of resources. Skipping no-change detection..");
-                }
-            } catch (IOException | BallerinaServiceGenException e) {
-                logger.error("Error while generating ballerina source.", e);
-                throw new CLIInternalException("Error while generating ballerina source.");
+                String shellContent = GatewayCmdUtils.readFileAsString("balxGeneration/balxGeneration.sh",
+                        true);
+                GatewayCmdUtils.writeContent(shellContent, new File(GatewayCmdUtils
+                        .getProjectAPIFilesDirectoryPath(projectName)+"/balxGeneration.sh"));
+                Runtime.getRuntime().exec("chmod +x " + GatewayCmdUtils
+                        .getProjectAPIFilesDirectoryPath(projectName) + "/balxGeneration.sh");
+            } catch (IOException e) {
+                e.printStackTrace();
+                new CLIInternalException("cannot copy balxGeneration shell script");
             }
+
+//            ThrottlePolicyGenerator policyGenerator = new ThrottlePolicyGenerator();
+//            CodeGenerator codeGenerator = new CodeGenerator();
+//            boolean changesDetected;
+//            try {
+//                policyGenerator.generate(GatewayCmdUtils.getProjectSrcDirectoryPath(projectName) + File.separator
+//                        + GatewayCliConstants.POLICY_DIR, applicationPolicies, subscriptionPolicies);
+//                codeGenerator.generate(projectName, apis, true);
+//                //Initializing the ballerina project and creating .bal folder.
+//                InitHandler.initialize(Paths.get(GatewayCmdUtils.getProjectDirectoryPath(projectName)), null,
+//                        new ArrayList<>(), null);
+//                try {
+//                    changesDetected = HashUtils.detectChanges(apis, subscriptionPolicies,
+//                            applicationPolicies, projectName);
+//                } catch (HashingException e) {
+//                    logger.error("Error while checking for changes of resources. Skipping no-change detection..", e);
+//                    throw new CLIInternalException(
+//                            "Error while checking for changes of resources. Skipping no-change detection..");
+//                }
+//            } catch (IOException | BallerinaServiceGenException e) {
+//                logger.error("Error while generating ballerina source.", e);
+//                throw new CLIInternalException("Error while generating ballerina source.");
+//            }
 
             //if all the operations are success, write new config to file
             if (isOverwriteRequired) {
@@ -487,17 +501,17 @@ public class SetupCmd implements GatewayLauncherCmd {
                 GatewayCmdUtils.saveConfig(newConfig, toolkitConfigPath);
             }
 
-            if (!changesDetected) {
-                outStream.println(
-                        "No changes received from the server since the previous setup."
-                                + " If you have already a built distribution, it can be reused.");
-            }
+//            if (!changesDetected) {
+//                outStream.println(
+//                        "No changes received from the server since the previous setup."
+//                                + " If you have already a built distribution, it can be reused.");
+//            }
             outStream.println("Setting up project " + projectName + " is successful.");
-
-            //There should not be any logic after this system exit
-            if (!changesDetected) {
-                Runtime.getRuntime().exit(GatewayCliConstants.EXIT_CODE_NOT_MODIFIED);
-            }
+//
+//            //There should not be any logic after this system exit
+//            if (!changesDetected) {
+//                Runtime.getRuntime().exit(GatewayCliConstants.EXIT_CODE_NOT_MODIFIED);
+//            }
         }
     }
 

@@ -35,6 +35,10 @@ BALLERINA_HOME="$MICROGW_HOME/lib/platform"
 export BALLERINA_HOME=$BALLERINA_HOME
 export PATH=$BALLERINA_HOME/bin:$PATH
 
+# needs to handle the scenario where no arg is provided
+IS_BUILD_COMMAND=true
+CMD_PRO_NAME_VAL="$1"
+MICRO_GW_PROJECT_DIR="$2"
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin; then
@@ -91,13 +95,10 @@ if [ -z "$JAVA_HOME" ]; then
 fi
 
 
-# needs to handle the scenario where no arg is provided
-IS_BUILD_COMMAND=true
-CMD_PRO_NAME_VAL="$1"
-MICRO_GW_PROJECT_DIR="$2"
 
 if [ "$IS_BUILD_COMMAND" = true ] && [ "$CMD_PRO_NAME_VAL" != "" ] && [ "$MICRO_GW_PROJECT_DIR" != "" ]; then
     MICRO_GW_LABEL_PROJECT_DIR="$MICRO_GW_PROJECT_DIR/$CMD_PRO_NAME_VAL"
+    echo $MICRO_GW_LABEL_PROJECT_DIR
     pushd $MICRO_GW_LABEL_PROJECT_DIR > /dev/null
         # clean the content of target folder
         if [ -d "$MICRO_GW_LABEL_PROJECT_DIR/target" ]; then

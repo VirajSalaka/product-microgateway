@@ -96,6 +96,7 @@ public class BuildCmd implements GatewayLauncherCmd {
                 //Initializing the ballerina project and creating .bal folder.
                 InitHandler.initialize(Paths.get(GatewayCmdUtils.getProjectDirectoryPath(projectName)), null,
                         new ArrayList<>(), null);
+                balCodeGeneration(projectName);
 
 //todo:
 //                try {
@@ -122,6 +123,20 @@ public class BuildCmd implements GatewayLauncherCmd {
         } catch (IOException e) {
             logger.error("Error occurred while creating the micro gateway distribution for the project {}.", projectName, e);
             throw new CLIInternalException("Error occurred while creating the micro gateway distribution for the project");
+        }
+    }
+
+    private void balCodeGeneration(String projectName){
+        ProcessBuilder processBuilder = new ProcessBuilder("/bin/bash", GatewayCmdUtils
+                .getProjectAPIFilesDirectoryPath(projectName) + "/balxGeneration.sh", projectName, GatewayCmdUtils
+                .getUserDir());
+        try {
+            processBuilder.start();
+            Thread.sleep(6000);
+        } catch (IOException e) {
+            new CLIInternalException("Cannot compile the ballerina code");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
