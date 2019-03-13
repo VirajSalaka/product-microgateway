@@ -58,7 +58,7 @@ import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyDT
 import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyListDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyListDTO;
-import org.wso2.apimgt.gateway.cli.model.rest.route.*;
+import org.wso2.apimgt.gateway.cli.model.route.*;
 import org.wso2.apimgt.gateway.cli.oauth.OAuthService;
 import org.wso2.apimgt.gateway.cli.oauth.OAuthServiceImpl;
 import org.wso2.apimgt.gateway.cli.rest.RESTAPIService;
@@ -612,8 +612,8 @@ public class SetupCmd implements GatewayLauncherCmd {
     }
 
     private APIListRouteDTO generateRoutesConfForSingleAPI(APIListRouteDTO apiList, String apiName,
-                                                                    String version, String endpointConfig,
-                                                                    APIEndpointSecurityDTO endpointSecurity){
+                                                           String version, String endpointConfig,
+                                                           APIEndpointSecurityDTO endpointSecurity){
 
         APIListRouteDTO apiListRouteDTO = apiList;
         if(apiListRouteDTO == null){

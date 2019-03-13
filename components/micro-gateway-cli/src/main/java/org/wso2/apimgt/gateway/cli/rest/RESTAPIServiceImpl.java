@@ -34,6 +34,7 @@ import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyLi
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyListDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.route.*;
+import org.wso2.apimgt.gateway.cli.model.route.*;
 import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
 import org.wso2.apimgt.gateway.cli.utils.TokenManagementUtil;
 

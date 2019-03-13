@@ -1,4 +1,4 @@
-package org.wso2.apimgt.gateway.cli.model.rest.route;
+package org.wso2.apimgt.gateway.cli.model.route;
 
 public enum EndpointType {
     load_balance,

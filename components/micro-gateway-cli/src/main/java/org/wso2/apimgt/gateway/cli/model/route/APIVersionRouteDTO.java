@@ -1,8 +1,6 @@
-package org.wso2.apimgt.gateway.cli.model.rest.route;
+package org.wso2.apimgt.gateway.cli.model.route;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.List;
 
 /**
  * This class holds the route details for a single version of the API (in the routes.yaml)

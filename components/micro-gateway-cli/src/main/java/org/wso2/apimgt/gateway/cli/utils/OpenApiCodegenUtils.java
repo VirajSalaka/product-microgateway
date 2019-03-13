@@ -30,6 +30,7 @@ import org.wso2.apimgt.gateway.cli.model.rest.EndpointList;
 import org.wso2.apimgt.gateway.cli.model.rest.EndpointUrlTypeEnum;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.model.rest.route.*;
+import org.wso2.apimgt.gateway.cli.model.route.*;
 
 import java.io.File;
 import java.io.IOException;
