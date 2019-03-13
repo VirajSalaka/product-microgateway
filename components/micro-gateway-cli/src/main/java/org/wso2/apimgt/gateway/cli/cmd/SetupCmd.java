@@ -743,7 +743,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             }
             for(JsonNode element: productionArr){
                 productionEndpoint.addEndpoint(element.get("url").asText());
-                productionEndpoint.setType(EndpointType.LOAD_BALANCE);
+                productionEndpoint.setType(EndpointType.load_balance);
                 productionEndpoint.setSecurityConfig(endpointSecurity);
             }
         }
@@ -756,7 +756,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             }
             for(JsonNode element: sandboxArr){
                 sandboxEndpoint.addEndpoint(element.get("url").asText());
-                sandboxEndpoint.setType(EndpointType.LOAD_BALANCE);
+                sandboxEndpoint.setType(EndpointType.load_balance);
                 sandboxEndpoint.setSecurityConfig(endpointSecurity);
             }
         }
@@ -774,7 +774,7 @@ public class SetupCmd implements GatewayLauncherCmd {
 
         if(productionUrl != null){
             productionEndpoint.setDefaultEndpoint(productionUrl.get("url").asText());
-            productionEndpoint.setType(EndpointType.FAILOVER);
+            productionEndpoint.setType(EndpointType.failover);
             productionEndpoint.setSecurityConfig(endpointSecurity);
         }
         if(productionFailovers != null){
@@ -791,8 +791,8 @@ public class SetupCmd implements GatewayLauncherCmd {
         JsonNode sandboxFailovers = endpointConfig.get("sandbox_failovers");
 
         if(sandboxUrl != null){
-            sandboxEndpoint.setDefaultEndpoint(sandboxUrl.get("sandbox_failovers").asText());
-            sandboxEndpoint.setType(EndpointType.FAILOVER);
+            sandboxEndpoint.setDefaultEndpoint(sandboxUrl.get("url").asText());
+            sandboxEndpoint.setType(EndpointType.failover);
             sandboxEndpoint.setSecurityConfig(endpointSecurity);
         }
 
@@ -818,7 +818,7 @@ public class SetupCmd implements GatewayLauncherCmd {
 
         if(productionUrl != null){
             productionEndpoint.setEndpoint(productionUrl.get("url").asText());
-            productionEndpoint.setType(EndpointType.DEFAULT);
+            productionEndpoint.setType(EndpointType.http);
             productionEndpoint.setSecurityConfig(endpointSecurity);
         }
 
@@ -827,7 +827,7 @@ public class SetupCmd implements GatewayLauncherCmd {
 
         if(sandboxUrl != null){
             sandboxEndpoint.setEndpoint(sandboxUrl.get("url").asText());
-            sandboxEndpoint.setType(EndpointType.DEFAULT);
+            sandboxEndpoint.setType(EndpointType.http);
             sandboxEndpoint.setSecurityConfig(endpointSecurity);
         }
 

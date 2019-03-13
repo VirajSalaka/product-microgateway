@@ -21,6 +21,7 @@ package org.wso2.apimgt.gateway.cli.cmd;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import org.ballerinalang.launcher.Main;
 import org.ballerinalang.packerina.init.InitHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +76,7 @@ public class BuildCmd implements GatewayLauncherCmd {
             projectName = GatewayCmdUtils.getProjectName(mainArgs);
             projectName = projectName.replaceAll("[\\/\\\\]", "");
             File projectLocation = new File(GatewayCmdUtils.getProjectDirectoryPath(projectName));
+            System.out.println(projectName);
 
             if (!projectLocation.exists()) {
                 throw new CLIRuntimeException("Project " + projectName + " does not exist.");
@@ -95,7 +97,7 @@ public class BuildCmd implements GatewayLauncherCmd {
                 InitHandler.initialize(Paths.get(GatewayCmdUtils.getProjectDirectoryPath(projectName)), null,
                         new ArrayList<>(), null);
 
-
+//todo:
 //                try {
 //                    changesDetected = HashUtils.detectChanges(apis, subscriptionPolicies,
 //                            applicationPolicies, projectName);
@@ -106,9 +108,12 @@ public class BuildCmd implements GatewayLauncherCmd {
 //                }
 
 
-
-
-
+//            String outputPath = GatewayCmdUtils.getProjectDirectoryPath(projectName)+"/target/"+projectName + ".balx";
+//            String srcPath = GatewayCmdUtils.getProjectSrcDirectoryPath(projectName) + "/";
+//            Main ballerinaLauncher = new Main();
+//            ballerinaLauncher.main("build", srcPath, "-o", outputPath, "--offline");
+//            String filename = null;
+//            ProcessBuilder processBuilder = new ProcessBuilder()
 
 
             //-------

@@ -18,7 +18,6 @@ package org.wso2.apimgt.gateway.cli.utils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.ballerinalang.net.grpc.builder.components.EndPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.cli.constants.GatewayCliConstants;
@@ -163,6 +162,13 @@ public class OpenApiCodegenUtils {
             new CLIRuntimeException("found no version named " + apiVersionRouteDTO + " in routes.yaml");
         }
         EndpointConfig endpointConfig = new EndpointConfig();
+
+        //todo: cannot define two different types of config to Sandbox and Prod envs, due to limitation in EndpointConfig.class
+        endpointConfig.setEndpointType(apiVersionRouteDTO.getProd().getBasicEndpoint().getType().toString());
+        if(endpointConfig.getEndpointType() == null){
+            endpointConfig.setEndpointType(apiVersionRouteDTO.getSandbox().getBasicEndpoint().getType().toString());
+        }
+
         EndpointList[] endpointLists = generateEpListFromEnvDTO(apiVersionRouteDTO);
 
         endpointConfig.setProdEndpoints(restoreNullForEmptyEndpointList(endpointLists[0]));
@@ -191,14 +197,14 @@ public class OpenApiCodegenUtils {
 
         //todo: remove the redundant code
         if(basicProdEp != null){
-            if(basicProdEp.getType().equals(EndpointType.DEFAULT)){
+            if(basicProdEp.getType().equals(EndpointType.http)){
                 prodEpList.addEndpoint(new Endpoint(((DefaultEndpointListDTO) basicProdEp).getEndpoint()));
-            }else if(basicProdEp.getType().equals(EndpointType.LOAD_BALANCE)){
+            }else if(basicProdEp.getType().equals(EndpointType.load_balance)){
                 List<String> epList = ((LoadBalanceEndpointListDTO) basicProdEp).getEndpointList();
                 for(String epUrl : epList){
                     prodEpList.addEndpoint(new Endpoint(epUrl));
                 }
-            }else if(basicProdEp.getType().equals(EndpointType.FAILOVER)){
+            }else if(basicProdEp.getType().equals(EndpointType.failover)){
                 prodEpList.addEndpoint(new Endpoint(((FailoverEndpointListDTO) basicProdEp).getDefaultEndpoint()));
                 List<String> epList = ((FailoverEndpointListDTO) basicProdEp).getEndpointList();
                 for(String epUrl : epList){
@@ -208,14 +214,14 @@ public class OpenApiCodegenUtils {
         }
 
         if(basicSandEp != null){
-            if(basicSandEp.getType().equals(EndpointType.DEFAULT)){
+            if(basicSandEp.getType().equals(EndpointType.http)){
                 sandboxEpList.addEndpoint(new Endpoint(((DefaultEndpointListDTO) basicSandEp).getEndpoint()));
-            }else if(basicSandEp.getType().equals(EndpointType.LOAD_BALANCE)){
+            }else if(basicSandEp.getType().equals(EndpointType.load_balance)){
                 List<String> epList = ((LoadBalanceEndpointListDTO) basicSandEp).getEndpointList();
                 for(String epUrl : epList){
                     sandboxEpList.addEndpoint(new Endpoint(epUrl));
                 }
-            }else if(basicSandEp.getType().equals(EndpointType.FAILOVER)){
+            }else if(basicSandEp.getType().equals(EndpointType.failover)){
                 sandboxEpList.addEndpoint(new Endpoint(((FailoverEndpointListDTO) basicSandEp).getDefaultEndpoint()));
                 List<String> epList = ((FailoverEndpointListDTO) basicSandEp).getEndpointList();
                 for(String epUrl : epList){

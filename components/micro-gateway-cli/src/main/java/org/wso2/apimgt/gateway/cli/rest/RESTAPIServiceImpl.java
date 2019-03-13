@@ -19,7 +19,6 @@ package org.wso2.apimgt.gateway.cli.rest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.cli.constants.GatewayCliConstants;
@@ -39,7 +38,6 @@ import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
 import org.wso2.apimgt.gateway.cli.utils.TokenManagementUtil;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -387,14 +385,14 @@ public class RESTAPIServiceImpl implements RESTAPIService {
 
         //todo: remove the redundant code
         if(basicProdEp != null){
-            if(basicProdEp.getType().equals(EndpointType.DEFAULT)){
+            if(basicProdEp.getType().equals(EndpointType.http)){
                 prodEpList.addEndpoint(new Endpoint(((DefaultEndpointListDTO) basicProdEp).getEndpoint()));
-            }else if(basicProdEp.getType().equals(EndpointType.LOAD_BALANCE)){
+            }else if(basicProdEp.getType().equals(EndpointType.load_balance)){
                 List<String> epList = ((LoadBalanceEndpointListDTO) basicProdEp).getEndpointList();
                 for(String epUrl : epList){
                     prodEpList.addEndpoint(new Endpoint(epUrl));
                 }
-            }else if(basicProdEp.getType().equals(EndpointType.FAILOVER)){
+            }else if(basicProdEp.getType().equals(EndpointType.failover)){
                 prodEpList.addEndpoint(new Endpoint(((FailoverEndpointListDTO) basicProdEp).getDefaultEndpoint()));
                 List<String> epList = ((FailoverEndpointListDTO) basicProdEp).getEndpointList();
                 for(String epUrl : epList){
@@ -404,14 +402,14 @@ public class RESTAPIServiceImpl implements RESTAPIService {
         }
 
         if(basicSandEp != null){
-            if(basicSandEp.getType().equals(EndpointType.DEFAULT)){
+            if(basicSandEp.getType().equals(EndpointType.http)){
                 sandboxEpList.addEndpoint(new Endpoint(((DefaultEndpointListDTO) basicSandEp).getEndpoint()));
-            }else if(basicSandEp.getType().equals(EndpointType.LOAD_BALANCE)){
+            }else if(basicSandEp.getType().equals(EndpointType.load_balance)){
                 List<String> epList = ((LoadBalanceEndpointListDTO) basicSandEp).getEndpointList();
                 for(String epUrl : epList){
                     sandboxEpList.addEndpoint(new Endpoint(epUrl));
                 }
-            }else if(basicSandEp.getType().equals(EndpointType.FAILOVER)){
+            }else if(basicSandEp.getType().equals(EndpointType.failover)){
                 sandboxEpList.addEndpoint(new Endpoint(((FailoverEndpointListDTO) basicSandEp).getDefaultEndpoint()));
                 List<String> epList = ((FailoverEndpointListDTO) basicSandEp).getEndpointList();
                 for(String epUrl : epList){
