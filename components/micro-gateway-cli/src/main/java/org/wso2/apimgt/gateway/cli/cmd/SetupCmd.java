@@ -27,14 +27,12 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
 import io.swagger.util.Json;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.packerina.init.InitHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.cli.codegen.CodeGenerationContext;
 import org.wso2.apimgt.gateway.cli.codegen.CodeGenerator;
-import org.wso2.apimgt.gateway.cli.codegen.ThrottlePolicyGenerator;
 import org.wso2.apimgt.gateway.cli.config.TOMLConfigParser;
 import org.wso2.apimgt.gateway.cli.constants.GatewayCliConstants;
 import org.wso2.apimgt.gateway.cli.constants.RESTServiceConstants;
@@ -43,8 +41,6 @@ import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.exception.CliLauncherException;
 import org.wso2.apimgt.gateway.cli.exception.ConfigParserException;
-import org.wso2.apimgt.gateway.cli.exception.HashingException;
-import org.wso2.apimgt.gateway.cli.hashing.HashUtils;
 import org.wso2.apimgt.gateway.cli.model.config.BasicAuth;
 import org.wso2.apimgt.gateway.cli.model.config.Client;
 import org.wso2.apimgt.gateway.cli.model.config.Config;
@@ -233,8 +229,6 @@ public class SetupCmd implements GatewayLauncherCmd {
             } else {
                 //todo: validate the swagger file before start processing
                 logger.debug("Successfully read the api definition file");
-                CodeGenerator codeGenerator = new CodeGenerator();
-//                try {
                     if (StringUtils.isEmpty(endpointConfig)) {
                         if (StringUtils.isEmpty(endpoint)) {
                             /*
@@ -250,18 +244,6 @@ public class SetupCmd implements GatewayLauncherCmd {
                                 "\"},\"endpoint_type\":\"http\"}";
                     }
                     saveSwaggerDefinitionForSingleAPI(projectName, api);
-//                    generateRoutesConfFromSwagger(projectName, api, endpointConfig, null);
-//                    codeGenerator.generate(projectName, api, endpointConfig, true);
-//
-//                    //Initializing the ballerina project and creating .bal folder.
-//                    logger.debug("Creating source artifacts");
-//                    InitHandler.initialize(Paths.get(GatewayCmdUtils.getProjectDirectoryPath(projectName)), null,
-//                            new ArrayList<>(), null);
-//
-//                } catch (IOException | BallerinaServiceGenException e) {
-//                    logger.error("Error while generating ballerina source.", e);
-//                    throw new CLIInternalException("Error while generating ballerina source.");
-//                }
                 outStream.println("Setting up project " + projectName + " is successful.");
 
             }
@@ -453,28 +435,7 @@ public class SetupCmd implements GatewayLauncherCmd {
                 new CLIInternalException("cannot copy balxGeneration shell script");
             }
 
-//            ThrottlePolicyGenerator policyGenerator = new ThrottlePolicyGenerator();
-//            CodeGenerator codeGenerator = new CodeGenerator();
-//            boolean changesDetected;
-//            try {
-//                policyGenerator.generate(GatewayCmdUtils.getProjectSrcDirectoryPath(projectName) + File.separator
-//                        + GatewayCliConstants.POLICY_DIR, applicationPolicies, subscriptionPolicies);
-//                codeGenerator.generate(projectName, apis, true);
-//                //Initializing the ballerina project and creating .bal folder.
-//                InitHandler.initialize(Paths.get(GatewayCmdUtils.getProjectDirectoryPath(projectName)), null,
-//                        new ArrayList<>(), null);
-//                try {
-//                    changesDetected = HashUtils.detectChanges(apis, subscriptionPolicies,
-//                            applicationPolicies, projectName);
-//                } catch (HashingException e) {
-//                    logger.error("Error while checking for changes of resources. Skipping no-change detection..", e);
-//                    throw new CLIInternalException(
-//                            "Error while checking for changes of resources. Skipping no-change detection..");
-//                }
-//            } catch (IOException | BallerinaServiceGenException e) {
-//                logger.error("Error while generating ballerina source.", e);
-//                throw new CLIInternalException("Error while generating ballerina source.");
-//            }
+            //todo: check if the files has been changed using hash utils
 
             //if all the operations are success, write new config to file
             if (isOverwriteRequired) {
@@ -501,17 +462,7 @@ public class SetupCmd implements GatewayLauncherCmd {
                 GatewayCmdUtils.saveConfig(newConfig, toolkitConfigPath);
             }
 
-//            if (!changesDetected) {
-//                outStream.println(
-//                        "No changes received from the server since the previous setup."
-//                                + " If you have already a built distribution, it can be reused.");
-//            }
             outStream.println("Setting up project " + projectName + " is successful.");
-//
-//            //There should not be any logic after this system exit
-//            if (!changesDetected) {
-//                Runtime.getRuntime().exit(GatewayCliConstants.EXIT_CODE_NOT_MODIFIED);
-//            }
         }
     }
 
@@ -556,6 +507,11 @@ public class SetupCmd implements GatewayLauncherCmd {
         return new String(System.console().readPassword());
     }
 
+    /**
+     * Generate publisherEndpoint, Client Certification Endpoint, admin Endpoint, registration Endpoint and token
+     * endpoint related to the user provided api manager host.
+     * @param host api manager's hostname
+     */
     private void populateHosts(String host) {
         try {
             publisherEndpoint = new URL(new URL(host), RESTServiceConstants.PUB_RESOURCE_PATH).toString();
@@ -569,6 +525,12 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
     }
 
+    /**
+     * Initialize the project
+     * @param projectName project name
+     * @param configPath TOML configuration file path
+     * @param deploymentConfigPath deployment configuration file path
+     */
     private static void init(String projectName, String configPath, String deploymentConfigPath) {
         try {
             GatewayCmdUtils.createProjectStructure(projectName);
@@ -599,7 +561,7 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
     }
 
-    public void setSecuritySchemas(String schemas) {
+    private void setSecuritySchemas(String schemas) {
         Config config = GatewayCmdUtils.getConfig();
         BasicAuth basicAuth = new BasicAuth();
         boolean basic = false;
@@ -625,40 +587,61 @@ public class SetupCmd implements GatewayLauncherCmd {
         config.setBasicAuth(basicAuth);
     }
 
+    /**
+     * Generate DTO object which represents Routes configuration for Single API
+     * //todo: change variable name
+     * @param apiList   Previous APIListRouteDTO object
+     * @param apiName   API name
+     * @param version   API version
+     * @param endpointConfig    Endpoint Configuration json file //todo: do not follow the structure provided by API manager, add the improved structure
+     * @param endpointSecurity  APIEndpointSecurityDTO object (contains security details for an API)
+     * @return  modified APIListRouteDTO object
+     */
     private APIListRouteDTO generateRoutesConfForSingleAPI(APIListRouteDTO apiList, String apiName,
                                                            String version, String endpointConfig,
                                                            APIEndpointSecurityDTO endpointSecurity){
-
+        //represents DTO containing root directory of Routes Configuration File
         APIListRouteDTO apiListRouteDTO = apiList;
         if(apiListRouteDTO == null){
             apiListRouteDTO = new APIListRouteDTO();
         }
 
-        APIRouteDTO apiRouteDTO = new APIRouteDTO();
+        //check if the API already exists for the given name
+        APIRouteDTO apiRouteDTO = apiListRouteDTO.findByAPIName(apiName);
+        if(apiListRouteDTO == null){
+            apiRouteDTO = new APIRouteDTO();
+        }
         apiRouteDTO.setApiName(apiName);
 
+        //we create a new version each time. If the version already exists an exception is thrown
         APIVersionRouteDTO apiVersionRouteDTO = new APIVersionRouteDTO();
         apiVersionRouteDTO.setVersion(version);
 
+        //create separate environments
         EnvDTO prodEnv = new EnvDTO();
         EnvDTO sandboxEnv = new EnvDTO();
 
-
+        //map the available endpoint configuration used in api manager to routes definition in MGW implementation
         EndpointListRouteDTO[] prodAndSandEndpointLists = generateEndpointListRouteDTO(endpointConfig,
                 endpointSecurity);
         prodEnv.setBasicEndpoint(prodAndSandEndpointLists[0]);
         sandboxEnv.setBasicEndpoint(prodAndSandEndpointLists[1]);
 
-
         apiVersionRouteDTO.setProd(prodEnv);
         apiVersionRouteDTO.setSandbox(sandboxEnv);
-
         apiRouteDTO.addAPIVersion(apiVersionRouteDTO);
         apiListRouteDTO.addAPIDTO(apiRouteDTO);
 
         return apiListRouteDTO;
     }
 
+    /**
+     * generate routes configuration file when the swagger definition is provided
+     * @param projectName   project name
+     * @param apiDef    api definition in swagger format
+     * @param endpointConfig    endpoint configuration in json format
+     * @param endpointSecurity  endpoint security details in json format
+     */
     private void generateRoutesConfFromSwagger( String projectName, String apiDef, String endpointConfig,
                                                 String endpointSecurity){
         SwaggerParser parser;
@@ -683,6 +666,11 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
     }
 
+    /**
+     * Save routes configuration file for multiple apis at once
+     * @param projectName   project name
+     * @param apis  list of APIs
+     */
     private void saveRoutesConfForMultipleAPIs(String projectName, List<ExtendedAPI> apis){
         APIListRouteDTO apiListRouteDTO = new APIListRouteDTO();
         for( ExtendedAPI api : apis){
@@ -703,6 +691,11 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
     }
 
+    /**
+     * parse endpoint security configurations in json format {type: , name: , password: }
+     * @param endpointSecurityString endpoint security definition in json
+     * @return  APIEndpointSecurityDTO object (for the purpose of routes configuration file)
+     */
     private APIEndpointSecurityDTO parseEndpointSecurityDefinition(String endpointSecurityString){
         ObjectMapper mapper = new ObjectMapper();
         APIEndpointSecurityDTO endpointSecurity = null;
@@ -716,11 +709,21 @@ public class SetupCmd implements GatewayLauncherCmd {
         return endpointSecurity;
     }
 
+    /** generate endpoint list DTO object (in routes configuration file)
+     * @param endpointConfig    endpoint configuration provided by API Manager as a json
+     * @param endpointSecurityJson  Endpoint security configuration in json {type: , name: , password: }
+     * @return
+     */
     private EndpointListRouteDTO[] generateEndpointListRouteDTO(String endpointConfig, String endpointSecurityJson){
 
         return generateEndpointListRouteDTO(endpointConfig, parseEndpointSecurityDefinition(endpointSecurityJson));
     }
 
+    /** generate endpoint list DTO object (in routes configuration file)
+     * @param endpointConfig    endpoint configuration provided by API Manager as a json
+     * @param endpointSecurity  Endpoint security configuration object
+     * @return
+     */
     private EndpointListRouteDTO[] generateEndpointListRouteDTO(String endpointConfig,
                                                               APIEndpointSecurityDTO endpointSecurity){
         ObjectMapper mapper = new ObjectMapper();
@@ -732,7 +735,9 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
         String type = root.get("endpoint_type").asText();
 
+        //depending on the type we have to decide the matching DTO;
         switch (type){
+            //todo: introduce a constant (Enum cannot be used)
             case "load_balance":
                 return generateLoadBalanceEpListDTO(root, endpointSecurity);
             case "failover":
@@ -740,13 +745,20 @@ public class SetupCmd implements GatewayLauncherCmd {
             case "http":
                 return generateDefaultEndpointListDTO(root, endpointSecurity);
             default:
-                //todo: throw an exception
+                new CLIRuntimeException(type + " is not recognized as a valid endpoint_type. Available endpoint_types " +
+                        "are \"load_balance\", \"failover\" and \"http\"");
                 return null;
         }
 
     }
 
     //todo: rename this method
+    /**
+     * Load
+     * @param endpointConfig
+     * @param endpointSecurity
+     * @return
+     */
     private LoadBalanceEndpointListDTO[] generateLoadBalanceEpListDTO(JsonNode endpointConfig,
                                                                       APIEndpointSecurityDTO endpointSecurity){
         JsonNode productionArr = endpointConfig.get("production_endpoints");

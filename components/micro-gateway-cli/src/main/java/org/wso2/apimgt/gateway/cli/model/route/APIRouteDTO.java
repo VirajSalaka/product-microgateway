@@ -1,6 +1,7 @@
 package org.wso2.apimgt.gateway.cli.model.route;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,11 @@ public class APIRouteDTO {
         if(apiVersionList == null){
             apiVersionList = new ArrayList<>();
         }
-        //todo: handle if existing version is added
+        //todo: test
+        if(apiVersionList.stream().anyMatch(api -> api.getVersion().equals(apiVersionRouteDTO.getVersion()))){
+            throw new CLIRuntimeException("API version already exists");
+            //todo: prompt to override ?
+        }
         apiVersionList.add(apiVersionRouteDTO);
     }
 

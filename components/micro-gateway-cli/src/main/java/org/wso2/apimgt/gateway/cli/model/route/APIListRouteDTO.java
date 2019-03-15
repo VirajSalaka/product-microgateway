@@ -1,6 +1,8 @@
 package org.wso2.apimgt.gateway.cli.model.route;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
+import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,11 +20,16 @@ public class APIListRouteDTO {
     }
 
     public void addAPIDTO(APIRouteDTO apiRouteDTO){
+
         if(apiRouteList == null){
             apiRouteList = new ArrayList<>();
         }
-        //todo: handle adding an existing apiName
-        apiRouteList.add(apiRouteDTO);
+
+        //todo: test the function
+        //check if the there is an api under the provided name
+        if(!apiRouteList.stream().anyMatch(api -> api.getApiName().equals(apiRouteDTO.getApiName()))){
+            apiRouteList.add(apiRouteDTO);
+        }
     }
 
     public APIRouteDTO findByAPIName(String apiName){
