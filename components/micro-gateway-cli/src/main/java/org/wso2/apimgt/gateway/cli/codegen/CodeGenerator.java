@@ -26,6 +26,8 @@ import io.swagger.parser.SwaggerParser;
 import org.wso2.apimgt.gateway.cli.constants.GatewayCliConstants;
 import org.wso2.apimgt.gateway.cli.constants.GeneratorConstants;
 import org.wso2.apimgt.gateway.cli.exception.BallerinaServiceGenException;
+import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
+import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.model.template.GenSrcFile;
 import org.wso2.apimgt.gateway.cli.model.template.service.BallerinaService;
@@ -139,6 +141,15 @@ public class CodeGenerator {
                 + File.separator + GatewayCliConstants.GW_DIST_POLICIES);
     }
 
+    /**
+     * Generates ballerina source for saved swagger definitions
+     * API endpoint details are identified by reading the routes configuration file
+     * Swagger definition is saved in the project
+     * @param projectName project name
+     * @param overwrite whether existing files overwrite or not
+     * @throws IOException if IOException occurs during writing generated ballerina files, copying extension filters
+     * or copying policy ballerina files
+     */
     public void generate(String projectName, boolean overwrite) throws IOException {
 
         final SwaggerParser parser;
@@ -175,9 +186,9 @@ public class CodeGenerator {
                                 + File.separator + GatewayCliConstants.GW_DIST_POLICIES);
 
                     } catch (BallerinaServiceGenException e) {
-                        e.printStackTrace(); //todo: handle error
+                        throw new CLIRuntimeException("Swagger definition cannot be parsed to ballerina code",e);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        throw new CLIInternalException("File write operations failed during ballerina code generation");
                     }
                 });
     }
