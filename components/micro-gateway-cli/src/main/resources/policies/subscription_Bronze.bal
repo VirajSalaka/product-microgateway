@@ -16,9 +16,7 @@ function initSubscriptionBronzePolicy() {
         from sBronzereqCopy
         select sBronzereqCopy.messageID as messageID, (sBronzereqCopy.subscriptionTier == "Bronze") as isEligible, sBronzereqCopy.subscriptionKey as throttleKey, 0 as expiryTimestamp
         => (gateway:EligibilityStreamDTO[] counts) {
-
             foreach var c in counts{
-
                 sBronzeeligibilityStream.publish(c);
             }
         }
@@ -30,9 +28,7 @@ function initSubscriptionBronzePolicy() {
         select sBronzeeligibilityStream.throttleKey as throttleKey, count() as eventCount, true as stopOnQuota, sBronzeeligibilityStream.expiryTimestamp as expiryTimeStamp
         group by sBronzeeligibilityStream.throttleKey
         => (gateway:IntermediateStream[] counts) {
-
             foreach var c in counts{
-
                 sBronzeintermediateStream.publish(c);
             }
         }
@@ -42,7 +38,6 @@ function initSubscriptionBronzePolicy() {
         group by sBronzeeligibilityStream.throttleKey
         => (gateway:GlobalThrottleStreamDTO[] counts) {
             foreach var c in counts{
-
                 sBronzeresultStream.publish(c);
             }
         }
@@ -52,9 +47,7 @@ function initSubscriptionBronzePolicy() {
         select sBronzeresultStream.throttleKey as throttleKey, sBronzeresultStream.isThrottled, sBronzeresultStream.stopOnQuota, sBronzeresultStream.expiryTimeStamp
         => (gateway:GlobalThrottleStreamDTO[] counts) {
             foreach var c in counts{
-
                 sBronzeglobalThrotCopy.publish(c);
-
             }
         }
 

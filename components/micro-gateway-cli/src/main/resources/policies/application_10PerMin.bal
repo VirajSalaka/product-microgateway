@@ -16,9 +16,7 @@ function initApplication10PerMinPolicy() {
         from s10PerMinreqCopy
         select s10PerMinreqCopy.messageID as messageID, (s10PerMinreqCopy.appTier == "10PerMin") as isEligible, s10PerMinreqCopy.appKey as throttleKey, 0 as expiryTimestamp
         => (gateway:EligibilityStreamDTO[] counts) {
-
-            foreach var c in counts{
-
+            foreach var c in counts {
                 s10PerMineligibilityStream.publish(c);
             }
         }
@@ -30,9 +28,7 @@ function initApplication10PerMinPolicy() {
         select s10PerMineligibilityStream.throttleKey as throttleKey, count() as eventCount, true as stopOnQuota, s10PerMineligibilityStream.expiryTimestamp as expiryTimeStamp
         group by s10PerMineligibilityStream.throttleKey
         => (gateway:IntermediateStream[] counts) {
-
-            foreach var c in counts{
-
+            foreach var c in counts {
                 s10PerMinintermediateStream.publish(c);
             }
         }
@@ -41,8 +37,7 @@ function initApplication10PerMinPolicy() {
         select s10PerMinintermediateStream.throttleKey, getThrottleValues10PerMin(s10PerMinintermediateStream.eventCount) as isThrottled, s10PerMinintermediateStream.stopOnQuota, s10PerMinintermediateStream.expiryTimeStamp
         group by s10PerMineligibilityStream.throttleKey
         => (gateway:GlobalThrottleStreamDTO[] counts) {
-            foreach var c in counts{
-
+            foreach var c in counts {
                 s10PerMinresultStream.publish(c);
             }
         }
@@ -51,13 +46,10 @@ function initApplication10PerMinPolicy() {
         window gateway:emitOnStateChange(s10PerMinresultStream.throttleKey, s10PerMinresultStream.isThrottled, "s10PerMinresultStream")
         select s10PerMinresultStream.throttleKey as throttleKey, s10PerMinresultStream.isThrottled, s10PerMinresultStream.stopOnQuota, s10PerMinresultStream.expiryTimeStamp
         => (gateway:GlobalThrottleStreamDTO[] counts) {
-            foreach var c in counts{
-
+            foreach var c in counts {
                 s10PerMinglobalThrotCopy.publish(c);
-
             }
         }
-
     }
 }
 

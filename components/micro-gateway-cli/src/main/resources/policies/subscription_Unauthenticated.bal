@@ -16,9 +16,7 @@ function initSubscriptionUnauthenticatedPolicy() {
         from sUnauthenticatedreqCopy
         select sUnauthenticatedreqCopy.messageID as messageID, (sUnauthenticatedreqCopy.subscriptionTier == "Unauthenticated") as isEligible, sUnauthenticatedreqCopy.subscriptionKey as throttleKey, 0 as expiryTimestamp
         => (gateway:EligibilityStreamDTO[] counts) {
-
-            foreach var c in counts{
-
+            foreach var c in counts {
                 sUnauthenticatedeligibilityStream.publish(c);
             }
         }
@@ -30,9 +28,7 @@ function initSubscriptionUnauthenticatedPolicy() {
         select sUnauthenticatedeligibilityStream.throttleKey as throttleKey, count() as eventCount, true as stopOnQuota, sUnauthenticatedeligibilityStream.expiryTimestamp as expiryTimeStamp
         group by sUnauthenticatedeligibilityStream.throttleKey
         => (gateway:IntermediateStream[] counts) {
-
-            foreach var c in counts{
-
+            foreach var c in counts {
                 sUnauthenticatedintermediateStream.publish(c);
             }
         }
@@ -41,8 +37,7 @@ function initSubscriptionUnauthenticatedPolicy() {
         select sUnauthenticatedintermediateStream.throttleKey, getThrottleValuesUnauthenticated(sUnauthenticatedintermediateStream.eventCount) as isThrottled, sUnauthenticatedintermediateStream.stopOnQuota, sUnauthenticatedintermediateStream.expiryTimeStamp
         group by sUnauthenticatedeligibilityStream.throttleKey
         => (gateway:GlobalThrottleStreamDTO[] counts) {
-            foreach var c in counts{
-
+            foreach var c in counts {
                 sUnauthenticatedresultStream.publish(c);
             }
         }
@@ -51,10 +46,8 @@ function initSubscriptionUnauthenticatedPolicy() {
         window gateway:emitOnStateChange(sUnauthenticatedresultStream.throttleKey, sUnauthenticatedresultStream.isThrottled, "sUnauthenticatedresultStream")
         select sUnauthenticatedresultStream.throttleKey as throttleKey, sUnauthenticatedresultStream.isThrottled, sUnauthenticatedresultStream.stopOnQuota, sUnauthenticatedresultStream.expiryTimeStamp
         => (gateway:GlobalThrottleStreamDTO[] counts) {
-            foreach var c in counts{
-
+            foreach var c in counts {
                 sUnauthenticatedglobalThrotCopy.publish(c);
-
             }
         }
 
