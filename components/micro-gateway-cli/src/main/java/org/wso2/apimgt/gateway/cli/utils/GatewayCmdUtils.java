@@ -814,10 +814,6 @@ public class GatewayCmdUtils {
         try {
             writer = new FileWriter(file);
             writer.write(content);
-        } finally {
-            if (writer != null) {
-                writer.close();
-            }
         }
     }
 
@@ -863,7 +859,7 @@ public class GatewayCmdUtils {
 
         if (deploymentConfPath == null) {
             if (!file.exists()) {
-                String defaultConfig = null;
+                String defaultConfig;
                 boolean created = file.createNewFile();
                 if (created) {
                     logger.debug("Deployment configuration file: {} created.", depConfig);
