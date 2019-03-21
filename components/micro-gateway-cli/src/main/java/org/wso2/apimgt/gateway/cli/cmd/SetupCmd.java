@@ -78,48 +78,69 @@ import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConsta
 /**
  * This class represents the "setup" command and it holds arguments and flags specified by the user.
  */
-@Parameters(commandNames = "setup", commandDescription = "setup information") public class SetupCmd
-        implements GatewayLauncherCmd {
-
+@Parameters(commandNames = "setup", commandDescription = "setup information")
+public class SetupCmd implements GatewayLauncherCmd {
     private static final Logger logger = LoggerFactory.getLogger(SetupCmd.class);
     private static PrintStream outStream = System.out;
 
-    @SuppressWarnings("unused") @Parameter(hidden = true, required = true) private List<String> mainArgs;
+    @SuppressWarnings("unused")
+    @Parameter(hidden = true, required = true)
+    private List<String> mainArgs;
 
-    @SuppressWarnings("unused") @Parameter(names = "--java.debug", hidden = true) private String javaDebugPort;
+    @SuppressWarnings("unused")
+    @Parameter(names = "--java.debug", hidden = true)
+    private String javaDebugPort;
 
-    @Parameter(names = { "-u", "--username" }, hidden = true) private String username;
+    @Parameter(names = {"-u", "--username"}, hidden = true)
+    private String username;
 
-    @Parameter(names = { "-p", "--password" }, hidden = true) private String password;
+    @Parameter(names = {"-p", "--password"}, hidden = true)
+    private String password;
 
-    @SuppressWarnings("unused") @Parameter(names = { "-l", "--label" }, hidden = true) private String label;
+    @SuppressWarnings("unused")
+    @Parameter(names = {"-l", "--label"}, hidden = true)
+    private String label;
 
-    @Parameter(names = { "-s", "--server-url" }, hidden = true) private String baseURL;
+    @Parameter(names = {"-s", "--server-url"}, hidden = true)
+    private String baseURL;
 
-    @Parameter(names = { "-oa", "--openapi" }, hidden = true) private String openApi;
+    @Parameter(names = {"-oa", "--openapi"}, hidden = true)
+    private String openApi;
 
-    @Parameter(names = { "-e", "--endpoint" }, hidden = true) private String endpoint;
+    @Parameter(names = {"-e", "--endpoint"}, hidden = true)
+    private String endpoint;
 
-    @Parameter(names = { "-ec", "--endpointConfig" }, hidden = true) private String endpointConfig;
+    @Parameter(names = {"-ec", "--endpointConfig"}, hidden = true)
+    private String endpointConfig;
 
-    @Parameter(names = { "-t", "--truststore" }, hidden = true) private String trustStoreLocation;
+    @Parameter(names = {"-t", "--truststore"}, hidden = true)
+    private String trustStoreLocation;
 
-    @Parameter(names = { "-w", "--truststore-pass" }, hidden = true) private String trustStorePassword;
+    @Parameter(names = {"-w", "--truststore-pass"}, hidden = true)
+    private String trustStorePassword;
 
-    @Parameter(names = { "-c", "--config" }, hidden = true) private String toolkitConfigPath;
+    @Parameter(names = {"-c", "--config"}, hidden = true)
+    private String toolkitConfigPath;
 
-    @SuppressWarnings("unused") @Parameter(names = { "-d",
-            "--deployment-config" }, hidden = true) private String deploymentConfigPath;
+    @SuppressWarnings("unused")
+    @Parameter(names = {"-d", "--deployment-config"}, hidden = true)
+    private String deploymentConfigPath;
 
-    @SuppressWarnings("unused") @Parameter(names = { "-a", "--api-name" }, hidden = true) private String apiName;
+    @SuppressWarnings("unused")
+    @Parameter(names = {"-a", "--api-name"}, hidden = true)
+    private String apiName;
 
-    @SuppressWarnings("unused") @Parameter(names = { "-v", "--version" }, hidden = true) private String version;
+    @SuppressWarnings("unused")
+    @Parameter(names = {"-v", "--version"}, hidden = true)
+    private String version;
 
-    @SuppressWarnings("unused") @Parameter(names = { "-f",
-            "--force" }, hidden = true, arity = 0) private boolean isForcefully;
+    @SuppressWarnings("unused")
+    @Parameter(names = {"-f", "--force"}, hidden = true, arity = 0)
+    private boolean isForcefully;
 
-    @SuppressWarnings("unused") @Parameter(names = { "-k",
-            "--insecure" }, hidden = true, arity = 0) private boolean isInsecure;
+    @SuppressWarnings("unused")
+    @Parameter(names = {"-k", "--insecure"}, hidden = true, arity = 0)
+    private boolean isInsecure;
 
     @Parameter(names = {"-sec", "--security"}, hidden = true)
     private String security;
@@ -134,7 +155,6 @@ import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConsta
     private String adminEndpoint;
     private String registrationEndpoint;
     private String tokenEndpoint;
-
     private String clientSecret;
     private boolean isOverwriteRequired;
 
@@ -145,8 +165,8 @@ import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConsta
         String grpc;
         String projectName = GatewayCmdUtils.getProjectName(mainArgs);
         if (projectName.contains(" ")) {
-            throw GatewayCmdUtils.createUsageException(
-                    "Only one argument accepted as the project name. but provided:" + " " + projectName);
+            throw GatewayCmdUtils.createUsageException("Only one argument accepted as the project name. but provided:" +
+                    " " + projectName);
         }
         if (StringUtils.isEmpty(toolkitConfigPath)) {
             toolkitConfigPath = GatewayCmdUtils.getMainConfigLocation();
@@ -190,8 +210,7 @@ import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConsta
                              * the user
                              */
                             if ((endpoint = promptForTextInput("Enter Endpoint URL: ")).trim().isEmpty()) {
-                                throw GatewayCmdUtils
-                                        .createUsageException("Micro gateway setup failed: empty endpoint.");
+                                throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty endpoint.");
                             }
                         }
                     }
@@ -218,12 +237,11 @@ import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConsta
                              * the user
                              */
                             if ((endpoint = promptForTextInput("Enter Endpoint URL: ")).trim().isEmpty()) {
-                                throw GatewayCmdUtils
-                                        .createUsageException("Micro gateway setup failed: empty endpoint.");
+                                throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty endpoint.");
                             }
                         }
-                        endpointConfig = "{\"production_endpoints\":{\"url\":\"" + endpoint.trim()
-                                + "\"},\"endpoint_type\":\"http\"}";
+                        endpointConfig = "{\"production_endpoints\":{\"url\":\"" + endpoint.trim() +
+                                "\"},\"endpoint_type\":\"http\"}";
                     }
 
                     if(StringUtils.isEmpty(basepath)){
@@ -265,8 +283,8 @@ import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConsta
                 if ((password = promptForPasswordInput("Enter Password for " +
                         username + ": ")).trim().isEmpty()) {
                     if (StringUtils.isEmpty(password)) {
-                        password = promptForPasswordInput(
-                                "Password can't be empty; enter password for " + username + ": ");
+                        password = promptForPasswordInput("Password can't be empty; enter password for "
+                                + username + ": ");
                         if (password.trim().isEmpty()) {
                             throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty password.");
                         }
@@ -284,8 +302,7 @@ import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConsta
                 if (StringUtils.isEmpty(trustStoreLocation)) {
                     isOverwriteRequired = true;
                     if ((trustStoreLocation = promptForTextInput(
-                            "Enter Trust store location: [" + RESTServiceConstants.DEFAULT_TRUSTSTORE_PATH + "]"))
-                            .trim().isEmpty()) {
+                            "Enter Trust store location: [" + RESTServiceConstants.DEFAULT_TRUSTSTORE_PATH + "]")).trim().isEmpty()) {
                         trustStoreLocation = RESTServiceConstants.DEFAULT_TRUSTSTORE_PATH;
                     }
                 }
@@ -310,8 +327,9 @@ import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConsta
             if (StringUtils.isEmpty(configuredTrustStorePass)) {
                 if (StringUtils.isEmpty(trustStorePassword)) {
                     isOverwriteRequired = true;
-                    if ((trustStorePassword = promptForPasswordInput(
-                            "Enter Trust store password: " + "[ use default? ]")).trim().isEmpty()) {
+                    if ((trustStorePassword = promptForPasswordInput("Enter Trust store password: " +
+                            "[ use default? ]")).trim()
+                            .isEmpty()) {
                         trustStorePassword = RESTServiceConstants.DEFAULT_TRUSTSTORE_PASS;
                     }
                 }
@@ -321,8 +339,8 @@ import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConsta
 
             File trustStoreFile = new File(trustStoreLocation);
             if (!trustStoreFile.isAbsolute()) {
-                trustStoreLocation = GatewayCmdUtils
-                        .getUnixPath(GatewayCmdUtils.getCLIHome() + File.separator + trustStoreLocation);
+                trustStoreLocation = GatewayCmdUtils.getUnixPath(GatewayCmdUtils.getCLIHome() + File.separator
+                        + trustStoreLocation);
             }
             trustStoreFile = new File(trustStoreLocation);
             if (!trustStoreFile.exists()) {
@@ -423,8 +441,12 @@ import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConsta
 
                 String encryptedCS = GatewayCmdUtils.encrypt(clientSecret, password);
                 String encryptedTrustStorePass = GatewayCmdUtils.encrypt(trustStorePassword, password);
-                Token token = configTokenValues.setUsername(username).setClientId(clientID).setClientSecret(encryptedCS)
-                        .setTrustStoreLocation(trustStoreLocation).setTrustStorePassword(encryptedTrustStorePass)
+                Token token = configTokenValues
+                        .setUsername(username)
+                        .setClientId(clientID)
+                        .setClientSecret(encryptedCS)
+                        .setTrustStoreLocation(trustStoreLocation)
+                        .setTrustStorePassword(encryptedTrustStorePass)
                         .build();
                 newConfig.setToken(token);
                 newConfig.setCorsConfiguration(GatewayCmdUtils.getDefaultCorsConfig());
@@ -445,22 +467,25 @@ import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConsta
      * @param version API version
      */
     private void validateAPIGetRequestParams(String label, String apiName, String version) {
-        if ((StringUtils.isEmpty(label) && (StringUtils.isEmpty(apiName) || StringUtils.isEmpty(version)))
-                || StringUtils.isNotEmpty(label) && (StringUtils.isNotEmpty(apiName) || StringUtils.isNotEmpty(version))
-                || (StringUtils.isEmpty(apiName) && StringUtils.isNotEmpty(version)) || (StringUtils.isNotEmpty(apiName)
-                && StringUtils.isEmpty(version))) {
+        if ((StringUtils.isEmpty(label) && (StringUtils.isEmpty(apiName) || StringUtils.isEmpty(version))) ||
+                StringUtils.isNotEmpty(label) && (StringUtils.isNotEmpty(apiName) || StringUtils.isNotEmpty(version)) ||
+                (StringUtils.isEmpty(apiName) && StringUtils.isNotEmpty(version)) ||
+                (StringUtils.isNotEmpty(apiName) && StringUtils.isEmpty(version))) {
             throw GatewayCmdUtils.createUsageException(
                     "Either label (-l <label>) or API name (-a <api-name>) with version (-v <version>) "
-                            + "should be provided." + "\n\nEx:\tmicro-gw setup accounts-project -l accounts"
+                            + "should be provided."
+                            + "\n\nEx:\tmicro-gw setup accounts-project -l accounts"
                             + "\n\tmicro-gw setup pizzashack-project -a Pizzashack -v 1.0.0");
         }
     }
 
-    @Override public String getName() {
+    @Override
+    public String getName() {
         return GatewayCliCommands.SETUP;
     }
 
-    @Override public void setParentCmdParser(JCommander parentCmdParser) {
+    @Override
+    public void setParentCmdParser(JCommander parentCmdParser) {
     }
 
     private String promptForTextInput(String msg) {
@@ -671,12 +696,14 @@ import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConsta
         isEndPointsNeeded = StringUtils.isEmpty(publisherEndpoint) || StringUtils.isEmpty(adminEndpoint) || StringUtils
                 .isEmpty(registrationEndpoint) || StringUtils.isEmpty(tokenEndpoint);
 
-        isBaseURLNeeded =
-                publisherEndpoint.contains("{baseURL}") || adminEndpoint.contains("{baseURL}") || registrationEndpoint
-                        .contains("{baseURL}") || tokenEndpoint.contains("{baseURL}") || isEndPointsNeeded;
+        isBaseURLNeeded = publisherEndpoint.contains(RESTServiceConstants.BASE_URL_TAG) ||
+                        adminEndpoint.contains(RESTServiceConstants.BASE_URL_TAG) ||
+                        registrationEndpoint.contains(RESTServiceConstants.BASE_URL_TAG) ||
+                        tokenEndpoint.contains(RESTServiceConstants.BASE_URL_TAG) || isEndPointsNeeded;
 
-        isRestVersionNeeded = publisherEndpoint.contains("{restVersion}") || adminEndpoint.contains("{restVersion}")
-                || registrationEndpoint.contains("{restVersion}") || isEndPointsNeeded;
+        isRestVersionNeeded = publisherEndpoint.contains(RESTServiceConstants.REST_VERSION_TAG) ||
+                adminEndpoint.contains(RESTServiceConstants.REST_VERSION_TAG)
+                || registrationEndpoint.contains(RESTServiceConstants.REST_VERSION_TAG) || isEndPointsNeeded;
 
         //set endpoints format if endpoint(s) is empty
         if (isEndPointsNeeded) {
@@ -781,5 +808,4 @@ import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConsta
                 "You are using REST version - " + restVersion + " of API Manager. (If you want to change this, go to "
                         + "<MICROGW_HOME>/conf/toolkit-config.toml)");
     }
-
 }
