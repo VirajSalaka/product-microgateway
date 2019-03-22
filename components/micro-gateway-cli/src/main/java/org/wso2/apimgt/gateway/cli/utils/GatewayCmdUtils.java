@@ -26,10 +26,8 @@ import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.cli.codegen.CodeGenerationContext;
 import org.wso2.apimgt.gateway.cli.config.TOMLConfigParser;
 import org.wso2.apimgt.gateway.cli.constants.GatewayCliConstants;
-import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
-import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
-import org.wso2.apimgt.gateway.cli.exception.CliLauncherException;
-import org.wso2.apimgt.gateway.cli.exception.ConfigParserException;
+import org.wso2.apimgt.gateway.cli.exception.*;
+import org.wso2.apimgt.gateway.cli.hashing.HashUtils;
 import org.wso2.apimgt.gateway.cli.model.config.*;
 import org.wso2.apimgt.gateway.cli.model.rest.APICorsConfigurationDTO;
 
@@ -298,33 +296,37 @@ public class GatewayCmdUtils {
      * @param apiVersion version of the API
      * @param apiDefPath File path for the swagger File (API definition)
      */
-    public static void createAPIFilesStructure(String projectName, String apiName, String apiVersion, String apiDefPath){
+    public static void createAPIFilesStructure(String projectName, String apiName, String apiVersion,
+                                               String apiDefPath){
         File projectDir = createFolderIfNotExist(getUserDir() + File.separator + projectName);
 
         String apiFilesDirPath = projectDir + File.separator + GatewayCliConstants.PROJECTS_API_FILES_DIRECTORY_NAME;
         createFolderIfNotExist(apiFilesDirPath);
 
-        String apiDirPath = apiFilesDirPath + File.separator + apiName;
-        createFolderIfNotExist(apiDirPath);
+        String apiFolderName;
+        String apiDirPath;
 
-        String apiVersionDirPath = apiDirPath + File.separator + apiVersion;
-        createFolderIfNotExist(apiVersionDirPath);
+        try {
+            apiFolderName = HashUtils.generateAPIId(apiName, apiVersion);
+            apiDirPath = apiFilesDirPath + File.separator + apiFolderName;
+            createFolderIfNotExist(apiDirPath);
+        } catch (HashingException e) {
+            throw new CLIInternalException("Error while hashing the APIName:version string");
+        }
 
         createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.APPLICATION_THROTTLE_POLICIES_FILE);
         createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.SUBSCRIPTION_THROTTLE_POLICIES_FILE);
         createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.CLIENT_CERT_METADATA_FILE);
-        createFileIfNotExist(apiVersionDirPath, GatewayCliConstants.API_METADATA_FILE);
+        createFileIfNotExist(apiDirPath, GatewayCliConstants.API_METADATA_FILE);
 
         if(apiDefPath == null){
-            createFileIfNotExist(apiVersionDirPath, GatewayCliConstants.API_SWAGGER);
+            createFileIfNotExist(apiDirPath, GatewayCliConstants.API_SWAGGER);
         }
-        else{
-            try {
-                copyFilesToSources(apiDefPath, apiVersionDirPath + File.separator +
-                        GatewayCliConstants.API_SWAGGER);
-            } catch (IOException e) {
-                new CLIInternalException("Error while copying the swagger to the project directory");
-            }
+        else try {
+            copyFilesToSources(apiDefPath, apiDirPath + File.separator +
+                    GatewayCliConstants.API_SWAGGER);
+        } catch (IOException e) {
+            new CLIInternalException("Error while copying the swagger to the project directory");
         }
 
     }

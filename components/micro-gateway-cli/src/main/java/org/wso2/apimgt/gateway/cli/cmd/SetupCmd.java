@@ -608,7 +608,7 @@ public class SetupCmd implements GatewayLauncherCmd {
 
         //check if the API already exists for the given name
         APIRouteDTO apiRouteDTO = apiListRouteDTO.findByAPIName(apiName);
-        if(apiListRouteDTO == null){
+        if(apiRouteDTO == null){
             apiRouteDTO = new APIRouteDTO();
         }
         apiRouteDTO.setApiName(apiName);
@@ -618,8 +618,8 @@ public class SetupCmd implements GatewayLauncherCmd {
         apiVersionRouteDTO.setVersion(version);
 
         //create separate environments
-        EnvDTO prodEnv = new EnvDTO();
-        EnvDTO sandboxEnv = new EnvDTO();
+        EndpointConfig prodEnv = new EndpointConfig();
+        EndpointConfig sandboxEnv = new EndpointConfig();
 
         //map the available endpoint configuration used in api manager to routes definition in MGW implementation
         EndpointListRouteDTO[] prodAndSandEndpointLists = generateEndpointListRouteDTO(endpointConfig,
