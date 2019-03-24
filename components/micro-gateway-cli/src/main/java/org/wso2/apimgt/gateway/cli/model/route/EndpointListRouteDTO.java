@@ -2,11 +2,13 @@ package org.wso2.apimgt.gateway.cli.model.route;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.wso2.apimgt.gateway.cli.model.rest.APIEndpointSecurityDTO;
+
+import java.util.ArrayList;
 import java.util.List;
 
 //todo: add constants
 /**
- * This class hold the available endpoints, transport_type and securityConfig details (in the routes.yaml)
+ * This class hold the available endpoints and securityConfig details (in the routes.yaml)
  */
 public class EndpointListRouteDTO {
 
@@ -42,4 +44,13 @@ public class EndpointListRouteDTO {
     }
 
     //todo: add "add endpoint" method
+    public void addEndpoint(String endpoint){
+        if(endpointList == null){
+            endpointList = new ArrayList<>();
+        }
+        //todo: indicate if a duplicate has occurred ?
+        if(!endpointList.contains(endpoint)){
+            endpointList.add(endpoint);
+        }
+    }
 }

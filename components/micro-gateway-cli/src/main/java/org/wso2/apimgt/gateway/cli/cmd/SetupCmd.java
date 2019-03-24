@@ -590,49 +590,15 @@ public class SetupCmd implements GatewayLauncherCmd {
     /**
      * Generate DTO object which represents Routes configuration for Single API
      * //todo: change variable name
-     * @param apiList   Previous APIListRouteDTO object
      * @param apiName   API name
      * @param version   API version
      * @param endpointConfig    Endpoint Configuration json file //todo: do not follow the structure provided by API manager, add the improved structure
      * @param endpointSecurity  APIEndpointSecurityDTO object (contains security details for an API)
      * @return  modified APIListRouteDTO object
      */
-    private APIListRouteDTO generateRoutesConfForSingleAPI(APIListRouteDTO apiList, String apiName,
-                                                           String version, String endpointConfig,
+    private void generateRoutesConfForSingleAPI( String apiName, String version, String endpointConfig,
                                                            APIEndpointSecurityDTO endpointSecurity){
-        //represents DTO containing root directory of Routes Configuration File
-        APIListRouteDTO apiListRouteDTO = apiList;
-        if(apiListRouteDTO == null){
-            apiListRouteDTO = new APIListRouteDTO();
-        }
 
-        //check if the API already exists for the given name
-        APIRouteDTO apiRouteDTO = apiListRouteDTO.findByAPIName(apiName);
-        if(apiRouteDTO == null){
-            apiRouteDTO = new APIRouteDTO();
-        }
-        apiRouteDTO.setApiName(apiName);
-
-        //we create a new version each time. If the version already exists an exception is thrown
-        APIVersionRouteDTO apiVersionRouteDTO = new APIVersionRouteDTO();
-        apiVersionRouteDTO.setVersion(version);
-
-        //create separate environments
-        EndpointConfig prodEnv = new EndpointConfig();
-        EndpointConfig sandboxEnv = new EndpointConfig();
-
-        //map the available endpoint configuration used in api manager to routes definition in MGW implementation
-        EndpointListRouteDTO[] prodAndSandEndpointLists = generateEndpointListRouteDTO(endpointConfig,
-                endpointSecurity);
-        prodEnv.setBasicEndpoint(prodAndSandEndpointLists[0]);
-        sandboxEnv.setBasicEndpoint(prodAndSandEndpointLists[1]);
-
-        apiVersionRouteDTO.setProd(prodEnv);
-        apiVersionRouteDTO.setSandbox(sandboxEnv);
-        apiRouteDTO.addAPIVersion(apiVersionRouteDTO);
-        apiListRouteDTO.addAPIDTO(apiRouteDTO);
-
-        return apiListRouteDTO;
     }
 
     /**

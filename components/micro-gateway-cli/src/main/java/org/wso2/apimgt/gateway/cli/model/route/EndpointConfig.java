@@ -10,7 +10,7 @@ public abstract class EndpointConfig {
     private EndpointListRouteDTO ProdEndpointList = null;
     private EndpointListRouteDTO sandboxEndpointList = null;
 
-    @JsonProperty("Production")
+    @JsonProperty("prod")
     public EndpointListRouteDTO getProdEndpointList() {
         return ProdEndpointList;
     }
@@ -19,7 +19,7 @@ public abstract class EndpointConfig {
         this.ProdEndpointList = prodEndpointList;
     }
 
-    @JsonProperty("Sandbox")
+    @JsonProperty("sandbox")
     public EndpointListRouteDTO getSandboxEndpointList() {
         return sandboxEndpointList;
     }

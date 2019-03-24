@@ -5,25 +5,88 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
+import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.hashing.HashUtils;
+import org.wso2.apimgt.gateway.cli.model.rest.APIEndpointSecurityDTO;
+import org.wso2.apimgt.gateway.cli.model.rest.Endpoint;
+import org.wso2.apimgt.gateway.cli.model.rest.EndpointConfig;
+import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.model.route.APIRouteEndpointConfig;
+import org.wso2.apimgt.gateway.cli.model.route.EndpointListRouteDTO;
+import org.wso2.apimgt.gateway.cli.model.route.EndpointType;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class RouteUtils {
     //todo: rename variable name
     private static final ObjectMapper OBJECT_MAPPER_YAML = new ObjectMapper(new YAMLFactory());
     //todo: set routesConfigPath as class variable
+    private static final ObjectMapper OBJECT_MAPPER_JSON = new ObjectMapper();
 
     public static void saveGlobalEpAndBasepath(String apiName, String apiVersion, String routesConfigPath, String basePath,
-                                        JsonNode endpointConfig){
+                                        String endpointConfigJson){
         String apiId = HashUtils.generateAPIId(apiName,apiVersion);
         JsonNode routesConfig = getRoutesConfig(routesConfigPath);
         addBasePath(routesConfig, apiId, basePath);
-        addGlobalEndpoint(routesConfig, apiName, apiVersion, apiId, endpointConfig);
+        addGlobalEndpoint(routesConfig, apiName, apiVersion, apiId, endpointConfigJson);
         writeRoutesConfig(routesConfig, routesConfigPath);
 
+    }
+
+    public static void saveGlobalEpAndBasepath(List<ExtendedAPI> apiList, String routesConfigPath) throws IOException {
+        JsonNode routesConfig = getRoutesConfig(routesConfigPath);
+        for(ExtendedAPI api : apiList){
+            APIRouteEndpointConfig apiEpConfig = new APIRouteEndpointConfig();
+            apiEpConfig.setApiName(api.getName());
+            apiEpConfig.setApiVersion(api.getVersion());
+
+            //todo: implement its own method
+            EndpointListRouteDTO[] prodSandEndpointList = convertEndpointConfig(OpenApiCodegenUtils
+                    .getEndpointConfig(api.getEndpointConfig()), api.getEndpointSecurity());
+            apiEpConfig.setProdEndpointList(prodSandEndpointList[0]);
+            apiEpConfig.setSandboxEndpointList(prodSandEndpointList[1]);
+
+            String apiId = HashUtils.generateAPIId(api.getName(), api.getVersion());
+            //todo: constant for "/"
+            addBasePath(routesConfig, apiId, api.getContext() + "/" + api.getVersion());
+            addAPIRouteEndpointConfigAsGlobalEp(routesConfig, apiId, apiEpConfig);
+        }
+        writeRoutesConfig(routesConfig, routesConfigPath);
+    }
+
+    //todo: decide whether we are going to use same endpointConfig json structure or not
+    private static EndpointListRouteDTO[] convertEndpointConfig(EndpointConfig endpointConfig, APIEndpointSecurityDTO
+            securityDTO){
+        EndpointListRouteDTO prodList = new EndpointListRouteDTO();
+        EndpointListRouteDTO sandboxList = new EndpointListRouteDTO();
+
+        try {
+            prodList.setType(EndpointType.valueOf(endpointConfig.getEndpointType()));
+            sandboxList.setType(EndpointType.valueOf(endpointConfig.getEndpointType()));
+        } catch (IllegalArgumentException e){
+            throw new CLIRuntimeException("The provided Endpoint type is not valid.", e);
+        }
+
+        //all the endpoints are added to same list to make structure simple
+        for(Endpoint endpoint: endpointConfig.getProdEndpoints().getEndpoints()){
+            prodList.addEndpoint(endpoint.getEndpointUrl());
+        }
+        for(Endpoint endpoint: endpointConfig.getProdFailoverEndpoints().getEndpoints()){
+            prodList.addEndpoint(endpoint.getEndpointUrl());
+        }
+        for(Endpoint endpoint: endpointConfig.getSandEndpoints().getEndpoints()){
+            sandboxList.addEndpoint(endpoint.getEndpointUrl());
+        }
+        for(Endpoint endpoint: endpointConfig.getSandFailoverEndpoints().getEndpoints()){
+            sandboxList.addEndpoint(endpoint.getEndpointUrl());
+        }
+
+        prodList.setSecurityConfig(securityDTO);
+        sandboxList.setSecurityConfig(securityDTO);
+
+        return new EndpointListRouteDTO[]{prodList, sandboxList};
     }
 
     private static void addBasePath(JsonNode rootNode, String apiId, String basePath){
@@ -34,14 +97,35 @@ public class RouteUtils {
     }
 
     private static void addGlobalEndpoint(JsonNode rootNode, String apiName, String apiVersion, String apiId,
-                                   JsonNode endpointConfig){
+                                   String endpointConfigJson){
 
-            JsonNode globalEpsNode = rootNode.get("global_endpoints");
-            ObjectNode globalEp = OBJECT_MAPPER_YAML.createObjectNode();
-            globalEp.put("name", apiName).put("version", apiVersion);
-            globalEp.set("endpointConfig", endpointConfig);
-            //todo: check if the apiId is unique
-            ((ObjectNode) globalEpsNode).set(apiId, globalEp);
+        //todo: validate the endpointConfig
+        JsonNode endpointConfig;
+        try {
+            endpointConfig = OBJECT_MAPPER_JSON.readTree(endpointConfigJson);
+        } catch (IOException e) {
+            throw new CLIRuntimeException("Error while parsing the provided endpointConfig Json");
+        }
+
+        APIRouteEndpointConfig apiEpConfig = new APIRouteEndpointConfig();
+        apiEpConfig.setApiName(apiName);
+        apiEpConfig.setApiVersion(apiVersion);
+        try {
+            apiEpConfig.setProdEndpointList(OBJECT_MAPPER_JSON.readValue(endpointConfig.get("prod").asText(),
+                    EndpointListRouteDTO.class));
+            apiEpConfig.setSandboxEndpointList(OBJECT_MAPPER_JSON.readValue(endpointConfig.get("sandbox").asText(),
+                    EndpointListRouteDTO.class));
+        } catch (IOException e) {
+            throw new CLIRuntimeException("Error while parsing the provided EndpointConfig");
+        }
+        addAPIRouteEndpointConfigAsGlobalEp(rootNode, apiId, apiEpConfig);
+    }
+
+    private static void addAPIRouteEndpointConfigAsGlobalEp(JsonNode rootNode, String apiId,
+                                                            APIRouteEndpointConfig apiEpConfig){
+        JsonNode globalEpsNode = rootNode.get("global_endpoints");
+        //todo: check if the apiId is unique
+        ((ObjectNode) globalEpsNode).set(apiId, OBJECT_MAPPER_YAML.valueToTree(apiEpConfig));
     }
 
     private static void writeRoutesConfig(JsonNode routesConfig, String routesConfigPath){

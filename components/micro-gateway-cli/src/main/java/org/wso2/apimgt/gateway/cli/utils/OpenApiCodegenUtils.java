@@ -64,7 +64,7 @@ public class OpenApiCodegenUtils {
         api.setEndpointConfigRepresentation(getEndpointConfig(projectName, apiName, apiVersion));
     }
 
-    private static EndpointConfig getEndpointConfig(String endpointConfig) throws IOException {
+    public static EndpointConfig getEndpointConfig(String endpointConfig) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode;
         EndpointConfig endpointConf = new EndpointConfig();
