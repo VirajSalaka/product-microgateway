@@ -292,27 +292,17 @@ public class GatewayCmdUtils {
     /**
      * Create API-Files Directory for a particular project
      * @param projectName name of the project
-     * @param apiName name of the API
-     * @param apiVersion version of the API
+     * @param apiId md5 hash value for apiName:version
      * @param apiDefPath File path for the swagger File (API definition)
      */
-    public static void createAPIFilesStructure(String projectName, String apiName, String apiVersion,
-                                               String apiDefPath){
+    public static void createAPIFilesStructure(String projectName, String apiId, String apiDefPath){
         File projectDir = createFolderIfNotExist(getUserDir() + File.separator + projectName);
 
         String apiFilesDirPath = projectDir + File.separator + GatewayCliConstants.PROJECTS_API_FILES_DIRECTORY_NAME;
         createFolderIfNotExist(apiFilesDirPath);
 
-        String apiFolderName;
-        String apiDirPath;
-
-        try {
-            apiFolderName = HashUtils.generateAPIId(apiName, apiVersion);
-            apiDirPath = apiFilesDirPath + File.separator + apiFolderName;
-            createFolderIfNotExist(apiDirPath);
-        } catch (HashingException e) {
-            throw new CLIInternalException("Error while hashing the APIName:version string");
-        }
+        String apiDirPath = apiFilesDirPath + File.separator + apiId;
+        createFolderIfNotExist(apiDirPath);
 
         createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.APPLICATION_THROTTLE_POLICIES_FILE);
         createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.SUBSCRIPTION_THROTTLE_POLICIES_FILE);
@@ -326,7 +316,7 @@ public class GatewayCmdUtils {
             copyFilesToSources(apiDefPath, apiDirPath + File.separator +
                     GatewayCliConstants.API_SWAGGER);
         } catch (IOException e) {
-            new CLIInternalException("Error while copying the swagger to the project directory");
+            throw new CLIInternalException("Error while copying the swagger to the project directory");
         }
 
     }
@@ -631,13 +621,12 @@ public class GatewayCmdUtils {
     /**
      * Returns the path to the swagger for a defined version of an API
      * @param projectName name of the project
-     * @param apiName name of the API
-     * @param apiVersion name of the API version
+     * @param apiId md5 hash value of apiName:apiVersion
      * @return path to the swagger for a defined version of an API
      */
-    public static String getProjectSwaggerFilePath(String projectName, String apiName, String apiVersion){
-        return getProjectAPIFilesDirectoryPath(projectName) + File.separator + apiName + File.separator + apiVersion +
-                File.separator + GatewayCliConstants.API_SWAGGER;
+    public static String getProjectSwaggerFilePath(String projectName, String apiId){
+        return getProjectAPIFilesDirectoryPath(projectName) + File.separator + apiId + File.separator +
+                GatewayCliConstants.API_SWAGGER;
     }
 
     /**

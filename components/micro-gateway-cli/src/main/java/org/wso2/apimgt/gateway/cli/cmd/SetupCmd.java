@@ -41,6 +41,7 @@ import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.exception.CliLauncherException;
 import org.wso2.apimgt.gateway.cli.exception.ConfigParserException;
+import org.wso2.apimgt.gateway.cli.hashing.HashUtils;
 import org.wso2.apimgt.gateway.cli.model.config.BasicAuth;
 import org.wso2.apimgt.gateway.cli.model.config.Client;
 import org.wso2.apimgt.gateway.cli.model.config.Config;
@@ -62,6 +63,7 @@ import org.wso2.apimgt.gateway.cli.rest.RESTAPIService;
 import org.wso2.apimgt.gateway.cli.rest.RESTAPIServiceImpl;
 import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
 import org.wso2.apimgt.gateway.cli.utils.OpenApiCodegenUtils;
+import org.wso2.apimgt.gateway.cli.utils.SwaggerUtils;
 import org.wso2.apimgt.gateway.cli.utils.grpc.GRPCUtils;
 
 import java.io.File;
@@ -432,7 +434,7 @@ public class SetupCmd implements GatewayLauncherCmd {
                         .getProjectAPIFilesDirectoryPath(projectName) + "/balxGeneration.sh");
             } catch (IOException e) {
                 e.printStackTrace();
-                new CLIInternalException("cannot copy balxGeneration shell script");
+                throw new CLIInternalException("cannot copy balxGeneration shell script");
             }
 
             //todo: check if the files has been changed using hash utils
@@ -675,172 +677,6 @@ public class SetupCmd implements GatewayLauncherCmd {
         return endpointSecurity;
     }
 
-    /** generate endpoint list DTO object (in routes configuration file)
-     * @param endpointConfig    endpoint configuration provided by API Manager as a json
-     * @param endpointSecurityJson  Endpoint security configuration in json {type: , name: , password: }
-     * @return
-     */
-    private EndpointListRouteDTO[] generateEndpointListRouteDTO(String endpointConfig, String endpointSecurityJson){
-
-        return generateEndpointListRouteDTO(endpointConfig, parseEndpointSecurityDefinition(endpointSecurityJson));
-    }
-
-    /** generate endpoint list DTO object (in routes configuration file)
-     * @param endpointConfig    endpoint configuration provided by API Manager as a json
-     * @param endpointSecurity  Endpoint security configuration object
-     * @return EndpointListDTO array with two elements: for production and sandbox
-     */
-    private EndpointListRouteDTO[] generateEndpointListRouteDTO(String endpointConfig,
-                                                              APIEndpointSecurityDTO endpointSecurity){
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = null;
-        try {
-            root = mapper.readTree(endpointConfig);
-        } catch (IOException e) {
-            new CLIRuntimeException("Error: endpointConfig string cannot be parsed", e);
-        }
-        String type = root.get("endpoint_type").asText();
-
-        //depending on the type we have to decide the matching DTO;
-        switch (type){
-            //todo: introduce a constant (Enum cannot be used)
-            case "load_balance":
-                return generateLoadBalanceEpListDTO(root, endpointSecurity);
-            case "failover":
-                return generateFailoverEpListDTO(root, endpointSecurity);
-            case "http":
-                return generateDefaultEndpointListDTO(root, endpointSecurity);
-            default:
-                throw new CLIRuntimeException(type + " is not recognized as a valid endpoint_type. Available endpoint_types " +
-                        "are \"load_balance\", \"failover\" and \"http\"");
-        }
-
-    }
-
-    //todo: rename this method
-    /**
-     * generate Endpoint List DTO for load_balance type
-     * @param endpointConfig EndpointConfig as a JsonNode Object
-     * @param endpointSecurity APIEndpointSecurityDTO
-     * @return EndpointListDTO array for load_balance type with two elements: production and sandbox
-     */
-    private LoadBalanceEndpointListDTO[] generateLoadBalanceEpListDTO(JsonNode endpointConfig,
-                                                                      APIEndpointSecurityDTO endpointSecurity){
-        JsonNode productionArr = endpointConfig.get("production_endpoints");
-        LoadBalanceEndpointListDTO productionEndpoint = new LoadBalanceEndpointListDTO();
-        if(productionArr != null){
-            if(!productionArr.isArray()){
-                throw new CLIRuntimeException("load balance endpoints for production environment are not provided in " +
-                        "JSON array format");
-            }
-            for(JsonNode element: productionArr){
-                productionEndpoint.addEndpoint(element.get("url").asText());
-                productionEndpoint.setType(EndpointType.load_balance);
-                productionEndpoint.setSecurityConfig(endpointSecurity);
-            }
-        }
-
-        JsonNode sandboxArr = endpointConfig.get("sandbox_endpoints");
-        LoadBalanceEndpointListDTO sandboxEndpoint = new LoadBalanceEndpointListDTO();
-        if(sandboxArr != null){
-            if(!sandboxArr.isArray()){
-                throw new CLIRuntimeException("load balance endpoints for sandbox environment are not provided in " +
-                        "JSON array format");
-
-            }
-            for(JsonNode element: sandboxArr){
-                sandboxEndpoint.addEndpoint(element.get("url").asText());
-                sandboxEndpoint.setType(EndpointType.load_balance);
-                sandboxEndpoint.setSecurityConfig(endpointSecurity);
-            }
-        }
-        return new LoadBalanceEndpointListDTO[] {productionEndpoint, sandboxEndpoint};
-    }
-
-    //todo: rename this method
-    //todo: check the logically possible setups, with the defn of failover
-    /**
-     * generate Endpoint List DTO for failover type
-     * @param endpointConfig    EndpointConfig as a JsonNode Object
-     * @param endpointSecurity  APIEndpointSecurityDTO
-     * @return  EndpointListDTO array for failover type with two elements: production and sandbox
-     */
-    private FailoverEndpointListDTO[] generateFailoverEpListDTO(JsonNode endpointConfig,
-                                                                APIEndpointSecurityDTO endpointSecurity){
-
-        FailoverEndpointListDTO productionEndpoint = new FailoverEndpointListDTO();
-        JsonNode productionUrl = endpointConfig.get("production_endpoints");
-        JsonNode productionFailovers = endpointConfig.get("production_failovers");
-
-        if(productionUrl != null){
-            productionEndpoint.setDefaultEndpoint(productionUrl.get("url").asText());
-            productionEndpoint.setType(EndpointType.failover);
-            productionEndpoint.setSecurityConfig(endpointSecurity);
-        }
-        if(productionFailovers != null){
-            if(!productionFailovers.isArray()){
-                throw new CLIRuntimeException("failover endpoints for production environment are not provided in " +
-                        "JSON array format");
-            }
-            for(JsonNode element: productionFailovers){
-                productionEndpoint.addEndpoint(element.get("url").asText());
-            }
-        }
-
-        FailoverEndpointListDTO sandboxEndpoint = new FailoverEndpointListDTO();
-        JsonNode sandboxUrl = endpointConfig.get("sandbox_endpoints");
-        JsonNode sandboxFailovers = endpointConfig.get("sandbox_failovers");
-
-        if(sandboxUrl != null){
-            sandboxEndpoint.setDefaultEndpoint(sandboxUrl.get("url").asText());
-            sandboxEndpoint.setType(EndpointType.failover);
-            sandboxEndpoint.setSecurityConfig(endpointSecurity);
-        }
-
-        if(sandboxFailovers != null){
-            if(!sandboxFailovers.isArray()){
-                throw new CLIRuntimeException("failover endpoints for sandbox environment are not provided in JSON " +
-                        "array format");
-            }
-            for(JsonNode element: sandboxFailovers){
-                sandboxEndpoint.addEndpoint(element.get("url").asText());
-            }
-        }
-
-        return new FailoverEndpointListDTO[] {productionEndpoint, sandboxEndpoint};
-    }
-
-    //todo: rename this method
-    //todo: bring "nothing to add" notification
-    /**
-     * generate Endpoint List DTO for default type (single endpoint)
-     * @param endpointConfig    EndpointConfig as a JsonNode Object
-     * @param endpointSecurity  APIEndpointSecurityDTO
-     * @return  EndpointListDTO array for default type with two elements: production and sandbox
-     */
-    private DefaultEndpointListDTO[] generateDefaultEndpointListDTO(JsonNode endpointConfig,
-                                                                    APIEndpointSecurityDTO endpointSecurity){
-
-        DefaultEndpointListDTO productionEndpoint = new DefaultEndpointListDTO();
-        JsonNode productionUrl = endpointConfig.get("production_endpoints");
-
-        if(productionUrl != null){
-            productionEndpoint.setEndpoint(productionUrl.get("url").asText());
-            productionEndpoint.setType(EndpointType.http);
-            productionEndpoint.setSecurityConfig(endpointSecurity);
-        }
-
-        DefaultEndpointListDTO sandboxEndpoint = new DefaultEndpointListDTO();
-        JsonNode sandboxUrl = endpointConfig.get("sandbox_endpoints");
-
-        if(sandboxUrl != null){
-            sandboxEndpoint.setEndpoint(sandboxUrl.get("url").asText());
-            sandboxEndpoint.setType(EndpointType.http);
-            sandboxEndpoint.setSecurityConfig(endpointSecurity);
-        }
-
-        return new DefaultEndpointListDTO[] {productionEndpoint, sandboxEndpoint};
-    }
 
     /**
      * Save subscription throttle policies in JSON format
@@ -857,9 +693,9 @@ public class SetupCmd implements GatewayLauncherCmd {
             GatewayCmdUtils.writeContent(policies,
                     new File(GatewayCmdUtils.getProjectSubscriptionThrottlePoliciesFilePath(projectName)));
         } catch (JsonProcessingException e) {
-            new CLIInternalException("Error: Cannot parse the SubscriptionThrottlePolicies Object to json");
+            throw new CLIInternalException("Error: Cannot parse the SubscriptionThrottlePolicies Object to json");
         } catch (IOException e) {
-            new CLIInternalException("Error: cannot write to the file : " +
+            throw new CLIInternalException("Error: cannot write to the file : " +
                     GatewayCliConstants.SUBSCRIPTION_THROTTLE_POLICIES_FILE);
         }
     }
@@ -879,9 +715,9 @@ public class SetupCmd implements GatewayLauncherCmd {
             GatewayCmdUtils.writeContent(policies,
                     new File(GatewayCmdUtils.getProjectAppThrottlePoliciesFilePath(projectName)));
         } catch (JsonProcessingException e) {
-            new CLIInternalException("Error: Cannot parse the ApplicationThrottlePolicies Object to json");
+            throw new CLIInternalException("Error: Cannot parse the ApplicationThrottlePolicies Object to json");
         } catch (IOException e) {
-            new CLIInternalException("Error: cannot write to the file : " +
+            throw new CLIInternalException("Error: cannot write to the file : " +
                     GatewayCliConstants.APPLICATION_THROTTLE_POLICIES_FILE);
         }
     }
@@ -900,9 +736,9 @@ public class SetupCmd implements GatewayLauncherCmd {
             GatewayCmdUtils.writeContent(clientCertMetadata,
                     new File(GatewayCmdUtils.getProjectClientCertMetadataFilePath(projectName)));
         } catch (JsonProcessingException e) {
-            new CLIInternalException("Error: Cannot parse the ApplicationThrottlePolicies Object to json");
+            throw new CLIInternalException("Error: Cannot parse the ApplicationThrottlePolicies Object to json");
         } catch (IOException e) {
-            new CLIInternalException("Error: cannot write to the file : " +
+            throw new CLIInternalException("Error: cannot write to the file : " +
                     GatewayCliConstants.CLIENT_CERT_METADATA_FILE);
         }
     }
@@ -929,33 +765,34 @@ public class SetupCmd implements GatewayLauncherCmd {
                     apiVersion)));
         }
         catch (JsonProcessingException e) {
-            new CLIInternalException("Error: Cannot parse the Swagger Object to json");
+            throw new CLIInternalException("Error: Cannot parse the Swagger Object to json");
         }
         catch (IOException e) {
-            new CLIInternalException("Error: Cannot map the API Definition Property into a swagger file.");
+            throw new CLIInternalException("Error: Cannot map the API Definition Property into a swagger file.");
         }
     }
 
-    /**
-     * Save swagger definition for Single API
-     * @param projectName project name
-     * @param swaggerDefinition API swagger definition (for developer first approach) as a JSON string
-     */
-    private void saveSwaggerDefinitionForSingleAPI(String projectName, String swaggerDefinition){
+    private void saveSwaggerDefinitionForSingleAPI(String projectName, ExtendedAPI api, String basePath){
+        String swaggerString = SwaggerUtils.generateSwaggerString(api, basePath);
+        String apiId = HashUtils.generateAPIId( api.getName(), api.getVersion());
+        try{
+            GatewayCmdUtils.writeContent(swaggerString,
+                    new File(GatewayCmdUtils.getProjectSwaggerFilePath(projectName, apiId)));
+        } catch (IOException e){
+            throw new CLIInternalException("Error while writing the swagger file of API " + api.getName() + ":" +
+                    api.getVersion());
+        }
+
+    }
+
+    private void saveSwaggerDefinitionForSingleAPI(String projectName, String swaggerPath){
         try {
-            SwaggerParser parser;
-            Swagger swagger;
-            parser = new SwaggerParser();
-            swagger = parser.parse(swaggerDefinition);
-
-            String apiName = swagger.getInfo().getTitle();
-            String apiVersion = swagger.getInfo().getVersion();
-
-            GatewayCmdUtils.writeContent(swaggerDefinition,
-                    new File(GatewayCmdUtils.getProjectSwaggerFilePath(projectName, apiName, apiVersion)));
+            String apiId = SwaggerUtils.generateAPIdForSwagger(swaggerPath);
+            GatewayCmdUtils.copyFilesToSources(swaggerPath,
+                    GatewayCmdUtils.getProjectSwaggerFilePath(projectName, apiId));
         }
         catch (IOException e) {
-            new CLIInternalException("Error: Cannot map the API Definition Property into a swagger file.");
+            throw new CLIInternalException("Error: Cannot map the API Definition Property into a swagger file.");
         }
     }
 
@@ -966,8 +803,7 @@ public class SetupCmd implements GatewayLauncherCmd {
      */
     private void saveSwaggerDefinitionForMultipleAPIs(String projectName, List<ExtendedAPI> apis){
         for(ExtendedAPI api : apis){
-            saveSwaggerDefinitionForSingleAPI(projectName, api.getName(), api.getVersion(), api.getApiDefinition(),
-                    api.getContext());
+            saveSwaggerDefinitionForSingleAPI(projectName, api, null);
         }
     }
 }
