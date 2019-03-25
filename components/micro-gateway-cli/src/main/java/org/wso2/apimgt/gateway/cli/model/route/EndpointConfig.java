@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * This class represents the endpoint configurations for the given environment. (in the routes.yaml)
  */
-public abstract class EndpointConfig {
+public class EndpointConfig {
 
     private EndpointListRouteDTO ProdEndpointList = null;
     private EndpointListRouteDTO sandboxEndpointList = null;

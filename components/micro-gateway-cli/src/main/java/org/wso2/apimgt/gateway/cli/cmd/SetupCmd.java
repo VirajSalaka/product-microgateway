@@ -147,8 +147,11 @@ public class SetupCmd implements GatewayLauncherCmd {
     @Parameter(names = {"-k", "--insecure"}, hidden = true, arity = 0)
     private boolean isInsecure;
 
-    @Parameter(names = {"-b", "--security"}, hidden = true)
+    @Parameter(names = {"-sec", "--security"}, hidden = true)
     private String security;
+
+    @Parameter(names = {"-b", "--basepath"}, hidden = true)
+    private String basepath;
 
     @Parameter(names = { "-etcd", "--enable-etcd" }, hidden = true, arity = 0)
     private boolean isEtcdEnabled;

@@ -4,14 +4,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.wso2.apimgt.gateway.cli.constants.RESTServiceConstants;
 import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.hashing.HashUtils;
 import org.wso2.apimgt.gateway.cli.model.rest.APIEndpointSecurityDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.Endpoint;
-import org.wso2.apimgt.gateway.cli.model.rest.EndpointConfig;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.model.route.APIRouteEndpointConfig;
+import org.wso2.apimgt.gateway.cli.model.route.EndpointConfig;
 import org.wso2.apimgt.gateway.cli.model.route.EndpointListRouteDTO;
 import org.wso2.apimgt.gateway.cli.model.route.EndpointType;
 
@@ -56,38 +57,38 @@ public class RouteUtils {
         writeRoutesConfig(routesConfig, routesConfigPath);
     }
 
-    //todo: decide whether we are going to use same endpointConfig json structure or not
-    private static EndpointListRouteDTO[] convertEndpointConfig(EndpointConfig endpointConfig, APIEndpointSecurityDTO
-            securityDTO){
-        EndpointListRouteDTO prodList = new EndpointListRouteDTO();
-        EndpointListRouteDTO sandboxList = new EndpointListRouteDTO();
-
-        try {
-            prodList.setType(EndpointType.valueOf(endpointConfig.getEndpointType()));
-            sandboxList.setType(EndpointType.valueOf(endpointConfig.getEndpointType()));
-        } catch (IllegalArgumentException e){
-            throw new CLIRuntimeException("The provided Endpoint type is not valid.", e);
-        }
-
-        //all the endpoints are added to same list to make structure simple
-        for(Endpoint endpoint: endpointConfig.getProdEndpoints().getEndpoints()){
-            prodList.addEndpoint(endpoint.getEndpointUrl());
-        }
-        for(Endpoint endpoint: endpointConfig.getProdFailoverEndpoints().getEndpoints()){
-            prodList.addEndpoint(endpoint.getEndpointUrl());
-        }
-        for(Endpoint endpoint: endpointConfig.getSandEndpoints().getEndpoints()){
-            sandboxList.addEndpoint(endpoint.getEndpointUrl());
-        }
-        for(Endpoint endpoint: endpointConfig.getSandFailoverEndpoints().getEndpoints()){
-            sandboxList.addEndpoint(endpoint.getEndpointUrl());
-        }
-
-        prodList.setSecurityConfig(securityDTO);
-        sandboxList.setSecurityConfig(securityDTO);
-
-        return new EndpointListRouteDTO[]{prodList, sandboxList};
-    }
+//    //todo: decide whether we are going to use same endpointConfig json structure or not
+//    private static EndpointListRouteDTO[] convertEndpointConfig(EndpointConfig endpointConfig, APIEndpointSecurityDTO
+//            securityDTO){
+//        EndpointListRouteDTO prodList = new EndpointListRouteDTO();
+//        EndpointListRouteDTO sandboxList = new EndpointListRouteDTO();
+//
+//        try {
+//            prodList.setType(EndpointType.valueOf(endpointConfig.getEndpointType()));
+//            sandboxList.setType(EndpointType.valueOf(endpointConfig.getEndpointType()));
+//        } catch (IllegalArgumentException e){
+//            throw new CLIRuntimeException("The provided Endpoint type is not valid.", e);
+//        }
+//
+//        //all the endpoints are added to same list to make structure simple
+//        for(Endpoint endpoint: endpointConfig.getProdEndpoints().getEndpoints()){
+//            prodList.addEndpoint(endpoint.getEndpointUrl());
+//        }
+//        for(Endpoint endpoint: endpointConfig.getProdFailoverEndpoints().getEndpoints()){
+//            prodList.addEndpoint(endpoint.getEndpointUrl());
+//        }
+//        for(Endpoint endpoint: endpointConfig.getSandEndpoints().getEndpoints()){
+//            sandboxList.addEndpoint(endpoint.getEndpointUrl());
+//        }
+//        for(Endpoint endpoint: endpointConfig.getSandFailoverEndpoints().getEndpoints()){
+//            sandboxList.addEndpoint(endpoint.getEndpointUrl());
+//        }
+//
+//        prodList.setSecurityConfig(securityDTO);
+//        sandboxList.setSecurityConfig(securityDTO);
+//
+//        return new EndpointListRouteDTO[]{prodList, sandboxList};
+//    }
 
     private static void addBasePath(JsonNode rootNode, String apiId, String basePath){
 
@@ -197,5 +198,118 @@ public class RouteUtils {
                     "APIRouteEndpointConfig object");
         }
         return apiRouteEndpointConfig;
+    }
+
+
+    private static EndpointConfig getEndpointConfig(String endpointConfigString){
+
+        EndpointConfig endpointconfig = new EndpointConfig();
+        EndpointListRouteDTO prodEndpointConfig = new EndpointListRouteDTO();
+        EndpointListRouteDTO sandEndpointConfig = new EndpointListRouteDTO();
+
+        JsonNode rootNode;
+        try {
+            rootNode = OBJECT_MAPPER_JSON.readTree(endpointConfigString);
+        } catch (IOException e) {
+            throw new CLIRuntimeException("Error while parsing the endpointConfig JSON string");
+        }
+        //todo: check whether path() can be used instead of get
+        JsonNode endpointTypeNode = rootNode.get(RESTServiceConstants.ENDPOINT_TYPE);
+
+        if(endpointTypeNode == null || endpointTypeNode.isNull()){
+            throw new CLIRuntimeException("EndpointType is not included in the endpointConfig JSON string");
+        }
+
+        String endpointType = endpointTypeNode.asText();
+
+        //todo: set the endpointType variable in both EndpointListROuteDTO
+        if (RESTServiceConstants.HTTP.equalsIgnoreCase(endpointType) || RESTServiceConstants.FAILOVER.
+                equalsIgnoreCase(endpointType)) {
+
+            JsonNode prodEndpointNode = rootNode.get(RESTServiceConstants.PRODUCTION_ENDPOINTS);
+            if (prodEndpointNode != null) {
+                prodEndpointConfig.addEndpoint(prodEndpointNode.get(RESTServiceConstants.URL).asText());
+            }
+
+
+        }
+
+
+
+//        ObjectMapper mapper = new ObjectMapper();
+//        JsonNode rootNode;
+//        EndpointConfig endpointConf = new EndpointConfig();
+//        rootNode = mapper.readTree(endpointConfig);
+//        String endpointType = rootNode.path(RESTServiceConstants.ENDPOINT_TYPE).asText();
+//        EndpointConfig.
+//        endpointConf.setEndpointType(endpointType);
+//
+//        if (RESTServiceConstants.HTTP.equalsIgnoreCase(endpointType) || RESTServiceConstants.FAILOVER.
+//                equalsIgnoreCase(endpointType)) {
+//            JsonNode prodEndpointNode = rootNode.get(RESTServiceConstants.PRODUCTION_ENDPOINTS);
+//            if (prodEndpointNode != null) {
+//                Endpoint prod = new Endpoint();
+//                prod.setEndpointUrl(prodEndpointNode.get(RESTServiceConstants.URL).asText());
+//                endpointConf.addProdEndpoint(prod);
+//            }
+//
+//            JsonNode sandEndpointNode = rootNode.get(RESTServiceConstants.SANDBOX_ENDPOINTS);
+//            if (sandEndpointNode != null) {
+//                Endpoint sandbox = new Endpoint();
+//                sandbox.setEndpointUrl(sandEndpointNode.get(RESTServiceConstants.URL).asText());
+//                endpointConf.addSandEndpoint(sandbox);
+//            }
+//
+//            if (RESTServiceConstants.FAILOVER.equalsIgnoreCase(endpointType)) {
+//                //ballerina does not treat primary/failover endpoint separately. Hence, primary production/sandbox
+//                //  eps (if any) will be added into failover list.
+//                if (endpointConf.getProdEndpoints() != null
+//                        && endpointConf.getProdEndpoints().getEndpoints().size() > 0) {
+//                    endpointConf.addProdFailoverEndpoint(endpointConf.getProdEndpoints().getEndpoints().get(0));
+//                }
+//                if (endpointConf.getSandEndpoints() != null
+//                        && endpointConf.getSandEndpoints().getEndpoints().size() > 0) {
+//                    endpointConf.addSandFailoverEndpoint(endpointConf.getSandEndpoints().getEndpoints().get(0));
+//                }
+//
+//                //Adding additional production/sandbox failover endpoints
+//                JsonNode prodFailoverEndpointNode = rootNode.withArray(RESTServiceConstants.PRODUCTION_FAILOVERS);
+//                if (prodFailoverEndpointNode != null) {
+//                    for (JsonNode node : prodFailoverEndpointNode) {
+//                        Endpoint endpoint = new Endpoint();
+//                        endpoint.setEndpointUrl(node.get(RESTServiceConstants.URL).asText());
+//                        endpointConf.addProdFailoverEndpoint(endpoint);
+//                    }
+//                }
+//
+//                JsonNode sandFailoverEndpointNode = rootNode.withArray(RESTServiceConstants.SANDBOX_FAILOVERS);
+//                if (sandFailoverEndpointNode != null) {
+//                    for (JsonNode node : sandFailoverEndpointNode) {
+//                        Endpoint endpoint = new Endpoint();
+//                        endpoint.setEndpointUrl(node.get(RESTServiceConstants.URL).asText());
+//                        endpointConf.addSandFailoverEndpoint(endpoint);
+//                    }
+//                }
+//            }
+//        } else if (RESTServiceConstants.LOAD_BALANCE.equalsIgnoreCase(endpointType)) {
+//            JsonNode prodEndpoints = rootNode.withArray(RESTServiceConstants.PRODUCTION_ENDPOINTS);
+//            if (prodEndpoints != null) {
+//                for (JsonNode node : prodEndpoints) {
+//                    Endpoint endpoint = new Endpoint();
+//                    endpoint.setEndpointUrl(node.get(RESTServiceConstants.URL).asText());
+//                    endpointConf.addProdEndpoint(endpoint);
+//                }
+//            }
+//
+//            JsonNode sandboxEndpoints = rootNode.withArray(RESTServiceConstants.SANDBOX_ENDPOINTS);
+//            if (sandboxEndpoints != null) {
+//                for (JsonNode node : sandboxEndpoints) {
+//                    Endpoint endpoint = new Endpoint();
+//                    endpoint.setEndpointUrl(node.get(RESTServiceConstants.URL).asText());
+//                    endpointConf.addSandEndpoint(endpoint);
+//                }
+//            }
+//        }
+//        return endpointConf;
     }
 }
