@@ -775,6 +775,15 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
     }
 
+    private void saveSwaggerDefinitionForSingleAPI(String projectName, String apiDefPath){
+        String apiId = SwaggerUtils.generateAPIdForSwagger(apiDefPath);
+        try {
+            GatewayCmdUtils.copyFilesToSources(apiDefPath, GatewayCmdUtils.getProjectSwaggerFilePath(projectName, apiId));
+        } catch (IOException e) {
+            throw new CLIInternalException("Error while copying swagger file to folder location for apiId: " + apiId);
+        }
+    }
+
     private void saveSwaggerDefinitionForSingleAPI(String projectName, ExtendedAPI api, String basePath){
         String swaggerString = SwaggerUtils.generateSwaggerString(api, basePath);
         String apiId = HashUtils.generateAPIId( api.getName(), api.getVersion());
@@ -786,17 +795,6 @@ public class SetupCmd implements GatewayLauncherCmd {
                     api.getVersion());
         }
 
-    }
-
-    private void saveSwaggerDefinitionForSingleAPI(String projectName, String swaggerPath){
-        try {
-            String apiId = SwaggerUtils.generateAPIdForSwagger(swaggerPath);
-            GatewayCmdUtils.copyFilesToSources(swaggerPath,
-                    GatewayCmdUtils.getProjectSwaggerFilePath(projectName, apiId));
-        }
-        catch (IOException e) {
-            throw new CLIInternalException("Error: Cannot map the API Definition Property into a swagger file.");
-        }
     }
 
     /**
