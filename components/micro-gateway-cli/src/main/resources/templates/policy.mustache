@@ -17,7 +17,18 @@ function {{funcName}}() {
                     select s{{name}}reqCopy.messageID as messageID, (s{{name}}reqCopy.{{tierType}} == "{{name}}") as isEligible, s{{name}}reqCopy.{{policyKey}} as throttleKey, 0 as expiryTimestamp
                     => (gateway:EligibilityStreamDTO[] counts) {
 
-                    foreach var c in counts{
+    from s{{name}}eligibilityStream
+    window gateway:timeBatch({{unitTime}})
+    where s{{name}}eligibilityStream.isEligible == true
+    select s{{name}}eligibilityStream.throttleKey as throttleKey, count() as eventCount, true as
+    stopOnQuota, s{{name}}eligibilityStream.expiryTimestamp as expiryTimeStamp
+    group by s{{name}}eligibilityStream.throttleKey
+    => (gateway:IntermediateStream[] counts) {
+    foreach var c in counts{
+    io:println("COunt-----------==========",c);
+        s{{name}}intermediateStream.publish(c);
+    }
+    }
 
     from s{{name}}intermediateStream
     select s{{name}}intermediateStream.throttleKey, getThrottleValues{{name}}(s{{name}}intermediateStream.eventCount) as isThrottled,
@@ -25,6 +36,7 @@ function {{funcName}}() {
     group by s{{name}}eligibilityStream.throttleKey
     => (gateway:GlobalThrottleStreamDTO[] counts) {
     foreach var c in counts{
+     io:println("COunt-2222----------==========",c);
         s{{name}}resultStream.publish(c);
     }
     }
@@ -35,6 +47,7 @@ function {{funcName}}() {
     s{{name}}resultStream.stopOnQuota, s{{name}}resultStream.expiryTimeStamp
     => (gateway:GlobalThrottleStreamDTO[] counts) {
     foreach var c in counts{
+    io:println("COunt-33333333---------==========",c);
         s{{name}}globalThrotCopy.publish(c);
     }
     }
