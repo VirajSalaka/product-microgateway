@@ -21,12 +21,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.swagger.models.Swagger;
-import io.swagger.parser.SwaggerParser;
-import io.swagger.util.Json;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.packerina.init.InitHandler;
 import org.slf4j.Logger;
@@ -56,13 +51,13 @@ import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyDT
 import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyListDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyListDTO;
-import org.wso2.apimgt.gateway.cli.model.route.*;
 import org.wso2.apimgt.gateway.cli.oauth.OAuthService;
 import org.wso2.apimgt.gateway.cli.oauth.OAuthServiceImpl;
 import org.wso2.apimgt.gateway.cli.rest.RESTAPIService;
 import org.wso2.apimgt.gateway.cli.rest.RESTAPIServiceImpl;
 import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
 import org.wso2.apimgt.gateway.cli.utils.OpenApiCodegenUtils;
+import org.wso2.apimgt.gateway.cli.utils.RouteUtils;
 import org.wso2.apimgt.gateway.cli.utils.SwaggerUtils;
 import org.wso2.apimgt.gateway.cli.utils.grpc.GRPCUtils;
 
@@ -248,9 +243,23 @@ public class SetupCmd implements GatewayLauncherCmd {
                         endpointConfig = "{\"production_endpoints\":{\"url\":\"" + endpoint.trim() +
                                 "\"},\"endpoint_type\":\"http\"}";
                     }
-                    saveSwaggerDefinitionForSingleAPI(projectName, api);
-                outStream.println("Setting up project " + projectName + " is successful.");
 
+                    if(StringUtils.isEmpty(basepath)){
+                        basepath = SwaggerUtils.getBasePathFromSwagger(openApi);
+                        if(StringUtils.isEmpty(basepath)){
+                            if ((basepath = promptForTextInput( "Enter basepath: "))
+                                    .trim().isEmpty()) {
+                                //todo: shall we allow the user to proceed with empty basepath
+                                throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty basepath");
+                            }
+
+                        }
+                    }
+
+                    saveSwaggerDefinitionForSingleAPI(projectName, api);
+                    RouteUtils.saveGlobalEpAndBasepath(openApi,
+                            GatewayCmdUtils.getProjectRoutesConfFilePath(projectName), basepath, endpointConfig);
+                outStream.println("Setting up project " + projectName + " is successful.");
             }
 
         } else {
@@ -393,7 +402,6 @@ public class SetupCmd implements GatewayLauncherCmd {
                             isInsecure);
 
             ObjectMapper objectMapper = new ObjectMapper();
-            GatewayCmdUtils.createAPIFilesStructure(projectName, apiName, version, null);
 
             List<ExtendedAPI> apis = new ArrayList<>();
             RESTAPIService service = new RESTAPIServiceImpl(publisherEndpoint, adminEndpoint, isInsecure);
@@ -405,7 +413,7 @@ public class SetupCmd implements GatewayLauncherCmd {
                     apis.add(api);
                 }
             }
-            if (apis == null || (apis != null && apis.isEmpty())) {
+            if (apis == null || apis.isEmpty()) {
                 // Delete folder
                 GatewayCmdUtils.deleteProject(workspace + File.separator + projectName);
                 String errorMsg;
@@ -416,29 +424,30 @@ public class SetupCmd implements GatewayLauncherCmd {
                 }
                 throw new CLIRuntimeException(errorMsg);
             }
+
             List<ApplicationThrottlePolicyDTO> applicationPolicies = service.getApplicationPolicies(accessToken);
             List<SubscriptionThrottlePolicyDTO> subscriptionPolicies = service.getSubscriptionPolicies(accessToken);
             List<ClientCertMetadataDTO> clientCertificates = service.getClientCertificates(accessToken);
             logger.info(String.valueOf(clientCertificates));
 
-            saveRoutesConfForMultipleAPIs(projectName, apis);
+            RouteUtils.saveGlobalEpAndBasepath(apis, GatewayCmdUtils.getProjectRoutesConfFilePath(projectName));
             saveApplicationThrottlePolicies(objectMapper, projectName, applicationPolicies);
             saveSubscriptionThrottlePolicies(objectMapper, projectName, subscriptionPolicies);
             saveClientCertMetadata(objectMapper, projectName, clientCertificates);
             saveSwaggerDefinitionForMultipleAPIs(projectName, apis);
 
             //todo: remove this command : temporary solution
-            try {
-                String shellContent = GatewayCmdUtils.readFileAsString("balxGeneration/balxGeneration.sh",
-                        true);
-                GatewayCmdUtils.writeContent(shellContent, new File(GatewayCmdUtils
-                        .getProjectAPIFilesDirectoryPath(projectName)+"/balxGeneration.sh"));
-                Runtime.getRuntime().exec("chmod +x " + GatewayCmdUtils
-                        .getProjectAPIFilesDirectoryPath(projectName) + "/balxGeneration.sh");
-            } catch (IOException e) {
-                e.printStackTrace();
-                throw new CLIInternalException("cannot copy balxGeneration shell script");
-            }
+//            try {
+//                String shellContent = GatewayCmdUtils.readFileAsString("balxGeneration/balxGeneration.sh",
+//                        true);
+//                GatewayCmdUtils.writeContent(shellContent, new File(GatewayCmdUtils
+//                        .getProjectAPIFilesDirectoryPath(projectName)+"/balxGeneration.sh"));
+//                Runtime.getRuntime().exec("chmod +x " + GatewayCmdUtils
+//                        .getProjectAPIFilesDirectoryPath(projectName) + "/balxGeneration.sh");
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                throw new CLIInternalException("cannot copy balxGeneration shell script");
+//            }
 
             //todo: check if the files has been changed using hash utils
 
@@ -592,75 +601,6 @@ public class SetupCmd implements GatewayLauncherCmd {
         config.setBasicAuth(basicAuth);
     }
 
-    /**
-     * Generate DTO object which represents Routes configuration for Single API
-     * //todo: change variable name
-     * @param apiName   API name
-     * @param version   API version
-     * @param endpointConfig    Endpoint Configuration json file //todo: do not follow the structure provided by API manager, add the improved structure
-     * @param endpointSecurity  APIEndpointSecurityDTO object (contains security details for an API)
-     * @return  modified APIListRouteDTO object
-     */
-    private void generateRoutesConfForSingleAPI( String apiName, String version, String endpointConfig,
-                                                           APIEndpointSecurityDTO endpointSecurity){
-
-    }
-
-    /**
-     * generate routes configuration file when the swagger definition is provided
-     * @param projectName   project name
-     * @param apiDef    api definition in swagger format
-     * @param endpointConfig    endpoint configuration in json format
-     * @param endpointSecurity  endpoint security details in json format
-     */
-    private void generateRoutesConfFromSwagger( String projectName, String apiDef, String endpointConfig,
-                                                String endpointSecurity){
-        SwaggerParser parser;
-        Swagger swagger;
-        parser = new SwaggerParser();
-        swagger = parser.parse(apiDef);
-
-        APIListRouteDTO apiListRouteDTO = generateRoutesConfForSingleAPI(null, swagger.getInfo().getTitle(),
-                swagger.getInfo().getVersion(), endpointConfig, parseEndpointSecurityDefinition(endpointSecurity));
-
-        //todo: resolve duplicate code
-        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        String yamlString = null;
-        try {
-            yamlString = objectMapper.writeValueAsString(apiListRouteDTO);
-            GatewayCmdUtils.writeContent(yamlString,
-                    new File(GatewayCmdUtils.getProjectRoutesConfFilePath(projectName)));
-        } catch (JsonProcessingException e) {
-            throw new CLIInternalException("Error: Routes configuration object cannot be parsed into yaml");
-        } catch (IOException e) {
-            throw new CLIInternalException("Error: cannot write the routes configuration to routes.yaml file");
-        }
-    }
-
-    /**
-     * Save routes configuration file for multiple apis at once
-     * @param projectName   project name
-     * @param apis  list of APIs
-     */
-    private void saveRoutesConfForMultipleAPIs(String projectName, List<ExtendedAPI> apis){
-        APIListRouteDTO apiListRouteDTO = new APIListRouteDTO();
-        for( ExtendedAPI api : apis){
-            apiListRouteDTO = generateRoutesConfForSingleAPI(apiListRouteDTO, api.getName(), api.getVersion(),
-                    api.getEndpointConfig(), api.getEndpointSecurity());
-        }
-
-        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        String yamlString = null;
-        try {
-            yamlString = objectMapper.writeValueAsString(apiListRouteDTO);
-            GatewayCmdUtils.writeContent(yamlString,
-                    new File(GatewayCmdUtils.getProjectRoutesConfFilePath(projectName)));
-        } catch (JsonProcessingException e) {
-            throw new CLIInternalException("Error: Routes configuration object cannot be parsed into yaml");
-        } catch (IOException e) {
-            throw new CLIInternalException("Error: cannot write the routes configuration to routes.yaml file");
-        }
-    }
 
     /**
      * parse endpoint security configurations in json format {type: , name: , password: }
@@ -683,7 +623,7 @@ public class SetupCmd implements GatewayLauncherCmd {
 
     /**
      * Save subscription throttle policies in JSON format
-     * @param objectMapper Jackson ObjectMapper object //todo: generate ObjectMapper inside function body ?
+     * @param objectMapper Jackson ObjectMapper object
      * @param projectName project name
      * @param list subscription throttle policies list
      */
@@ -746,35 +686,6 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
     }
 
-    /**
-     * Save swagger Definition file for Single API in JSON format
-     * @param projectName project name
-     * @param apiName api name  //todo: remove name and version and extract them using swagger
-     * @param apiVersion api version
-     * @param apiDef api definition as a JSON string
-     * @param context context (Since basepath is not provided within the swagger by PublisherAPI in API Manager)
-     */
-    private void saveSwaggerDefinitionForSingleAPI(String projectName, String apiName, String apiVersion,
-                                                   String apiDef, String context){
-        try {
-            SwaggerParser parser;
-            Swagger swagger;
-            parser = new SwaggerParser();
-            swagger = parser.parse(apiDef);
-            swagger.setBasePath(context);
-
-            String json = Json.pretty(swagger);
-            GatewayCmdUtils.writeContent(json, new File(GatewayCmdUtils.getProjectSwaggerFilePath(projectName, apiName,
-                    apiVersion)));
-        }
-        catch (JsonProcessingException e) {
-            throw new CLIInternalException("Error: Cannot parse the Swagger Object to json");
-        }
-        catch (IOException e) {
-            throw new CLIInternalException("Error: Cannot map the API Definition Property into a swagger file.");
-        }
-    }
-
     private void saveSwaggerDefinitionForSingleAPI(String projectName, String apiDefPath){
         String apiId = SwaggerUtils.generateAPIdForSwagger(apiDefPath);
         try {
@@ -784,17 +695,10 @@ public class SetupCmd implements GatewayLauncherCmd {
         }
     }
 
-    private void saveSwaggerDefinitionForSingleAPI(String projectName, ExtendedAPI api, String basePath){
-        String swaggerString = SwaggerUtils.generateSwaggerString(api, basePath);
+    private void saveSwaggerDefinitionForSingleAPI(String projectName, ExtendedAPI api){
+        String swaggerString = SwaggerUtils.generateSwaggerString(api);
         String apiId = HashUtils.generateAPIId( api.getName(), api.getVersion());
-        try{
-            GatewayCmdUtils.writeContent(swaggerString,
-                    new File(GatewayCmdUtils.getProjectSwaggerFilePath(projectName, apiId)));
-        } catch (IOException e){
-            throw new CLIInternalException("Error while writing the swagger file of API " + api.getName() + ":" +
-                    api.getVersion());
-        }
-
+        GatewayCmdUtils.createPerAPIFolderStructure(projectName, apiId, swaggerString);
     }
 
     /**
@@ -804,7 +708,7 @@ public class SetupCmd implements GatewayLauncherCmd {
      */
     private void saveSwaggerDefinitionForMultipleAPIs(String projectName, List<ExtendedAPI> apis){
         for(ExtendedAPI api : apis){
-            saveSwaggerDefinitionForSingleAPI(projectName, api, null);
+            saveSwaggerDefinitionForSingleAPI(projectName, api);
         }
     }
 }

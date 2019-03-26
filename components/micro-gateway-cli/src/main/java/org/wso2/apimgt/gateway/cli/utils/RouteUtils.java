@@ -8,10 +8,12 @@ import org.wso2.apimgt.gateway.cli.constants.RESTServiceConstants;
 import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.hashing.HashUtils;
+import org.wso2.apimgt.gateway.cli.model.rest.APIEndpointSecurityDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.model.route.APIRouteEndpointConfig;
 import org.wso2.apimgt.gateway.cli.model.route.EndpointConfig;
 import org.wso2.apimgt.gateway.cli.model.route.EndpointListRouteDTO;
+import org.wso2.apimgt.gateway.cli.model.route.EndpointType;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,26 +25,29 @@ public class RouteUtils {
     //todo: set routesConfigPath as class variable
     private static final ObjectMapper OBJECT_MAPPER_JSON = new ObjectMapper();
 
-    public static void saveGlobalEpAndBasepath(String apiName, String apiVersion, String routesConfigPath, String basePath,
+    public static void saveGlobalEpAndBasepath(String apiDefPath, String routesConfigPath, String basePath,
                                         String endpointConfigJson){
-        String apiId = HashUtils.generateAPIId(apiName,apiVersion);
+        String apiId = SwaggerUtils.generateAPIdForSwagger(apiDefPath);
+        String[] apiNameAndVersion = SwaggerUtils.getAPINameVersionFromSwagger(apiDefPath);
+        String apiName = apiNameAndVersion[0];
+        String apiVersion = apiNameAndVersion[1];
+
         JsonNode routesConfig = getRoutesConfig(routesConfigPath);
         addBasePath(routesConfig, apiId, basePath);
         addGlobalEndpoint(routesConfig, apiName, apiVersion, apiId, endpointConfigJson);
         writeRoutesConfig(routesConfig, routesConfigPath);
-
     }
 
-    public static void saveGlobalEpAndBasepath(List<ExtendedAPI> apiList, String routesConfigPath) throws IOException {
+    public static void saveGlobalEpAndBasepath(List<ExtendedAPI> apiList, String routesConfigPath) {
         JsonNode routesConfig = getRoutesConfig(routesConfigPath);
         for(ExtendedAPI api : apiList){
             APIRouteEndpointConfig apiEpConfig = new APIRouteEndpointConfig();
             apiEpConfig.setApiName(api.getName());
             apiEpConfig.setApiVersion(api.getVersion());
 
-            EndpointConfig endpointConfig = getEndpointConfig(api.getApiDefinition());
+            EndpointConfig endpointConfig = getEndpointConfig(api.getEndpointConfig(), api.getEndpointSecurity());
 
-            apiEpConfig.setProdEndpointList(endpointConfig.getProdEndpointList();
+            apiEpConfig.setProdEndpointList(endpointConfig.getProdEndpointList());
             apiEpConfig.setSandboxEndpointList(endpointConfig.getSandboxEndpointList());
 
             String apiId = HashUtils.generateAPIId(api.getName(), api.getVersion());
@@ -88,7 +93,7 @@ public class RouteUtils {
 
     private static void addBasePath(JsonNode rootNode, String apiId, String basePath){
 
-            JsonNode basePathsNode = rootNode.get("basePaths");
+            JsonNode basePathsNode = rootNode.get("basepaths");
             //todo: validate whether the basePath is already available
             ((ObjectNode) basePathsNode).put(apiId, basePath);
     }
@@ -145,7 +150,7 @@ public class RouteUtils {
             throw new CLIInternalException("Error while reading the routesConfiguration in path : " + routesConfigPath);
         }
         if(rootNode == null){
-            return OBJECT_MAPPER_YAML.createObjectNode();
+            rootNode = OBJECT_MAPPER_YAML.createObjectNode();
         }
         JsonNode basePathsNode = null;
         JsonNode globalEpsNode = null;
@@ -196,11 +201,15 @@ public class RouteUtils {
         return apiRouteEndpointConfig;
     }
 
-    private static EndpointConfig getEndpointConfig(String endpointConfigJson){
+    private static EndpointConfig getEndpointConfig(String endpointConfigJson, APIEndpointSecurityDTO endpointSecurity){
 
         EndpointConfig endpointconfig = new EndpointConfig();
         EndpointListRouteDTO prodEndpointConfig = new EndpointListRouteDTO();
         EndpointListRouteDTO sandEndpointConfig = new EndpointListRouteDTO();
+
+        //set securityConfig to the both environments
+        prodEndpointConfig.setSecurityConfig(endpointSecurity);
+        sandEndpointConfig.setSecurityConfig(endpointSecurity);
 
         JsonNode rootNode;
         try {
@@ -208,12 +217,11 @@ public class RouteUtils {
         } catch (IOException e) {
             throw new CLIRuntimeException("Error while parsing the endpointConfig JSON string");
         }
-        //todo: check whether path() can be used instead of get
+
         JsonNode endpointTypeNode = rootNode.get(RESTServiceConstants.ENDPOINT_TYPE);
 
         String endpointType = endpointTypeNode.asText();
 
-        //todo: set the endpointType variable in both EndpointListROuteDTO
         if (RESTServiceConstants.HTTP.equalsIgnoreCase(endpointType) || RESTServiceConstants.FAILOVER.
                 equalsIgnoreCase(endpointType)) {
 
@@ -229,6 +237,11 @@ public class RouteUtils {
             }
 
             if (RESTServiceConstants.FAILOVER.equalsIgnoreCase(endpointType)) {
+                /* Due to the limitation in provided json from Publisher, both production and sandbox environments are
+                identified as the same type*/
+                prodEndpointConfig.setType(EndpointType.failover);
+                sandEndpointConfig.setType(EndpointType.failover);
+
                 //Adding additional production/sandbox failover endpoints
                 JsonNode prodFailoverEndpointNode = rootNode.withArray(RESTServiceConstants.PRODUCTION_FAILOVERS);
                 if (prodFailoverEndpointNode != null) {
@@ -244,7 +257,15 @@ public class RouteUtils {
                     }
                 }
             }
+            else{
+                prodEndpointConfig.setType(EndpointType.http);
+                sandEndpointConfig.setType(EndpointType.http);
+            }
         } else if (RESTServiceConstants.LOAD_BALANCE.equalsIgnoreCase(endpointType)) {
+
+            prodEndpointConfig.setType(EndpointType.load_balance);
+            sandEndpointConfig.setType(EndpointType.load_balance);
+
             JsonNode prodEndpoints = rootNode.withArray(RESTServiceConstants.PRODUCTION_ENDPOINTS);
             if (prodEndpoints != null) {
                 for (JsonNode node : prodEndpoints) {

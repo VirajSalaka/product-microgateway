@@ -7,6 +7,7 @@ import io.swagger.parser.SwaggerParser;
 import io.swagger.util.Json;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.parser.OpenAPIV3Parser;
+import org.apache.commons.lang.StringUtils;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.hashing.HashUtils;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
@@ -22,10 +23,6 @@ public class SwaggerUtils {
 
         String swaggerVersion = findSwaggerVersion(apiDefPath, true);
         String apiId;
-
-        if (swaggerVersion == null) {
-            throw new CLIRuntimeException("Error: swagger version is not identified.");
-        }
 
         switch(swaggerVersion){
             case "2":
@@ -61,7 +58,8 @@ public class SwaggerUtils {
         } catch (IOException e) {
             throw new CLIRuntimeException("Error while reading the swagger file, check again.");
         }
-        return null;
+
+        throw new CLIRuntimeException("Error while reading the swagger file, check again.");
     }
 
     private static String generateAPIdForSwaggerV2(String apiDefPath){
@@ -86,25 +84,17 @@ public class SwaggerUtils {
         return HashUtils.generateAPIId(apiName, apiVersion);
     }
 
-    public static String generateSwaggerString(ExtendedAPI api, String basePath){
+
+    //todo: check if this is required
+    public static String generateSwaggerString(ExtendedAPI api){
         String swaggerVersion = findSwaggerVersion(api.getApiDefinition(), false);
 
-        if (swaggerVersion == null) {
-            throw new CLIRuntimeException("Error: swagger version is not identified.");
-        }
-
         switch(swaggerVersion){
-            //todo: bring constants
             case "2":
                 Swagger swagger = new SwaggerParser().parse(api.getApiDefinition());
-                if(basePath != null && !basePath.trim().isEmpty()){
-                    swagger.setBasePath(basePath);
-                } else {
-                    //todo: bring constants
-                    swagger.setBasePath("/" + api.getContext() + "/" + api.getVersion());
-                }
-                return Json.pretty(swagger);
+                swagger.setBasePath(api.getContext() + "/" + api.getVersion());
 
+                return Json.pretty(swagger);
             case "3":
                 return api.getApiDefinition();
             default:
@@ -112,6 +102,32 @@ public class SwaggerUtils {
         }
     }
 
+    static String[] getAPINameVersionFromSwagger(String apiDefPath){
+        String swaggerVersion = findSwaggerVersion(apiDefPath, true);
 
+        switch(swaggerVersion){
+            case "2":
+                Swagger swagger = new SwaggerParser().read(apiDefPath);
+                return new String[] {swagger.getInfo().getTitle(), swagger.getInfo().getVersion()};
+
+            case "3":
+                OpenAPI openAPI = new OpenAPIV3Parser().read(apiDefPath);
+                return new String[] {openAPI.getInfo().getTitle(), openAPI.getInfo().getVersion()};
+        }
+        //this is already checked by the parser. Therefore never reach this statement
+        throw new CLIRuntimeException("Name and version is not provided in the OpenAPI definition");
+    }
+
+    public static String getBasePathFromSwagger(String apiDefPath){
+        String swaggerVersion = findSwaggerVersion(apiDefPath, true);
+
+        if(swaggerVersion.equals("2")){
+            Swagger swagger = new SwaggerParser().read(apiDefPath);
+            if(!StringUtils.isEmpty(swagger.getBasePath())){
+                return swagger.getBasePath();
+            }
+        }
+        return null;
+    }
 
 }

@@ -286,6 +286,13 @@ public class GatewayCmdUtils {
         String confDirPath = projectDir + File.separator + GatewayCliConstants.CONF_DIRECTORY_NAME;
         createFolderIfNotExist(confDirPath);
 
+        String apiFilesDirPath = projectDir + File.separator + GatewayCliConstants.PROJECTS_API_FILES_DIRECTORY_NAME;
+        createFolderIfNotExist(apiFilesDirPath);
+
+        createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.APPLICATION_THROTTLE_POLICIES_FILE);
+        createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.SUBSCRIPTION_THROTTLE_POLICIES_FILE);
+        createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.CLIENT_CERT_METADATA_FILE);
+
         createFileIfNotExist(projectDir.getPath(), GatewayCliConstants.ROUTES_FILE);
     }
 
@@ -293,28 +300,24 @@ public class GatewayCmdUtils {
      * Create API-Files Directory for a particular project
      * @param projectName name of the project
      * @param apiId md5 hash value for apiName:version
-     * @param apiDefPath File path for the swagger File (API definition)
+     * @param apiDefinition swagger content as a JSON string
      */
-    public static void createAPIFilesStructure(String projectName, String apiId, String apiDefPath){
-        File projectDir = createFolderIfNotExist(getUserDir() + File.separator + projectName);
+    public static void createPerAPIFolderStructure(String projectName, String apiId, String apiDefinition){
+        String projectDir = getUserDir() + File.separator + projectName;
 
         String apiFilesDirPath = projectDir + File.separator + GatewayCliConstants.PROJECTS_API_FILES_DIRECTORY_NAME;
-        createFolderIfNotExist(apiFilesDirPath);
 
         String apiDirPath = apiFilesDirPath + File.separator + apiId;
         createFolderIfNotExist(apiDirPath);
-
-        createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.APPLICATION_THROTTLE_POLICIES_FILE);
-        createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.SUBSCRIPTION_THROTTLE_POLICIES_FILE);
-        createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.CLIENT_CERT_METADATA_FILE);
         createFileIfNotExist(apiDirPath, GatewayCliConstants.API_METADATA_FILE);
 
-        if(apiDefPath == null){
-            createFileIfNotExist(apiDirPath, GatewayCliConstants.API_SWAGGER);
+        if (apiDefinition.isEmpty()){
+            throw new CLIInternalException("No swagger definition is provided to generate API");
         }
-        else try {
-            copyFilesToSources(apiDefPath, apiDirPath + File.separator +
-                    GatewayCliConstants.API_SWAGGER);
+
+        try {
+            writeContent(apiDefinition, new File (apiDirPath + File.separator +
+                    GatewayCliConstants.API_SWAGGER));
         } catch (IOException e) {
             throw new CLIInternalException("Error while copying the swagger to the project directory");
         }
