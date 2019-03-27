@@ -1,5 +1,6 @@
 package org.wso2.apimgt.gateway.cli.model.route;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.wso2.apimgt.gateway.cli.model.rest.APIEndpointSecurityDTO;
 
@@ -10,6 +11,7 @@ import java.util.List;
 /**
  * This class hold the available endpoints and securityConfig details (in the routes.yaml)
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class EndpointListRouteDTO {
 
     private APIEndpointSecurityDTO securityConfig = null;

@@ -1,7 +1,9 @@
 package org.wso2.apimgt.gateway.cli.model.route;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResourceRouteEndpointConfig extends EndpointConfig{
 
     private String name = null;

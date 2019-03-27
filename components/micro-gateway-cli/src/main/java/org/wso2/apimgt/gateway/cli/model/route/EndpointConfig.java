@@ -1,10 +1,12 @@
 package org.wso2.apimgt.gateway.cli.model.route;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * This class represents the endpoint configurations for the given environment. (in the routes.yaml)
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class EndpointConfig {
 
     private EndpointListRouteDTO ProdEndpointList = null;

@@ -51,7 +51,6 @@ public class RouteUtils {
             apiEpConfig.setSandboxEndpointList(endpointConfig.getSandboxEndpointList());
 
             String apiId = HashUtils.generateAPIId(api.getName(), api.getVersion());
-            //todo: constant for "/"
             addBasePath(routesConfig, apiId, api.getContext() + "/" + api.getVersion());
             addAPIRouteEndpointConfigAsGlobalEp(routesConfig, apiId, apiEpConfig);
         }
@@ -93,18 +92,22 @@ public class RouteUtils {
 
     private static void addBasePath(JsonNode rootNode, String apiId, String basePath){
 
-            JsonNode basePathsNode = rootNode.get("basepaths");
-            //todo: validate whether the basePath is already available
-            ((ObjectNode) basePathsNode).put(apiId, basePath);
+        JsonNode basePathsNode = rootNode.get("basepaths");
+        String modifiedBasePath = basePath.startsWith("/") ? basePath : ( "/" + basePath);
+        //todo: validate whether the basePath is already available
+        //todo: validate basepath syntax
+
+        ((ObjectNode) basePathsNode).put(apiId, modifiedBasePath);
     }
 
     private static void addGlobalEndpoint(JsonNode rootNode, String apiName, String apiVersion, String apiId,
                                    String endpointConfigJson){
 
         //todo: validate the endpointConfig
-        JsonNode endpointConfig;
+        EndpointConfig endpointConfig;
         try {
-            endpointConfig = OBJECT_MAPPER_JSON.readTree(endpointConfigJson);
+            //todo: bring yaml file
+            endpointConfig = OBJECT_MAPPER_JSON.readValue(endpointConfigJson, EndpointConfig.class);
         } catch (IOException e) {
             throw new CLIRuntimeException("Error while parsing the provided endpointConfig Json");
         }
@@ -112,14 +115,8 @@ public class RouteUtils {
         APIRouteEndpointConfig apiEpConfig = new APIRouteEndpointConfig();
         apiEpConfig.setApiName(apiName);
         apiEpConfig.setApiVersion(apiVersion);
-        try {
-            apiEpConfig.setProdEndpointList(OBJECT_MAPPER_JSON.readValue(endpointConfig.get("prod").asText(),
-                    EndpointListRouteDTO.class));
-            apiEpConfig.setSandboxEndpointList(OBJECT_MAPPER_JSON.readValue(endpointConfig.get("sandbox").asText(),
-                    EndpointListRouteDTO.class));
-        } catch (IOException e) {
-            throw new CLIRuntimeException("Error while parsing the provided EndpointConfig");
-        }
+        apiEpConfig.setProdEndpointList(endpointConfig.getProdEndpointList());
+        apiEpConfig.setSandboxEndpointList(endpointConfig.getSandboxEndpointList());
         addAPIRouteEndpointConfigAsGlobalEp(rootNode, apiId, apiEpConfig);
     }
 

@@ -226,9 +226,12 @@ public class SetupCmd implements GatewayLauncherCmd {
                     throw new CLIInternalException("Error while generating ballerina source.");
                 }
                 outStream.println("Setting up project " + projectName + " is successful.");
+
             } else {
                 //todo: validate the swagger file before start processing
                 logger.debug("Successfully read the api definition file");
+                String apiDefPath = Paths.get(openApi).toAbsolutePath().toString();
+                String endpointConfigString = OpenApiCodegenUtils.readApi(endpointConfig);
                     if (StringUtils.isEmpty(endpointConfig)) {
                         if (StringUtils.isEmpty(endpoint)) {
                             /*
@@ -240,25 +243,25 @@ public class SetupCmd implements GatewayLauncherCmd {
                                 throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty endpoint.");
                             }
                         }
+                        //todo: fix this in a proper way -> not working now
                         endpointConfig = "{\"production_endpoints\":{\"url\":\"" + endpoint.trim() +
                                 "\"},\"endpoint_type\":\"http\"}";
                     }
 
                     if(StringUtils.isEmpty(basepath)){
-                        basepath = SwaggerUtils.getBasePathFromSwagger(openApi);
+                        basepath = SwaggerUtils.getBasePathFromSwagger(apiDefPath);
                         if(StringUtils.isEmpty(basepath)){
                             if ((basepath = promptForTextInput( "Enter basepath: "))
                                     .trim().isEmpty()) {
                                 //todo: shall we allow the user to proceed with empty basepath
                                 throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty basepath");
                             }
-
                         }
                     }
 
-                    saveSwaggerDefinitionForSingleAPI(projectName, api);
-                    RouteUtils.saveGlobalEpAndBasepath(openApi,
-                            GatewayCmdUtils.getProjectRoutesConfFilePath(projectName), basepath, endpointConfig);
+                    saveSwaggerDefinitionForSingleAPI(projectName, apiDefPath);
+                    RouteUtils.saveGlobalEpAndBasepath(apiDefPath,
+                            GatewayCmdUtils.getProjectRoutesConfFilePath(projectName), basepath, endpointConfigString);
                 outStream.println("Setting up project " + projectName + " is successful.");
             }
 
@@ -687,12 +690,11 @@ public class SetupCmd implements GatewayLauncherCmd {
     }
 
     private void saveSwaggerDefinitionForSingleAPI(String projectName, String apiDefPath){
+
+        String swaggerString = OpenApiCodegenUtils.readApi(apiDefPath);
         String apiId = SwaggerUtils.generateAPIdForSwagger(apiDefPath);
-        try {
-            GatewayCmdUtils.copyFilesToSources(apiDefPath, GatewayCmdUtils.getProjectSwaggerFilePath(projectName, apiId));
-        } catch (IOException e) {
-            throw new CLIInternalException("Error while copying swagger file to folder location for apiId: " + apiId);
-        }
+        GatewayCmdUtils.createPerAPIFolderStructure(projectName, apiId, swaggerString);
+
     }
 
     private void saveSwaggerDefinitionForSingleAPI(String projectName, ExtendedAPI api){
