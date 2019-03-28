@@ -16,7 +16,7 @@
 package org.wso2.apimgt.gateway.cli.model.rest.ext;
 
 import org.wso2.apimgt.gateway.cli.model.rest.APIDetailedDTO;
-import org.wso2.apimgt.gateway.cli.model.rest.EndpointConfig;
+import org.wso2.apimgt.gateway.cli.model.route.EndpointConfig;
 
 public class ExtendedAPI extends APIDetailedDTO {
     private EndpointConfig endpointConfigRepresentation = null;

@@ -34,6 +34,7 @@ import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyLi
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyListDTO;
 import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
+import org.wso2.apimgt.gateway.cli.utils.RouteUtils;
 import org.wso2.apimgt.gateway.cli.utils.TokenManagementUtil;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -181,7 +182,8 @@ public class RESTAPIServiceImpl implements RESTAPIService {
 
     private void setAdditionalConfigs(ExtendedAPI api) throws IOException {
         String endpointConfig = api.getEndpointConfig();
-        api.setEndpointConfigRepresentation(getEndpointConfig(endpointConfig));
+        //todo: remove the comment
+        //api.setEndpointConfigRepresentation((endpointConfig));
         // set default values from config if per api cors is not enabled
         Config config = GatewayCmdUtils.getConfig();
         if (config == null) {

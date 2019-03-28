@@ -21,8 +21,8 @@ import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.context.FieldValueResolver;
 import com.github.jknack.handlebars.context.JavaBeanValueResolver;
 import com.github.jknack.handlebars.context.MapValueResolver;
-import io.swagger.models.Swagger;
-import io.swagger.parser.SwaggerParser;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.parser.OpenAPIV3Parser;
 import org.wso2.apimgt.gateway.cli.constants.GatewayCliConstants;
 import org.wso2.apimgt.gateway.cli.constants.GeneratorConstants;
 import org.wso2.apimgt.gateway.cli.exception.BallerinaServiceGenException;
@@ -35,6 +35,7 @@ import org.wso2.apimgt.gateway.cli.model.template.service.ListenerEndpoint;
 import org.wso2.apimgt.gateway.cli.utils.CodegenUtils;
 import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
 import org.wso2.apimgt.gateway.cli.utils.OpenApiCodegenUtils;
+import org.wso2.apimgt.gateway.cli.utils.SwaggerUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,38 +65,37 @@ public class CodeGenerator {
      * @throws IOException                  when file operations fail
      * @throws BallerinaServiceGenException when code generator fails
      */
-    public void generate(String projectName, List<ExtendedAPI> apis, boolean overwrite)
-            throws IOException, BallerinaServiceGenException {
-        BallerinaService definitionContext;
-        SwaggerParser parser;
-        Swagger swagger;
-        String projectSrcPath = GatewayCmdUtils
-                .getProjectSrcDirectoryPath(projectName);
-        List<GenSrcFile> genFiles = new ArrayList<>();
-        for (ExtendedAPI api : apis) {
-            outStream.println("ID for API " + api.getName() + " : " + api.getId());
-            parser = new SwaggerParser();
-            swagger = parser.parse(api.getApiDefinition());
-            definitionContext = new BallerinaService().buildContext(swagger, api);
-            // we need to generate the bal service for default versioned apis as well
-            if (definitionContext.getApi().getIsDefaultVersion()) {
-                // without building the definitionContext again we use the same context to build default version as
-                // well. Hence setting the default version as false to generate the api with base path having version.
-                definitionContext.getApi().setIsDefaultVersion(false);
-                genFiles.add(generateService(definitionContext));
-                definitionContext.getApi().setIsDefaultVersion(true);
-                definitionContext.setQualifiedServiceName(CodegenUtils.trim(api.getName()));
-            }
-
-            genFiles.add(generateService(definitionContext));
-            genFiles.add(generateSwagger(definitionContext));
-
-        }
-        genFiles.add(generateCommonEndpoints());
-        CodegenUtils.writeGeneratedSources(genFiles, Paths.get(projectSrcPath), overwrite);
-        GatewayCmdUtils.copyFilesToSources(GatewayCmdUtils.getFiltersFolderLocation() + File.separator
-                        + GatewayCliConstants.GW_DIST_EXTENSION_FILTER,
-                projectSrcPath + File.separator + GatewayCliConstants.GW_DIST_EXTENSION_FILTER);
+    public void generate(String projectName, List<ExtendedAPI> apis, boolean overwrite) {
+//        BallerinaService definitionContext;
+//        SwaggerParser parser;
+//        Swagger swagger;
+//        String projectSrcPath = GatewayCmdUtils
+//                .getProjectSrcDirectoryPath(projectName);
+//        List<GenSrcFile> genFiles = new ArrayList<>();
+//        for (ExtendedAPI api : apis) {
+//            outStream.println("ID for API " + api.getName() + " : " + api.getId());
+//            parser = new SwaggerParser();
+//            swagger = parser.parse(api.getApiDefinition());
+//            definitionContext = new BallerinaService().buildContext(swagger, api);
+//            // we need to generate the bal service for default versioned apis as well
+//            if (definitionContext.getApi().getIsDefaultVersion()) {
+//                // without building the definitionContext again we use the same context to build default version as
+//                // well. Hence setting the default version as false to generate the api with base path having version.
+//                definitionContext.getApi().setIsDefaultVersion(false);
+//                genFiles.add(generateService(definitionContext));
+//                definitionContext.getApi().setIsDefaultVersion(true);
+//                definitionContext.setQualifiedServiceName(CodegenUtils.trim(api.getName()));
+//            }
+//
+//            genFiles.add(generateService(definitionContext));
+//            genFiles.add(generateSwagger(definitionContext));
+//
+//        }
+//        genFiles.add(generateCommonEndpoints());
+//        CodegenUtils.writeGeneratedSources(genFiles, Paths.get(projectSrcPath), overwrite);
+//        GatewayCmdUtils.copyFilesToSources(GatewayCmdUtils.getFiltersFolderLocation() + File.separator
+//                        + GatewayCliConstants.GW_DIST_EXTENSION_FILTER,
+//                projectSrcPath + File.separator + GatewayCliConstants.GW_DIST_EXTENSION_FILTER);
     }
     /**
      * Generates ballerina source for provided Open APIDetailedDTO Definition in {@code definitionPath}.
@@ -111,34 +111,34 @@ public class CodeGenerator {
      */
     public void generate(String projectName, String apiDef, String endpointDef, boolean overwrite)
             throws IOException, BallerinaServiceGenException {
-        BallerinaService definitionContext;
-        SwaggerParser parser;
-        Swagger swagger;
-        String projectSrcPath = GatewayCmdUtils.getProjectSrcDirectoryPath(projectName);
-        List<GenSrcFile> genFiles = new ArrayList<>();
-
-        parser = new SwaggerParser();
-        swagger = parser.parse(apiDef);
-        ExtendedAPI api = new ExtendedAPI();
-        String apiId = UUID.randomUUID().toString();
-        api.setId(apiId);
-        outStream.println("ID for API " + api.getName() + " : " + apiId);
-        api.setName(swagger.getInfo().getTitle());
-        api.setVersion(swagger.getInfo().getVersion());
-        api.setContext(swagger.getBasePath());
-        api.setEndpointConfig(endpointDef);
-        api.setTransport(Arrays.asList("http", "https"));
-        OpenApiCodegenUtils.setAdditionalConfigs(api);
-        definitionContext = new BallerinaService().buildContext(swagger, api);
-        genFiles.add(generateService(definitionContext));
-
-        genFiles.add(generateCommonEndpoints());
-        CodegenUtils.writeGeneratedSources(genFiles, Paths.get(projectSrcPath), overwrite);
-        GatewayCmdUtils.copyFilesToSources(GatewayCmdUtils.getFiltersFolderLocation() + File.separator
-                        + GatewayCliConstants.GW_DIST_EXTENSION_FILTER,
-                projectSrcPath + File.separator + GatewayCliConstants.GW_DIST_EXTENSION_FILTER);
-        GatewayCmdUtils.copyFolder(GatewayCmdUtils.getPoliciesFolderLocation(), projectSrcPath
-                + File.separator + GatewayCliConstants.GW_DIST_POLICIES);
+//        BallerinaService definitionContext;
+//        SwaggerParser parser;
+//        Swagger swagger;
+//        String projectSrcPath = GatewayCmdUtils.getProjectSrcDirectoryPath(projectName);
+//        List<GenSrcFile> genFiles = new ArrayList<>();
+//
+//        parser = new SwaggerParser();
+//        swagger = parser.parse(apiDef);
+//        ExtendedAPI api = new ExtendedAPI();
+//        String apiId = UUID.randomUUID().toString();
+//        api.setId(apiId);
+//        outStream.println("ID for API " + api.getName() + " : " + apiId);
+//        api.setName(swagger.getInfo().getTitle());
+//        api.setVersion(swagger.getInfo().getVersion());
+//        api.setContext(swagger.getBasePath());
+//        api.setEndpointConfig(endpointDef);
+//        api.setTransport(Arrays.asList("http", "https"));
+//        OpenApiCodegenUtils.setAdditionalConfigs(projectName, api);
+//        definitionContext = new BallerinaService().buildContext(swagger, api);
+//        genFiles.add(generateService(definitionContext));
+//
+//        genFiles.add(generateCommonEndpoints());
+//        CodegenUtils.writeGeneratedSources(genFiles, Paths.get(projectSrcPath), overwrite);
+//        GatewayCmdUtils.copyFilesToSources(GatewayCmdUtils.getFiltersFolderLocation() + File.separator
+//                        + GatewayCliConstants.GW_DIST_EXTENSION_FILTER,
+//                projectSrcPath + File.separator + GatewayCliConstants.GW_DIST_EXTENSION_FILTER);
+//        GatewayCmdUtils.copyFolder(GatewayCmdUtils.getPoliciesFolderLocation(), projectSrcPath
+//                + File.separator + GatewayCliConstants.GW_DIST_POLICIES);
     }
 
     /**
@@ -152,45 +152,35 @@ public class CodeGenerator {
      */
     public void generate(String projectName, boolean overwrite) throws IOException {
 
-//        final SwaggerParser parser;
-//        String projectSrcPath = GatewayCmdUtils.getProjectSrcDirectoryPath(projectName);
-//        String projectAPIFilesPath = GatewayCmdUtils.getProjectAPIFilesDirectoryPath(projectName);
-//        List<GenSrcFile> genFiles = new ArrayList<>();
-//
-//        parser = new SwaggerParser();
-//        Files.walk(Paths.get(projectAPIFilesPath)).filter( path -> path.getFileName().toString().equals("swagger.json"))
-//                .forEach( path -> {
-//                    Swagger swagger = parser.parse(OpenApiCodegenUtils.readApi(path.toString()));
-//                    ExtendedAPI api = new ExtendedAPI();
-//                    BallerinaService definitionContext = null;
-//                    String apiId = UUID.randomUUID().toString();
-//                    api.setId(apiId);
-//                    outStream.println("ID for API " + api.getName() + " : " + apiId);
-//                    api.setName(swagger.getInfo().getTitle());
-//                    api.setVersion(swagger.getInfo().getVersion());
-//                    api.setContext(swagger.getBasePath());
-//                    api.setTransport(Arrays.asList("http", "https"));
-//
-//                    OpenApiCodegenUtils.setAdditionalConfigs(api, projectName, swagger.getInfo().getTitle(),
-//                            swagger.getInfo().getVersion());
-//
-//                    try {
-//                        definitionContext = new BallerinaService().buildContext(swagger, api);
-//                        genFiles.add(generateService(definitionContext));
-//                        genFiles.add(generateCommonEndpoints());
-//                        CodegenUtils.writeGeneratedSources(genFiles, Paths.get(projectSrcPath), overwrite);
-//                        GatewayCmdUtils.copyFilesToSources(GatewayCmdUtils.getFiltersFolderLocation() + File.separator
-//                                        + GatewayCliConstants.GW_DIST_EXTENSION_FILTER,
-//                                projectSrcPath + File.separator + GatewayCliConstants.GW_DIST_EXTENSION_FILTER);
-//                        GatewayCmdUtils.copyFolder(GatewayCmdUtils.getPoliciesFolderLocation(), projectSrcPath
-//                                + File.separator + GatewayCliConstants.GW_DIST_POLICIES);
-//
-//                    } catch (BallerinaServiceGenException e) {
-//                        throw new CLIRuntimeException("Swagger definition cannot be parsed to ballerina code",e);
-//                    } catch (IOException e) {
-//                        throw new CLIInternalException("File write operations failed during ballerina code generation");
-//                    }
-//                });
+        String projectSrcPath = GatewayCmdUtils.getProjectSrcDirectoryPath(projectName);
+        String projectAPIFilesPath = GatewayCmdUtils.getProjectAPIFilesDirectoryPath(projectName);
+        List<GenSrcFile> genFiles = new ArrayList<>();
+
+        Files.walk(Paths.get(projectAPIFilesPath)).filter( path -> path.getFileName().toString().equals("swagger.json"))
+                .forEach( path -> {
+                    ExtendedAPI api = SwaggerUtils.generateAPIFromOpenAPIDef(path.toString());
+                    BallerinaService definitionContext;
+                    OpenApiCodegenUtils.setAdditionalConfigs(projectName, api);
+                    OpenAPI openAPI = new OpenAPIV3Parser().read(path.toString());
+
+                    try {
+                        //todo: fix this
+                        definitionContext = new BallerinaService().buildContext(openAPI, api);
+                        genFiles.add(generateService(definitionContext));
+                        genFiles.add(generateCommonEndpoints());
+                        CodegenUtils.writeGeneratedSources(genFiles, Paths.get(projectSrcPath), overwrite);
+                        GatewayCmdUtils.copyFilesToSources(GatewayCmdUtils.getFiltersFolderLocation() + File.separator
+                                        + GatewayCliConstants.GW_DIST_EXTENSION_FILTER,
+                                projectSrcPath + File.separator + GatewayCliConstants.GW_DIST_EXTENSION_FILTER);
+                        GatewayCmdUtils.copyFolder(GatewayCmdUtils.getPoliciesFolderLocation(), projectSrcPath
+                                + File.separator + GatewayCliConstants.GW_DIST_POLICIES);
+
+                    } catch (BallerinaServiceGenException e) {
+                        throw new CLIRuntimeException("Swagger definition cannot be parsed to ballerina code",e);
+                    } catch (IOException e) {
+                        throw new CLIInternalException("File write operations failed during ballerina code generation");
+                    }
+                });
     }
 
     /**
