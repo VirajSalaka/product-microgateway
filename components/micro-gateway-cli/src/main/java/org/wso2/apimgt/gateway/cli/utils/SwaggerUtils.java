@@ -14,67 +14,14 @@ import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.UUID;
 
 public class SwaggerUtils {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     public static String generateAPIdForSwagger(String apiDefPath){
-
-        String swaggerVersion = findSwaggerVersion(apiDefPath, true);
-        String apiId;
-
-        switch(swaggerVersion){
-            case "2":
-                apiId = generateAPIdForSwaggerV2(apiDefPath);
-                break;
-            case "3":
-                apiId = generateAPIIdForSwaggerV3(apiDefPath);
-                break;
-            default:
-                throw new CLIRuntimeException("Error: Swagger version is not identified");
-        }
-        return apiId;
-    }
-
-    private static String findSwaggerVersion(String apiDefinition, boolean isFilePath){
-        try {
-            JsonNode rootNode;
-            if(isFilePath){
-                //if filepath to the swagger is provided
-                rootNode = objectMapper.readTree(new File(apiDefinition));
-            } else {
-                //if the raw string of the swagger is provided
-                rootNode = objectMapper.readTree(apiDefinition);
-            }
-
-            if(rootNode.has("swagger") && rootNode.get("swagger").asText().contains("2")){
-                //todo: introduce a constant for swagger version
-                return "2";
-            }
-            else if(rootNode.has("openapi") && rootNode.get("openapi").asText().contains("3")){
-                return "3";
-            }
-        } catch (IOException e) {
-            throw new CLIRuntimeException("Error while reading the swagger file, check again.");
-        }
-
-        throw new CLIRuntimeException("Error while reading the swagger file, check again.");
-    }
-
-    private static String generateAPIdForSwaggerV2(String apiDefPath){
-        SwaggerParser parser;
-        Swagger swagger;
-        parser = new SwaggerParser();
-        swagger = parser.read(apiDefPath);
-
-        String apiName = swagger.getInfo().getTitle();
-        String apiVersion = swagger.getInfo().getVersion();
-
-        return HashUtils.generateAPIId(apiName, apiVersion);
-    }
-
-    private static String generateAPIIdForSwaggerV3(String apiDefPath){
 
         OpenAPI openAPI = new OpenAPIV3Parser().read(apiDefPath);
 
@@ -84,16 +31,42 @@ public class SwaggerUtils {
         return HashUtils.generateAPIId(apiName, apiVersion);
     }
 
+    private static JsonNode generateJsonNode(String apiDefinition, boolean isFilePath){
+        try{
+            if(isFilePath){
+                //if filepath to the swagger is provided
+                return objectMapper.readTree(new File(apiDefinition));
+            }
+            //if the raw string of the swagger is provided
+            return objectMapper.readTree(apiDefinition);
+        } catch (IOException e){
+            throw new CLIRuntimeException("Api Definition cannot be parsed.");
+        }
+    }
+
+    private static String findSwaggerVersion(String apiDefinition, boolean isFilePath){
+
+        JsonNode rootNode = generateJsonNode(apiDefinition, isFilePath);
+        if(rootNode.has("swagger") && rootNode.get("swagger").asText().trim().startsWith("2")){
+            //todo: introduce a constant for swagger version
+            return "2";
+        }
+        else if(rootNode.has("openapi") && rootNode.get("openapi").asText().trim().startsWith("3")){
+            return "3";
+        }
+
+        throw new CLIRuntimeException("Error while reading the swagger file, check again.");
+    }
 
     //todo: check if this is required
     public static String generateSwaggerString(ExtendedAPI api){
-        String swaggerVersion = findSwaggerVersion(api.getApiDefinition(), false);
 
+        String swaggerVersion = findSwaggerVersion(api.getApiDefinition(), false);
         switch(swaggerVersion){
             case "2":
                 Swagger swagger = new SwaggerParser().parse(api.getApiDefinition());
+                //to bring the settings in API Manager
                 swagger.setBasePath(api.getContext() + "/" + api.getVersion());
-
                 return Json.pretty(swagger);
             case "3":
                 return api.getApiDefinition();
@@ -103,19 +76,10 @@ public class SwaggerUtils {
     }
 
     static String[] getAPINameVersionFromSwagger(String apiDefPath){
-        String swaggerVersion = findSwaggerVersion(apiDefPath, true);
 
-        switch(swaggerVersion){
-            case "2":
-                Swagger swagger = new SwaggerParser().read(apiDefPath);
-                return new String[] {swagger.getInfo().getTitle(), swagger.getInfo().getVersion()};
+        OpenAPI openAPI = new OpenAPIV3Parser().read(apiDefPath);
+        return new String[] {openAPI.getInfo().getTitle(), openAPI.getInfo().getVersion()};
 
-            case "3":
-                OpenAPI openAPI = new OpenAPIV3Parser().read(apiDefPath);
-                return new String[] {openAPI.getInfo().getTitle(), openAPI.getInfo().getVersion()};
-        }
-        //this is already checked by the parser. Therefore never reach this statement
-        throw new CLIRuntimeException("Name and version is not provided in the OpenAPI definition");
     }
 
     public static String getBasePathFromSwagger(String apiDefPath){
@@ -128,6 +92,23 @@ public class SwaggerUtils {
             }
         }
         return null;
+    }
+
+    public static ExtendedAPI generateAPIFromOpenAPIDef(String apiDefPath){
+
+        ExtendedAPI api;
+        String apiId = UUID.randomUUID().toString(); //todo: clarify the purpose of this UUID ?
+
+        api = new ExtendedAPI();
+        OpenAPI openAPI = new OpenAPIV3Parser().read(apiDefPath);
+
+        api.setId(apiId);
+        api.setName(openAPI.getInfo().getTitle());
+        api.setVersion(openAPI.getInfo().getVersion());
+        api.setContext(getBasePathFromSwagger(apiDefPath));
+        api.setTransport(Arrays.asList("http", "https"));
+        return api;
+
     }
 
 }
