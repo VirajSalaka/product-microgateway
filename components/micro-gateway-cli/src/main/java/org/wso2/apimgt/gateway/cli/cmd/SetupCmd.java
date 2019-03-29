@@ -666,7 +666,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             saveSwaggerDefinitionForSingleAPI(projectName, api);
         }
     }
-}
+
 
     /**
      * Set endpoints of publisher, admin, registration and token

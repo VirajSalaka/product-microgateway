@@ -811,10 +811,9 @@ public class GatewayCmdUtils {
      */
     public static void writeContent(String content, File file) throws IOException {
         FileWriter writer = null;
-        try {
-            writer = new FileWriter(file);
-            writer.write(content);
-        }
+        writer = new FileWriter(file);
+        writer.write(content);
+
     }
 
     /**
