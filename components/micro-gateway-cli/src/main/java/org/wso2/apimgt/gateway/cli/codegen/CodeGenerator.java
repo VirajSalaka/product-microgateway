@@ -155,6 +155,7 @@ public class CodeGenerator {
         String projectSrcPath = GatewayCmdUtils.getProjectSrcDirectoryPath(projectName);
         String projectAPIFilesPath = GatewayCmdUtils.getProjectAPIFilesDirectoryPath(projectName);
         List<GenSrcFile> genFiles = new ArrayList<>();
+        List<BallerinaService> serviceList = new ArrayList<>();
 
         Files.walk(Paths.get(projectAPIFilesPath)).filter( path -> path.getFileName().toString().equals("swagger.json"))
                 .forEach( path -> {
@@ -195,6 +196,20 @@ public class CodeGenerator {
         String srcFile = concatTitle + GeneratorConstants.BALLERINA_EXTENSION;
         String mainContent = getContent(context, GeneratorConstants.DEFAULT_TEMPLATE_DIR,
                 GeneratorConstants.SERVICE_TEMPLATE_NAME);
+        return new GenSrcFile(GenSrcFile.GenFileType.GEN_SRC, srcFile, mainContent);
+    }
+
+    /**
+     * Generate code for Main ballerina file
+     *
+     * @param services list of model context to be used by the templates
+     * @return generated source files as a list of {@link GenSrcFile}
+     * @throws IOException when code generation with specified templates fails
+     */
+    private GenSrcFile generateMainBal(List<BallerinaService> services) throws IOException {
+        String srcFile = GeneratorConstants.MAIN_TEMPLATE_NAME + GeneratorConstants.BALLERINA_EXTENSION;
+        String mainContent = getContent(services, GeneratorConstants.DEFAULT_TEMPLATE_DIR,
+                GeneratorConstants.MAIN_TEMPLATE_NAME);
         return new GenSrcFile(GenSrcFile.GenFileType.GEN_SRC, srcFile, mainContent);
     }
 

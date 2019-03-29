@@ -102,7 +102,7 @@ public class SetupCmd implements GatewayLauncherCmd {
     private String label;
 
     @Parameter(names = {"-s", "--server-url"}, hidden = true)
-    private String baseUrl;
+    private String baseURL;
 
     @Parameter(names = {"-oa", "--openapi"}, hidden = true)
     private String openApi;
@@ -110,7 +110,7 @@ public class SetupCmd implements GatewayLauncherCmd {
     @Parameter(names = {"-e", "--endpoint"}, hidden = true)
     private String endpoint;
 
-    @Parameter(names = {"-ec", "--endpointConfig"}, hidden = true)
+    @Parameter(names = {"-ec", "--endpoint-config"}, hidden = true)
     private String endpointConfig;
 
     @Parameter(names = {"-t", "--truststore"}, hidden = true)
@@ -156,14 +156,13 @@ public class SetupCmd implements GatewayLauncherCmd {
     private String registrationEndpoint;
     private String tokenEndpoint;
     private String clientSecret;
-    private String clientCertEndpoint;
+    private boolean isOverwriteRequired;
 
     public void execute() {
         String clientID;
         String workspace = GatewayCmdUtils.getUserDir();
         boolean isOpenApi = StringUtils.isNotEmpty(openApi);
-        boolean isGRPC = false;
-        String grpc = null;
+        String grpc;
         String projectName = GatewayCmdUtils.getProjectName(mainArgs);
         if (projectName.contains(" ")) {
             throw GatewayCmdUtils.createUsageException("Only one argument accepted as the project name. but provided:" +
@@ -187,7 +186,7 @@ public class SetupCmd implements GatewayLauncherCmd {
         logger.debug("Etcd is enabled : " + isEtcdEnabled);
 
         Config config = GatewayCmdUtils.getConfig();
-        boolean isOverwriteRequired = false;
+        isOverwriteRequired = false;
 
         /*
          * If api is created via an api definition, the setup flow is altered
@@ -296,23 +295,9 @@ public class SetupCmd implements GatewayLauncherCmd {
                 }
             }
 
-            //Setup urls
-            publisherEndpoint = config.getToken().getPublisherEndpoint();
-            adminEndpoint = config.getToken().getAdminEndpoint();
-            registrationEndpoint = config.getToken().getRegistrationEndpoint();
-            tokenEndpoint = config.getToken().getTokenEndpoint();
-            if (StringUtils.isEmpty(publisherEndpoint) || StringUtils.isEmpty(adminEndpoint) || StringUtils
-                    .isEmpty(registrationEndpoint) || StringUtils.isEmpty(tokenEndpoint)) {
-                if (StringUtils.isEmpty(baseUrl)) {
-                    isOverwriteRequired = true;
-                    if ((baseUrl = promptForTextInput("Enter APIM base URL [" +
-                            RESTServiceConstants.DEFAULT_HOST + "]: "))
-                            .trim().isEmpty()) {
-                        baseUrl = RESTServiceConstants.DEFAULT_HOST;
-                    }
-                }
-                populateHosts(baseUrl);
-            }
+            //setup endpoints
+            Token configToken = config.getToken();
+            TokenBuilder configTokenValues = setEndpoints(configToken);
 
             //configure trust store
             String configuredTrustStore = config.getToken().getTrustStoreLocation();
@@ -320,9 +305,7 @@ public class SetupCmd implements GatewayLauncherCmd {
                 if (StringUtils.isEmpty(trustStoreLocation)) {
                     isOverwriteRequired = true;
                     if ((trustStoreLocation = promptForTextInput(
-                            "Enter Trust store location: [" + RESTServiceConstants.DEFAULT_TRUSTSTORE_PATH +
-                                    "]")).trim()
-                            .isEmpty()) {
+                            "Enter Trust store location: [" + RESTServiceConstants.DEFAULT_TRUSTSTORE_PATH + "]")).trim().isEmpty()) {
                         trustStoreLocation = RESTServiceConstants.DEFAULT_TRUSTSTORE_PATH;
                     }
                 }
@@ -374,9 +357,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
 
             //Security Schemas settings
-            if (security == null) {
-                security = "oauth2";
-            } else if (security == "") {
+            if (StringUtils.isEmpty(security)) {
                 security = "oauth2";
             }
             setSecuritySchemas(security);
@@ -463,11 +444,7 @@ public class SetupCmd implements GatewayLauncherCmd {
 
                 String encryptedCS = GatewayCmdUtils.encrypt(clientSecret, password);
                 String encryptedTrustStorePass = GatewayCmdUtils.encrypt(trustStorePassword, password);
-                Token token = new TokenBuilder()
-                        .setPublisherEndpoint(publisherEndpoint)
-                        .setAdminEndpoint(adminEndpoint)
-                        .setRegistrationEndpoint(registrationEndpoint)
-                        .setTokenEndpoint(tokenEndpoint)
+                Token token = configTokenValues
                         .setUsername(username)
                         .setClientId(clientID)
                         .setClientSecret(encryptedCS)
@@ -524,30 +501,6 @@ public class SetupCmd implements GatewayLauncherCmd {
         return new String(System.console().readPassword());
     }
 
-    /**
-     * Generate publisherEndpoint, Client Certification Endpoint, admin Endpoint, registration Endpoint and token
-     * endpoint related to the user provided api manager host.
-     * @param host api manager's hostname
-     */
-    private void populateHosts(String host) {
-        try {
-            publisherEndpoint = new URL(new URL(host), RESTServiceConstants.PUB_RESOURCE_PATH).toString();
-            clientCertEndpoint = new URL(new URL(host), RESTServiceConstants.PUB_CLIENT_CERT_PATH).toString();
-            adminEndpoint = new URL(new URL(host), RESTServiceConstants.ADMIN_RESOURCE_PATH).toString();
-            registrationEndpoint = new URL(new URL(host), RESTServiceConstants.DCR_RESOURCE_PATH).toString();
-            tokenEndpoint = new URL(new URL(host), RESTServiceConstants.TOKEN_PATH).toString();
-        } catch (MalformedURLException e) {
-            logger.error("Malformed URL provided {}", host);
-            throw new CLIInternalException("Error occurred while setting up URL configurations.");
-        }
-    }
-
-    /**
-     * Initialize the project
-     * @param projectName project name
-     * @param configPath TOML configuration file path
-     * @param deploymentConfigPath deployment configuration file path
-     */
     private static void init(String projectName, String configPath, String deploymentConfigPath) {
         try {
             GatewayCmdUtils.createProjectStructure(projectName);
@@ -584,20 +537,20 @@ public class SetupCmd implements GatewayLauncherCmd {
         boolean basic = false;
         boolean oauth2 = false;
         String[] schemasArray = schemas.trim().split("\\s*,\\s*");
-        for (int i = 0; i < schemasArray.length; i++) {
-            if (schemasArray[i].equalsIgnoreCase("basic")) {
+        for (String s : schemasArray) {
+            if (s.equalsIgnoreCase("basic")) {
                 basic = true;
-            } else if (schemasArray[i].equalsIgnoreCase("oauth2")) {
+            } else if (s.equalsIgnoreCase("oauth2")) {
                 oauth2 = true;
             }
         }
         if (basic && oauth2) {
             basicAuth.setOptional(true);
             basicAuth.setRequired(false);
-        } else if (basic && !oauth2) {
+        } else if (basic) {
             basicAuth.setRequired(true);
             basicAuth.setOptional(false);
-        } else if (!basic && oauth2) {
+        } else if (oauth2) {
             basicAuth.setOptional(false);
             basicAuth.setRequired(false);
         }
@@ -715,3 +668,147 @@ public class SetupCmd implements GatewayLauncherCmd {
     }
 }
 
+    /**
+     * Set endpoints of publisher, admin, registration and token
+     *
+     * @param token token from config file
+     * @return TokenBuilder modified token to be written back to configuration file
+     */
+    private TokenBuilder setEndpoints(Token token) {
+        //new token values for config(to rewrite configuration file)
+        TokenBuilder configTokenValues = new TokenBuilder();
+
+        boolean isEndPointsNeeded; //if endpoint(s) is empty and not defined
+        boolean isBaseURLNeeded; //if endpoint(s) contains {baseURL} or endPointsNeeded
+        boolean isRestVersionNeeded; //if endpoint(s) contains {restVersion}
+
+        String restVersion = token.getRestVersion();
+        publisherEndpoint = token.getPublisherEndpoint();
+        adminEndpoint = token.getAdminEndpoint();
+        registrationEndpoint = token.getRegistrationEndpoint();
+        tokenEndpoint = token.getTokenEndpoint();
+
+        //copy current token config values
+        configTokenValues.setPublisherEndpoint(publisherEndpoint);
+        configTokenValues.setAdminEndpoint(adminEndpoint);
+        configTokenValues.setRegistrationEndpoint(registrationEndpoint);
+        configTokenValues.setTokenEndpoint(tokenEndpoint);
+        configTokenValues.setRestVersion(restVersion);
+        configTokenValues.setBaseURL(token.getBaseURL());
+
+        isEndPointsNeeded = StringUtils.isEmpty(publisherEndpoint) || StringUtils.isEmpty(adminEndpoint) || StringUtils
+                .isEmpty(registrationEndpoint) || StringUtils.isEmpty(tokenEndpoint);
+
+        isBaseURLNeeded = publisherEndpoint.contains(RESTServiceConstants.BASE_URL_TAG) ||
+                        adminEndpoint.contains(RESTServiceConstants.BASE_URL_TAG) ||
+                        registrationEndpoint.contains(RESTServiceConstants.BASE_URL_TAG) ||
+                        tokenEndpoint.contains(RESTServiceConstants.BASE_URL_TAG) || isEndPointsNeeded;
+
+        isRestVersionNeeded = publisherEndpoint.contains(RESTServiceConstants.REST_VERSION_TAG) ||
+                adminEndpoint.contains(RESTServiceConstants.REST_VERSION_TAG)
+                || registrationEndpoint.contains(RESTServiceConstants.REST_VERSION_TAG) || isEndPointsNeeded;
+
+        //set endpoints format if endpoint(s) is empty
+        if (isEndPointsNeeded) {
+            if (StringUtils.isEmpty(publisherEndpoint)) {
+                publisherEndpoint = RESTServiceConstants.CONFIG_PUBLISHER_ENDPOINT;
+            }
+            if (StringUtils.isEmpty(adminEndpoint)) {
+                adminEndpoint = RESTServiceConstants.CONFIG_ADMIN_ENDPOINT;
+            }
+            if (StringUtils.isEmpty(registrationEndpoint)) {
+                registrationEndpoint = RESTServiceConstants.CONFIG_REGISTRATION_ENDPOINT;
+            }
+            if (StringUtils.isEmpty(tokenEndpoint)) {
+                tokenEndpoint = RESTServiceConstants.CONFIG_TOKEN_ENDPOINT;
+            }
+        }
+
+        //set base URL
+        if (isBaseURLNeeded) {
+
+            //if base url not set from setup argument "-s", "--server-url"
+            if (StringUtils.isEmpty(baseURL)) {
+                baseURL = token.getBaseURL();
+
+                //if baseURL not configured in token, use default host
+                if (StringUtils.isEmpty(baseURL)) {
+                    baseURL = RESTServiceConstants.DEFAULT_HOST;
+                }
+
+                //cli command to ask user to accept the baseURL or enter a new base url
+                String userInputURL = getBaseURLfromCmd(baseURL);
+                if (!userInputURL.isEmpty()) {
+                    baseURL = userInputURL;
+                    isOverwriteRequired = true;
+                }
+            }
+            configTokenValues.setBaseURL(baseURL);
+        }
+
+        // set rest version
+        if (isRestVersionNeeded) {
+
+            if (StringUtils.isEmpty(restVersion)) {
+                restVersion = RESTServiceConstants.CONFIG_REST_VERSION;
+            }
+            informRestVersiontoUser(restVersion);
+            configTokenValues.setRestVersion(restVersion);
+        }
+
+        if (isBaseURLNeeded || isRestVersionNeeded) {
+            publisherEndpoint = publisherEndpoint.replace(RESTServiceConstants.BASE_URL_TAG, baseURL)
+                    .replace(RESTServiceConstants.REST_VERSION_TAG, restVersion);
+            adminEndpoint = adminEndpoint.replace(RESTServiceConstants.BASE_URL_TAG, baseURL)
+                    .replace(RESTServiceConstants.REST_VERSION_TAG, restVersion);
+            registrationEndpoint = registrationEndpoint.replace(RESTServiceConstants.BASE_URL_TAG, baseURL)
+                    .replace(RESTServiceConstants.REST_VERSION_TAG, restVersion);
+            tokenEndpoint = tokenEndpoint.replace(RESTServiceConstants.BASE_URL_TAG, baseURL)
+                    .replace(RESTServiceConstants.REST_VERSION_TAG, restVersion);
+        }
+
+        //validate URLs
+        validateURL(publisherEndpoint);
+        validateURL(adminEndpoint);
+        validateURL(registrationEndpoint);
+        validateURL(tokenEndpoint);
+
+        return configTokenValues;
+    }
+
+    /**
+     * validate URLs
+     *
+     * @param urlString url string to be validated
+     */
+    private void validateURL(String urlString) {
+
+        try {
+            new URL(urlString);
+        } catch (MalformedURLException e) {
+            logger.error("Malformed URL provided {}", urlString);
+            throw new CLIInternalException("Error occurred while setting up URL configurations.");
+        }
+
+    }
+
+    /**
+     * prompt to get the base URL
+     */
+    private String getBaseURLfromCmd(String defaultBaseURL) {
+        String userInputURL;
+        userInputURL = promptForTextInput("Enter APIM base URL [" + defaultBaseURL + "]: ").trim();
+        return userInputURL;
+    }
+
+    /**
+     * inform user on REST version of endpoint URLs
+     *
+     * @param restVersion API Manager's REST version
+     */
+    private void informRestVersiontoUser(String restVersion) {
+        outStream.println(
+                "You are using REST version - " + restVersion + " of API Manager. (If you want to change this, go to "
+                        + "<MICROGW_HOME>/conf/toolkit-config.toml)");
+    }
+}
