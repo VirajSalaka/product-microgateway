@@ -243,8 +243,14 @@ public class SetupCmd implements GatewayLauncherCmd {
                             }
                         }
                         //todo: fix this in a proper way -> not working now
-                        endpointConfig = "{\"production_endpoints\":{\"url\":\"" + endpoint.trim() +
-                                "\"},\"endpoint_type\":\"http\"}";
+                        endpointConfig = "{ \n" +
+                                "         \"prod\": {\n" +
+                                "            \"type\": \"load_balance\",\n" +
+                                "            \"endpoints\": [\n" +
+                                                endpoint.trim() +
+                                "            ]\n" +
+                                "         }\n" +
+                                "      }";
                     }
 
                     if(StringUtils.isEmpty(basepath)){
@@ -421,17 +427,17 @@ public class SetupCmd implements GatewayLauncherCmd {
             saveSwaggerDefinitionForMultipleAPIs(projectName, apis);
 
             //todo: remove this command : temporary solution
-//            try {
-//                String shellContent = GatewayCmdUtils.readFileAsString("balxGeneration/balxGeneration.sh",
-//                        true);
-//                GatewayCmdUtils.writeContent(shellContent, new File(GatewayCmdUtils
-//                        .getProjectAPIFilesDirectoryPath(projectName)+"/balxGeneration.sh"));
-//                Runtime.getRuntime().exec("chmod +x " + GatewayCmdUtils
-//                        .getProjectAPIFilesDirectoryPath(projectName) + "/balxGeneration.sh");
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//                throw new CLIInternalException("cannot copy balxGeneration shell script");
-//            }
+            try {
+                String shellContent = GatewayCmdUtils.readFileAsString("balxGeneration/balxGeneration.sh",
+                        true);
+                GatewayCmdUtils.writeContent(shellContent, new File(GatewayCmdUtils
+                        .getProjectAPIFilesDirectoryPath(projectName)+"/balxGeneration.sh"));
+                Runtime.getRuntime().exec("chmod +x " + GatewayCmdUtils
+                        .getProjectAPIFilesDirectoryPath(projectName) + "/balxGeneration.sh");
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new CLIInternalException("cannot copy balxGeneration shell script");
+            }
 
             //todo: check if the files has been changed using hash utils
 
@@ -588,9 +594,8 @@ public class SetupCmd implements GatewayLauncherCmd {
         SubscriptionThrottlePolicyListDTO policyList = new SubscriptionThrottlePolicyListDTO();
         policyList.setList(list);
         try {
-            String policies = objectMapper.writeValueAsString(policyList);
-            GatewayCmdUtils.writeContent(policies,
-                    new File(GatewayCmdUtils.getProjectSubscriptionThrottlePoliciesFilePath(projectName)));
+            objectMapper.writeValue(new File(GatewayCmdUtils.getProjectSubscriptionThrottlePoliciesFilePath(projectName)),
+                    policyList);
         } catch (JsonProcessingException e) {
             throw new CLIInternalException("Error: Cannot parse the SubscriptionThrottlePolicies Object to json");
         } catch (IOException e) {
@@ -610,9 +615,8 @@ public class SetupCmd implements GatewayLauncherCmd {
         ApplicationThrottlePolicyListDTO policyList = new ApplicationThrottlePolicyListDTO();
         policyList.setList(list);
         try {
-            String policies = objectMapper.writeValueAsString(policyList);
-            GatewayCmdUtils.writeContent(policies,
-                    new File(GatewayCmdUtils.getProjectAppThrottlePoliciesFilePath(projectName)));
+            objectMapper.writeValue(new File(GatewayCmdUtils.getProjectAppThrottlePoliciesFilePath(projectName)),
+                    policyList);
         } catch (JsonProcessingException e) {
             throw new CLIInternalException("Error: Cannot parse the ApplicationThrottlePolicies Object to json");
         } catch (IOException e) {
@@ -630,10 +634,8 @@ public class SetupCmd implements GatewayLauncherCmd {
     private void saveClientCertMetadata(ObjectMapper objectMapper, String projectName,
                                         List<ClientCertMetadataDTO> metadataList){
         try {
-            String clientCertMetadata = objectMapper.writeValueAsString(metadataList);
-            //todo: avoid write content,  instead of that use writevalue function
-            GatewayCmdUtils.writeContent(clientCertMetadata,
-                    new File(GatewayCmdUtils.getProjectClientCertMetadataFilePath(projectName)));
+            objectMapper.writeValue(new File(GatewayCmdUtils.getProjectClientCertMetadataFilePath(projectName)),
+                    metadataList);
         } catch (JsonProcessingException e) {
             throw new CLIInternalException("Error: Cannot parse the ApplicationThrottlePolicies Object to json");
         } catch (IOException e) {

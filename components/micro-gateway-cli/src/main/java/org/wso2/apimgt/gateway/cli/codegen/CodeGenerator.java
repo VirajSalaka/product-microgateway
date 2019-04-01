@@ -32,10 +32,7 @@ import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.model.template.GenSrcFile;
 import org.wso2.apimgt.gateway.cli.model.template.service.BallerinaService;
 import org.wso2.apimgt.gateway.cli.model.template.service.ListenerEndpoint;
-import org.wso2.apimgt.gateway.cli.utils.CodegenUtils;
-import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
-import org.wso2.apimgt.gateway.cli.utils.OpenApiCodegenUtils;
-import org.wso2.apimgt.gateway.cli.utils.SwaggerUtils;
+import org.wso2.apimgt.gateway.cli.utils.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -165,9 +162,19 @@ public class CodeGenerator {
                     OpenAPI openAPI = new OpenAPIV3Parser().read(path.toString());
 
                     try {
-                        //todo: fix this
+                        String[] basepaths = RouteUtils.getBasePath(api.getName(), api.getVersion(),
+                                GatewayCmdUtils.getProjectRoutesConfFilePath(projectName));
                         definitionContext = new BallerinaService().buildContext(openAPI, api);
                         genFiles.add(generateService(definitionContext));
+
+                        //if two basepaths are available, second one is the default one
+                        if(basepaths.length == 2){
+                            definitionContext = new BallerinaService().buildContext(openAPI, api);
+                            definitionContext.setBasepath(basepaths[1]);
+                            definitionContext.setQualifiedServiceName(api.getName());
+                            genFiles.add(generateService(definitionContext));
+                        }
+
                         genFiles.add(generateCommonEndpoints());
                         CodegenUtils.writeGeneratedSources(genFiles, Paths.get(projectSrcPath), overwrite);
                         GatewayCmdUtils.copyFilesToSources(GatewayCmdUtils.getFiltersFolderLocation() + File.separator

@@ -142,7 +142,7 @@ case $key in
     ;;
     build)
     ALL_ARGS+=("$1")
-    IS_BUILD_COMMAND=true
+    IS_BUILD_COMMAND=false
     shift # past build argument
     ;;
     *)    # default argument

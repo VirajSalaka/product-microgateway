@@ -113,8 +113,8 @@ public class BuildCmd implements GatewayLauncherCmd {
 //            String srcPath = GatewayCmdUtils.getProjectSrcDirectoryPath(projectName) + "/";
 //            Main ballerinaLauncher = new Main();
 //            ballerinaLauncher.main("build", srcPath, "-o", outputPath, "--offline");
-//            String filename = null;
-//            ProcessBuilder processBuilder = new ProcessBuilder()
+////            String filename = null;
+////            ProcessBuilder processBuilder = new ProcessBuilder();
 
 
             //-------
@@ -127,6 +127,7 @@ public class BuildCmd implements GatewayLauncherCmd {
     }
 
     private void balCodeGeneration(String projectName){
+        //todo: this depends on the PATH variable of the machine : needs to be fixed
         ProcessBuilder processBuilder = new ProcessBuilder("/bin/bash", GatewayCmdUtils
                 .getProjectAPIFilesDirectoryPath(projectName) + "/balxGeneration.sh", projectName, GatewayCmdUtils
                 .getUserDir());
@@ -134,7 +135,7 @@ public class BuildCmd implements GatewayLauncherCmd {
             processBuilder.start();
             Thread.sleep(6000);
         } catch (IOException e) {
-            new CLIInternalException("Cannot compile the ballerina code");
+            throw new CLIInternalException("Cannot compile the ballerina code");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

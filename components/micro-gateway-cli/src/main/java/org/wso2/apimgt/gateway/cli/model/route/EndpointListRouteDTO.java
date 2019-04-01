@@ -3,6 +3,7 @@ package org.wso2.apimgt.gateway.cli.model.route;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.wso2.apimgt.gateway.cli.model.rest.APIEndpointSecurityDTO;
+import org.wso2.apimgt.gateway.cli.model.rest.EndpointUrlTypeEnum;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,8 @@ public class EndpointListRouteDTO {
 
     private APIEndpointSecurityDTO securityConfig = null;
     private EndpointType type = null;
-    private List<String> endpointList = null;
+    private List<String> endpoints = null;
+
 
     @JsonProperty("securityConfig")
     public APIEndpointSecurityDTO getSecurityConfig() {
@@ -37,22 +39,22 @@ public class EndpointListRouteDTO {
     }
 
     @JsonProperty("endpoints")
-    public List<String> getEndpointList() {
-        return endpointList;
+    public List<String> getEndpoints() {
+        return endpoints;
     }
 
-    public void setEndpointList(List<String> endpointList) {
-        this.endpointList = endpointList;
+    public void setEndpoints(List<String> endpoints) {
+        this.endpoints = endpoints;
     }
 
     //todo: add "add endpoint" method
     public void addEndpoint(String endpoint){
-        if(endpointList == null){
-            endpointList = new ArrayList<>();
+        if(endpoints == null){
+            endpoints = new ArrayList<>();
         }
         //todo: indicate if a duplicate has occurred ?
-        if(!endpointList.contains(endpoint)){
-            endpointList.add(endpoint);
+        if(!endpoints.contains(endpoint)){
+            endpoints.add(endpoint);
         }
     }
 }

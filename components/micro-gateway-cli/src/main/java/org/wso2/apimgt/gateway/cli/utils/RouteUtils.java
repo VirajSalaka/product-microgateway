@@ -2,8 +2,10 @@ package org.wso2.apimgt.gateway.cli.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.swagger.util.Json;
 import org.wso2.apimgt.gateway.cli.constants.RESTServiceConstants;
 import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
@@ -51,7 +53,8 @@ public class RouteUtils {
             apiEpConfig.setSandboxEndpointList(endpointConfig.getSandboxEndpointList());
 
             String apiId = HashUtils.generateAPIId(api.getName(), api.getVersion());
-            addBasePath(routesConfig, apiId, api.getContext() + "/" + api.getVersion());
+            addBasePath(routesConfig, api);
+
             addAPIRouteEndpointConfigAsGlobalEp(routesConfig, apiId, apiEpConfig);
         }
         writeRoutesConfig(routesConfig, routesConfigPath);
@@ -96,8 +99,18 @@ public class RouteUtils {
         String modifiedBasePath = basePath.startsWith("/") ? basePath : ( "/" + basePath);
         //todo: validate whether the basePath is already available
         //todo: validate basepath syntax
+        ArrayNode arrayNode = ((ObjectNode) basePathsNode).putArray(apiId);
+        arrayNode.add(modifiedBasePath);
+    }
 
-        ((ObjectNode) basePathsNode).put(apiId, modifiedBasePath);
+    private static void addBasePath(JsonNode rootNode, ExtendedAPI api){
+        JsonNode basePathsNode = rootNode.get("basepaths");
+        String apiId = HashUtils.generateAPIId(api.getName(), api.getVersion());
+        ArrayNode arrayNode = ((ObjectNode) basePathsNode).putArray(apiId);
+        arrayNode.add(api.getContext() + "/" + api.getVersion());
+        if(api.getIsDefaultVersion()){
+            arrayNode.add(api.getContext());
+        }
     }
 
     private static void addGlobalEndpoint(JsonNode rootNode, String apiName, String apiVersion, String apiId,
@@ -176,10 +189,16 @@ public class RouteUtils {
         return rootNode;
     }
 
-    public static String getBasePath(String apiName, String apiVersion, String routesConfigPath){
+    public static String[] getBasePath(String apiName, String apiVersion, String routesConfigPath){
         String apiId = HashUtils.generateAPIId(apiName, apiVersion);
         JsonNode rootNode = getRoutesConfig(routesConfigPath);
-        return rootNode.get("basepaths").get(apiId).asText();
+        ArrayNode arrayNode = (ArrayNode) rootNode.get("basepaths").get(apiId);
+
+        if(arrayNode.size() == 2){
+            return new String[] {arrayNode.get(0).asText(), arrayNode.get(1).asText()};
+        }
+
+        return new String[] {arrayNode.get(0).asText()};
     }
 
     public static APIRouteEndpointConfig getGlobalEpConfig(String apiName, String apiVersion, String routesConfigPath){
@@ -189,7 +208,7 @@ public class RouteUtils {
         APIRouteEndpointConfig apiRouteEndpointConfig;
 
         try {
-            apiRouteEndpointConfig = OBJECT_MAPPER_YAML.readValue(globalEpConfig.asText(),
+            apiRouteEndpointConfig = OBJECT_MAPPER_YAML.readValue(globalEpConfig.toString(),
                     APIRouteEndpointConfig.class);
         } catch (IOException e) {
             throw new CLIInternalException("Error while mapping Global Endpoint JsonNode object to " +
@@ -278,11 +297,11 @@ public class RouteUtils {
             }
         }
 
-        if(prodEndpointConfig.getEndpointList() != null && prodEndpointConfig.getEndpointList().size()>0){
+        if(prodEndpointConfig.getEndpoints() != null && prodEndpointConfig.getEndpoints().size()>0){
             endpointconfig.setProdEndpointList(prodEndpointConfig);
         }
 
-        if(sandEndpointConfig.getEndpointList() != null && sandEndpointConfig.getEndpointList().size()>0){
+        if(sandEndpointConfig.getEndpoints() != null && sandEndpointConfig.getEndpoints().size()>0){
             endpointconfig.setSandboxEndpointList(sandEndpointConfig);
         }
 

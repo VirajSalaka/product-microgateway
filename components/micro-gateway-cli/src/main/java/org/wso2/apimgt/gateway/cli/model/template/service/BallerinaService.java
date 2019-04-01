@@ -26,7 +26,7 @@ import io.swagger.v3.oas.models.tags.Tag;
 import org.wso2.apimgt.gateway.cli.exception.BallerinaServiceGenException;
 import org.wso2.apimgt.gateway.cli.model.config.Config;
 import org.wso2.apimgt.gateway.cli.model.config.ContainerConfig;
-import org.wso2.apimgt.gateway.cli.model.route.EndpointConfig;
+import org.wso2.apimgt.gateway.cli.model.mgwServiceMap.MgwEndpointConfigDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.utils.CodegenUtils;
 import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
@@ -48,7 +48,7 @@ public class BallerinaService implements BallerinaOpenAPIObject<BallerinaService
     private ExtendedAPI api;
     private ContainerConfig containerConfig;
     private Config config;
-    private EndpointConfig endpointConfig;
+    private MgwEndpointConfigDTO endpointConfig;
     private String srcPackage;
     private String modelPackage;
     private String qualifiedServiceName;
@@ -58,6 +58,7 @@ public class BallerinaService implements BallerinaOpenAPIObject<BallerinaService
     private List<Tag> tags = null;
     private Set<Map.Entry<String, BallerinaPath>> paths = null;
     private Etcd etcd;
+    private String basepath;
 
     /**
      * Build a {@link BallerinaService} object from a {@link OpenAPI} object.
@@ -87,6 +88,8 @@ public class BallerinaService implements BallerinaOpenAPIObject<BallerinaService
         this.qualifiedServiceName =
                 CodegenUtils.trim(api.getName()) + "_" + replaceAllNonAlphaNumeric(api.getVersion());
         this.endpointConfig = api.getEndpointConfigRepresentation();
+        this.setBasepath(api.getSpecificBasepath());
+
         return buildContext(definition);
     }
 
@@ -174,11 +177,11 @@ public class BallerinaService implements BallerinaOpenAPIObject<BallerinaService
         this.name = name;
     }
 
-    public EndpointConfig getEndpointConfig() {
+    public MgwEndpointConfigDTO getEndpointConfig() {
         return endpointConfig;
     }
 
-    public void setEndpointConfig(EndpointConfig endpointConfig) {
+    public void setEndpointConfig(MgwEndpointConfigDTO endpointConfig) {
         this.endpointConfig = endpointConfig;
     }
 
@@ -212,5 +215,13 @@ public class BallerinaService implements BallerinaOpenAPIObject<BallerinaService
 
     public void setConfig(Config config) {
         this.config = config;
+    }
+
+    public String getBasepath() {
+        return basepath;
+    }
+
+    public void setBasepath(String basepath) {
+        this.basepath = basepath;
     }
 }

@@ -813,7 +813,7 @@ public class GatewayCmdUtils {
         FileWriter writer = null;
         writer = new FileWriter(file);
         writer.write(content);
-
+        writer.flush();
     }
 
     /**
