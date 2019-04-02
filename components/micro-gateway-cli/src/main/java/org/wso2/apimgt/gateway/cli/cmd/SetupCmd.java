@@ -231,42 +231,42 @@ public class SetupCmd implements GatewayLauncherCmd {
                 logger.debug("Successfully read the api definition file");
                 String apiDefPath = Paths.get(openApi).toAbsolutePath().toString();
                 String endpointConfigString = OpenApiCodegenUtils.readApi(endpointConfig);
-                    if (StringUtils.isEmpty(endpointConfig)) {
-                        if (StringUtils.isEmpty(endpoint)) {
-                            /*
-                             * if an endpoint config or an endpoint is not provided as an argument, it is prompted from
-                             * the user
-                             */
-                            if ((endpoint = promptForTextInput( "Enter Endpoint URL: "))
-                                    .trim().isEmpty()) {
-                                throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty endpoint.");
-                            }
+                if (StringUtils.isEmpty(endpointConfig)) {
+                    if (StringUtils.isEmpty(endpoint)) {
+                        /*
+                         * if an endpoint config or an endpoint is not provided as an argument, it is prompted from
+                         * the user
+                         */
+                        if ((endpoint = promptForTextInput( "Enter Endpoint URL: "))
+                                .trim().isEmpty()) {
+                            throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty endpoint.");
                         }
-                        //todo: fix this in a proper way -> not working now
-                        endpointConfig = "{ \n" +
-                                "         \"prod\": {\n" +
-                                "            \"type\": \"load_balance\",\n" +
-                                "            \"endpoints\": [\n" +
-                                                endpoint.trim() +
-                                "            ]\n" +
-                                "         }\n" +
-                                "      }";
                     }
+                    //todo: fix this in a proper way -> not working now
+                    endpointConfig = "{ \n" +
+                            "         \"prod\": {\n" +
+                            "            \"type\": \"load_balance\",\n" +
+                            "            \"endpoints\": [\n" +
+                            endpoint.trim() +
+                            "            ]\n" +
+                            "         }\n" +
+                            "      }";
+                }
 
+                if(StringUtils.isEmpty(basepath)){
+                    basepath = SwaggerUtils.getBasePathFromSwagger(apiDefPath);
                     if(StringUtils.isEmpty(basepath)){
-                        basepath = SwaggerUtils.getBasePathFromSwagger(apiDefPath);
-                        if(StringUtils.isEmpty(basepath)){
-                            if ((basepath = promptForTextInput( "Enter basepath: "))
-                                    .trim().isEmpty()) {
-                                //todo: shall we allow the user to proceed with empty basepath
-                                throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty basepath");
-                            }
+                        if ((basepath = promptForTextInput( "Enter basepath: "))
+                                .trim().isEmpty()) {
+                            //todo: shall we allow the user to proceed with empty basepath
+                            throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty basepath");
                         }
                     }
-
-                    saveSwaggerDefinitionForSingleAPI(projectName, apiDefPath);
-                    RouteUtils.saveGlobalEpAndBasepath(apiDefPath,
-                            GatewayCmdUtils.getProjectRoutesConfFilePath(projectName), basepath, endpointConfigString);
+                }
+                saveSwaggerDefinitionForSingleAPI(projectName, apiDefPath);
+                RouteUtils.saveGlobalEpAndBasepath(apiDefPath,
+                        GatewayCmdUtils.getProjectRoutesConfFilePath(projectName), basepath, endpointConfigString);
+                copyScriptForBalCompilation(projectName);
                 outStream.println("Setting up project " + projectName + " is successful.");
             }
 
@@ -426,19 +426,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             saveClientCertMetadata(objectMapper, projectName, clientCertificates);
             saveSwaggerDefinitionForMultipleAPIs(projectName, apis);
 
-            //todo: remove this command : temporary solution
-            try {
-                String shellContent = GatewayCmdUtils.readFileAsString("balxGeneration/balxGeneration.sh",
-                        true);
-                GatewayCmdUtils.writeContent(shellContent, new File(GatewayCmdUtils
-                        .getProjectAPIFilesDirectoryPath(projectName)+"/balxGeneration.sh"));
-                Runtime.getRuntime().exec("chmod +x " + GatewayCmdUtils
-                        .getProjectAPIFilesDirectoryPath(projectName) + "/balxGeneration.sh");
-            } catch (IOException e) {
-                e.printStackTrace();
-                throw new CLIInternalException("cannot copy balxGeneration shell script");
-            }
-
+            copyScriptForBalCompilation(projectName);
             //todo: check if the files has been changed using hash utils
 
             //if all the operations are success, write new config to file
@@ -812,5 +800,21 @@ public class SetupCmd implements GatewayLauncherCmd {
         outStream.println(
                 "You are using REST version - " + restVersion + " of API Manager. (If you want to change this, go to "
                         + "<MICROGW_HOME>/conf/toolkit-config.toml)");
+    }
+
+    private void copyScriptForBalCompilation(String projectName){
+        //todo: remove this command : temporary solution
+        try {
+            String shellContent = GatewayCmdUtils.readFileAsString("balxGeneration/balxGeneration.sh",
+                    true);
+            GatewayCmdUtils.writeContent(shellContent, new File(GatewayCmdUtils
+                    .getProjectAPIFilesDirectoryPath(projectName)+"/balxGeneration.sh"));
+            Runtime.getRuntime().exec("chmod +x " + GatewayCmdUtils
+                    .getProjectAPIFilesDirectoryPath(projectName) + "/balxGeneration.sh");
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new CLIInternalException("cannot copy balxGeneration shell script");
+        }
+
     }
 }
