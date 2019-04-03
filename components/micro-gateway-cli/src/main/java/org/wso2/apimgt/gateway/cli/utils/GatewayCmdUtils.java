@@ -289,10 +289,6 @@ public class GatewayCmdUtils {
         String apiFilesDirPath = projectDir + File.separator + GatewayCliConstants.PROJECTS_API_FILES_DIRECTORY_NAME;
         createFolderIfNotExist(apiFilesDirPath);
 
-        createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.APPLICATION_THROTTLE_POLICIES_FILE);
-        createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.SUBSCRIPTION_THROTTLE_POLICIES_FILE);
-        createFileIfNotExist(apiFilesDirPath, GatewayCliConstants.CLIENT_CERT_METADATA_FILE);
-
         createFileIfNotExist(projectDir.getPath(), GatewayCliConstants.ROUTES_FILE);
     }
 
