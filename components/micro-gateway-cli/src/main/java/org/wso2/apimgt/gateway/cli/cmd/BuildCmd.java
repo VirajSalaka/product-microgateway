@@ -60,6 +60,9 @@ public class BuildCmd implements GatewayLauncherCmd {
     @Parameter(hidden = true, required = true)
     private List<String> mainArgs;
 
+    @Parameter(names = {"--compiled"}, hidden = true, arity = 0)
+    private boolean isCompiled;
+
     private String projectName;
 
     @Parameter(names = {"--help", "-h", "?"}, hidden = true, description = "for more information")
@@ -72,23 +75,21 @@ public class BuildCmd implements GatewayLauncherCmd {
             return;
         }
 
-        try {
-            projectName = GatewayCmdUtils.getProjectName(mainArgs);
-            projectName = projectName.replaceAll("[\\/\\\\]", "");
-            File projectLocation = new File(GatewayCmdUtils.getProjectDirectoryPath(projectName));
-            System.out.println(projectName);
+        projectName = GatewayCmdUtils.getProjectName(mainArgs);
+        projectName = projectName.replaceAll("[\\/\\\\]", "");
+        File projectLocation = new File(GatewayCmdUtils.getProjectDirectoryPath(projectName));
 
-            if (!projectLocation.exists()) {
-                throw new CLIRuntimeException("Project " + projectName + " does not exist.");
-            }
-            //------
+        if (!projectLocation.exists()) {
+            throw new CLIRuntimeException("Project " + projectName + " does not exist.");
+        }
 
-
-            String toolkitConfigPath = GatewayCmdUtils.getMainConfigLocation();
-            init(projectName, toolkitConfigPath);
-            CodeGenerator codeGenerator = new CodeGenerator();
-            ThrottlePolicyGenerator policyGenerator = new ThrottlePolicyGenerator();
-            boolean changesDetected;
+        if(!isCompiled){
+            try{
+                String toolkitConfigPath = GatewayCmdUtils.getMainConfigLocation();
+                init(projectName, toolkitConfigPath);
+                CodeGenerator codeGenerator = new CodeGenerator();
+                ThrottlePolicyGenerator policyGenerator = new ThrottlePolicyGenerator();
+                boolean changesDetected;
 
                 policyGenerator.generate(GatewayCmdUtils.getProjectSrcDirectoryPath(projectName) + File.separator
                         + GatewayCliConstants.POLICY_DIR, projectName);
@@ -96,7 +97,7 @@ public class BuildCmd implements GatewayLauncherCmd {
                 //Initializing the ballerina project and creating .bal folder.
                 InitHandler.initialize(Paths.get(GatewayCmdUtils.getProjectDirectoryPath(projectName)), null,
                         new ArrayList<>(), null);
-                balCodeGeneration(projectName);
+//                balCodeGeneration(projectName);
 
 //todo:
 //                try {
@@ -107,22 +108,18 @@ public class BuildCmd implements GatewayLauncherCmd {
 //                    throw new CLIInternalException(
 //                            "Error while checking for changes of resources. Skipping no-change detection..");
 //                }
-
-
-//            String outputPath = GatewayCmdUtils.getProjectDirectoryPath(projectName)+"/target/"+projectName + ".balx";
-//            String srcPath = GatewayCmdUtils.getProjectSrcDirectoryPath(projectName) + "/";
-//            Main ballerinaLauncher = new Main();
-//            ballerinaLauncher.main("build", srcPath, "-o", outputPath, "--offline");
-////            String filename = null;
-////            ProcessBuilder processBuilder = new ProcessBuilder();
-
-
-            //-------
-            GatewayCmdUtils.createProjectGWDistribution(projectName);
-            outStream.println("Build successful for the project - " + projectName);
-        } catch (IOException e) {
-            logger.error("Error occurred while creating the micro gateway distribution for the project {}.", projectName, e);
-            throw new CLIInternalException("Error occurred while creating the micro gateway distribution for the project");
+            } catch (IOException e) {
+                throw new CLIInternalException("Error occured while generating ballerina code for the swagger file.");
+            }
+        }
+        else{
+            try {
+                GatewayCmdUtils.createProjectGWDistribution(projectName);
+                outStream.println("Build successful for the project - " + projectName);
+            } catch (IOException e) {
+                logger.error("Error occurred while creating the micro gateway distribution for the project {}.", projectName, e);
+                throw new CLIInternalException("Error occurred while creating the micro gateway distribution for the project");
+            }
         }
     }
 
@@ -132,8 +129,12 @@ public class BuildCmd implements GatewayLauncherCmd {
                 .getProjectAPIFilesDirectoryPath(projectName) + "/balxGeneration.sh", projectName, GatewayCmdUtils
                 .getUserDir());
         try {
-            processBuilder.start();
-            Thread.sleep(6000);
+            Process process = processBuilder.start();
+            process.waitFor();
+
+            if(process.exitValue() != 0){
+                throw new RuntimeException("Error occurred when building.");
+            }
         } catch (IOException e) {
             throw new CLIInternalException("Cannot compile the ballerina code");
         } catch (InterruptedException e) {
