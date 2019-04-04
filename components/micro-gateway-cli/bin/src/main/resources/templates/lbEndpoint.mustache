@@ -1,0 +1,7 @@
+http:LoadBalanceClient {{qualifiedServiceName}}_{{endpointUrlType}} = new({
+    targets: [
+    {{#endpoints}}    {url: gateway:retrieveConfig("{{api.id}}_{{endpointUrlType}}_endpoint_{{@index}}", "{{endpointUrl}}")}{{#unless @last}},
+    {{/unless}}{{/endpoints}}
+    ]
+    {{>caching}}{{>basicAuth}}
+});

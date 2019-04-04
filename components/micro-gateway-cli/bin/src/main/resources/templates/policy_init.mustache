@@ -1,0 +1,25 @@
+import ballerina/log;
+import ballerina/runtime;
+import wso2/gateway;
+
+
+function initThrottlePolicies() {
+    boolean globalThrottlingEnabled=gateway:initiateThrottlingJmsListener();
+
+     if(!globalThrottlingEnabled){
+         while (true) {
+             if(gateway:isStreamsInitialized == true) {
+                            log:printDebug("Throttle streams initialized.");
+                            break;
+             }
+         }
+     }
+{{#policyInitNames}}
+    future<()> {{.}}Ftr = start {{.}}();
+{{/policyInitNames}}
+    log:printDebug("Throttle policies initialized.");
+}
+
+function getDeployedPolicies() returns map<boolean> {
+    return { {{#policyNames}}"{{.}}":true{{#unless @last}},{{/unless}}{{/policyNames}} };
+}
