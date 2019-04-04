@@ -176,19 +176,21 @@ public class CodeGenerator {
                         }
 
                         genFiles.add(generateCommonEndpoints());
-                        CodegenUtils.writeGeneratedSources(genFiles, Paths.get(projectSrcPath), overwrite);
-                        GatewayCmdUtils.copyFilesToSources(GatewayCmdUtils.getFiltersFolderLocation() + File.separator
-                                        + GatewayCliConstants.GW_DIST_EXTENSION_FILTER,
-                                projectSrcPath + File.separator + GatewayCliConstants.GW_DIST_EXTENSION_FILTER);
-                        GatewayCmdUtils.copyFolder(GatewayCmdUtils.getPoliciesFolderLocation(), projectSrcPath
-                                + File.separator + GatewayCliConstants.GW_DIST_POLICIES);
-
+                        serviceList.add(definitionContext);
                     } catch (BallerinaServiceGenException e) {
                         throw new CLIRuntimeException("Swagger definition cannot be parsed to ballerina code",e);
                     } catch (IOException e) {
                         throw new CLIInternalException("File write operations failed during ballerina code generation");
                     }
                 });
+        genFiles.add(generateMainBal(serviceList));
+        CodegenUtils.writeGeneratedSources(genFiles, Paths.get(projectSrcPath), overwrite);
+        GatewayCmdUtils.copyFilesToSources(GatewayCmdUtils.getFiltersFolderLocation() + File.separator
+                        + GatewayCliConstants.GW_DIST_EXTENSION_FILTER,
+                projectSrcPath + File.separator + GatewayCliConstants.GW_DIST_EXTENSION_FILTER);
+        GatewayCmdUtils.copyFolder(GatewayCmdUtils.getPoliciesFolderLocation(), projectSrcPath
+                + File.separator + GatewayCliConstants.GW_DIST_POLICIES);
+
     }
 
     /**
