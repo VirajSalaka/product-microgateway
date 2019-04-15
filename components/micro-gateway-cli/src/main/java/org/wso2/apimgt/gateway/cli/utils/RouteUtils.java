@@ -66,8 +66,6 @@ public class RouteUtils {
     public static void saveGlobalEpAndBasepath(String apiDefPath, String basePath, String endpointConfigJson){
         String apiId = OpenAPICodegenUtils.generateAPIdForSwagger(apiDefPath);
         String[] apiNameAndVersion = OpenAPICodegenUtils.getAPINameVersionFromSwagger(apiDefPath);
-
-
         String apiName = apiNameAndVersion[0];
         String apiVersion = apiNameAndVersion[1];
 
@@ -541,6 +539,7 @@ public class RouteUtils {
 
     public static void addFunction(String function, String type, String apiID, String routeConfigPath,
                                    String projectName) {
+
 
         APIRouteEndpointConfig api = RouteUtils.getGlobalEpConfig(apiID);
 
