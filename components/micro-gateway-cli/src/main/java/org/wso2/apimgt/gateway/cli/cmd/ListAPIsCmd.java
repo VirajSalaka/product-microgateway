@@ -20,14 +20,15 @@ package org.wso2.apimgt.gateway.cli.cmd;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
 import org.wso2.apimgt.gateway.cli.utils.RouteUtils;
 
 import java.io.PrintStream;
 import java.util.List;
 
+/**
+ * This class represents the "list apis" command and it holds arguments and flags specified by the user.
+ */
 @Parameters(commandNames = "list apis", commandDescription = "list apis of the microgateway")
 public class ListAPIsCmd implements GatewayLauncherCmd {
     private static final String API_ID = "API ID";
@@ -38,13 +39,11 @@ public class ListAPIsCmd implements GatewayLauncherCmd {
     @Parameter(names = {"--project"}, hidden = true)
     private String projectName;
 
-    private static final Logger logger = LoggerFactory.getLogger(ListAPIsCmd.class);
     private static PrintStream outStream = System.out;
 
     @Override
     public void execute() {
         projectName = GatewayCmdUtils.buildProjectName(projectName);
-        RouteUtils.setRoutesConfigPath(GatewayCmdUtils.getProjectRoutesConfFilePath(projectName));
         printAPIDetailsInTable(RouteUtils.listApis());
     }
 

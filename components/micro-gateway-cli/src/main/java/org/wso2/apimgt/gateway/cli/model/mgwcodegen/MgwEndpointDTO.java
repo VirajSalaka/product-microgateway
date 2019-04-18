@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wso2.apimgt.gateway.cli.model.mgwServiceMap;
+package org.wso2.apimgt.gateway.cli.model.mgwcodegen;
 
+/**
+ * This class represents the value of an endpoint(url) required for ballerina code generation process
+ * (in mustache templates).
+ */
 public class MgwEndpointDTO {
     private String endpointUrl;
 
-//    public MgwEndpointDTO(){
-//    }
 
-    public MgwEndpointDTO(String endpointUrl){
+    public MgwEndpointDTO(String endpointUrl) {
         setEndpointUrl(endpointUrl);
     }
 

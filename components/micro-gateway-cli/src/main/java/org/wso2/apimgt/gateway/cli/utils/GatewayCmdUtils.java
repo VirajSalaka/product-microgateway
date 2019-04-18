@@ -41,6 +41,7 @@ import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
@@ -1158,7 +1159,17 @@ public class GatewayCmdUtils {
                 logger.debug("Working project was set from config: " + projectName);
             }
         }
-
         return projectName;
+    }
+
+    public static void setConfiguration(String configPath) throws ConfigParserException{
+        Path configurationFile = Paths.get(configPath);
+        if (Files.exists(configurationFile)) {
+            Config config = TOMLConfigParser.parse(configPath, Config.class);
+            GatewayCmdUtils.setConfig(config);
+        } else {
+            logger.error("Configuration: {} Not found.", configPath);
+            throw new CLIInternalException("Error occurred while loading configurations.");
+        }
     }
 }

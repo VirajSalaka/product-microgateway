@@ -33,7 +33,11 @@ import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.model.template.GenSrcFile;
 import org.wso2.apimgt.gateway.cli.model.template.service.BallerinaService;
 import org.wso2.apimgt.gateway.cli.model.template.service.ListenerEndpoint;
-import org.wso2.apimgt.gateway.cli.utils.*;
+import org.wso2.apimgt.gateway.cli.utils.CodegenUtils;
+import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
+import org.wso2.apimgt.gateway.cli.utils.OpenAPICodegenUtils;
+import org.wso2.apimgt.gateway.cli.utils.RouteUtils;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -57,10 +61,11 @@ public class CodeGenerator {
      * Generates ballerina source for saved swagger definitions
      * API endpoint details are identified by reading the routes configuration file
      * Swagger definition is saved in the project
+     *
      * @param projectName project name
-     * @param overwrite whether existing files overwrite or not
+     * @param overwrite   whether existing files overwrite or not
      * @throws IOException if IOException occurs during writing generated ballerina files, copying extension filters
-     * or copying policy ballerina files
+     *                     or copying policy ballerina files
      */
     public void generate(String projectName, boolean overwrite) throws IOException {
 
@@ -69,8 +74,8 @@ public class CodeGenerator {
         List<GenSrcFile> genFiles = new ArrayList<>();
         List<BallerinaService> serviceList = new ArrayList<>();
 
-        Files.walk(Paths.get(projectAPIFilesPath)).filter( path -> path.getFileName().toString().equals("swagger.json"))
-                .forEach( path -> {
+        Files.walk(Paths.get(projectAPIFilesPath)).filter(path -> path.getFileName().toString().equals("swagger.json"))
+                .forEach(path -> {
                     ExtendedAPI api = OpenAPICodegenUtils.generateAPIFromOpenAPIDef(path.toString());
                     BallerinaService definitionContext;
                     OpenAPICodegenUtils.setAdditionalConfigs(projectName, api);
@@ -83,7 +88,7 @@ public class CodeGenerator {
                         genFiles.add(generateService(definitionContext));
 
                         //if two basepaths are available, second one is the default one
-                        if(basepaths.length == 2){
+                        if (basepaths.length == 2) {
                             definitionContext = new BallerinaService().buildContext(openAPI, api);
                             definitionContext.setBasepath(basepaths[1]);
                             definitionContext.setQualifiedServiceName(api.getName());
@@ -92,7 +97,7 @@ public class CodeGenerator {
 
                         serviceList.add(definitionContext);
                     } catch (BallerinaServiceGenException e) {
-                        throw new CLIRuntimeException("Swagger definition cannot be parsed to ballerina code",e);
+                        throw new CLIRuntimeException("Swagger definition cannot be parsed to ballerina code", e);
                     } catch (IOException e) {
                         throw new CLIInternalException("File write operations failed during ballerina code generation");
                     }
@@ -122,7 +127,7 @@ public class CodeGenerator {
     }
 
     /**
-     * Generate code for Main ballerina file
+     * Generate code for Main ballerina file.
      *
      * @param services list of model context to be used by the templates
      * @return generated source files as a list of {@link GenSrcFile}
@@ -170,6 +175,7 @@ public class CodeGenerator {
      * Generates ballerina source for provided Open APIDetailedDTO Definition in {@code definitionPath}.
      * Generated source will be written to a ballerina package at {@code outPath}
      * <p>Method can be user for generating Ballerina mock services and clients</p>
+     *
      * @param projectName name of the project being set up
      * @param apiDef      api definition string
      * @param overwrite   whether existing files overwrite or not

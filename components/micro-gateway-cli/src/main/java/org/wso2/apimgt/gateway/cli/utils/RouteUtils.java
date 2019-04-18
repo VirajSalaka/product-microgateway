@@ -23,14 +23,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.swagger.util.Json;
 import org.wso2.apimgt.gateway.cli.constants.RESTServiceConstants;
 import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.hashing.HashUtils;
-import org.wso2.apimgt.gateway.cli.model.mgwServiceMap.MgwEndpointConfigDTO;
-import org.wso2.apimgt.gateway.cli.model.mgwServiceMap.MgwEndpointDTO;
-import org.wso2.apimgt.gateway.cli.model.mgwServiceMap.MgwEndpointListDTO;
+import org.wso2.apimgt.gateway.cli.model.mgwcodegen.MgwEndpointConfigDTO;
+import org.wso2.apimgt.gateway.cli.model.mgwcodegen.MgwEndpointDTO;
+import org.wso2.apimgt.gateway.cli.model.mgwcodegen.MgwEndpointListDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.APIEndpointSecurityDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.EndpointUrlTypeEnum;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
@@ -52,7 +51,8 @@ public class RouteUtils {
     private static final String RESOURCES = "resources";
     private static final String GLOBAL_FUNCTION = "resources";
     private static JsonNode routesConfig;
-    private static String routesConfigPath;
+    private static final String routesConfigPath = GatewayCmdUtils.getProjectRoutesConfFilePath
+            (GatewayCmdUtils.findCurrentProject());
     public static final String IN = "in";
     public static final String OUT = "out";
     public static final String FUNCTION_IN ="functionIn";
@@ -82,9 +82,16 @@ public class RouteUtils {
      * save endpoint configuration and basePath of API
      * @param apiList List of APIs
      */
-    public static void saveGlobalEpAndBasepath(List<ExtendedAPI> apiList) {
+    public static void saveGlobalEpAndBasepath(List<ExtendedAPI> apiList, boolean isForceFully) {
         JsonNode routesConfig = getRoutesConfig();
         for(ExtendedAPI api : apiList){
+            String apiId = HashUtils.generateAPIId(api.getName(), api.getVersion());
+
+            if(hasApiInRoutesConfig(apiId) && !isForceFully){
+                throw GatewayCmdUtils.createUsageException("The provided API id '" + apiId + "' already " +
+                        "has an endpointConfiguration. use -f or --force to forcefully update the " +
+                        "endpointConfiguration");
+            }
             APIRouteEndpointConfig apiEpConfig = new APIRouteEndpointConfig();
             apiEpConfig.setApiName(api.getName());
             apiEpConfig.setApiVersion(api.getVersion());
@@ -94,7 +101,6 @@ public class RouteUtils {
             apiEpConfig.setProdEndpointList(endpointConfig.getProdEndpointList());
             apiEpConfig.setSandboxEndpointList(endpointConfig.getSandboxEndpointList());
 
-            String apiId = HashUtils.generateAPIId(api.getName(), api.getVersion());
             addBasePath(routesConfig, api);
 
             addAPIRouteEndpointConfigAsGlobalEp(routesConfig, apiId, apiEpConfig);
@@ -206,9 +212,6 @@ public class RouteUtils {
      * @return Routes Configuration as a JsonNode
      */
     private static JsonNode getRoutesConfig(){
-        if(routesConfigPath == null){
-            throw new CLIInternalException("routes.yaml is not provided");
-        }
         try {
             routesConfig = OBJECT_MAPPER_YAML.readTree(new File(routesConfigPath));
         } catch (IOException e) {
@@ -520,7 +523,7 @@ public class RouteUtils {
         return rootNode.get(RESOURCES).get(resourceId);
     }
 
-    public static boolean hasResource(String resourceId){
+    public static boolean hasResourceInRoutesConfig(String resourceId){
         if(getResourceJsonNode(resourceId) == null){
             return false;
         }
@@ -544,12 +547,7 @@ public class RouteUtils {
         return "No endpoints available";
     }
 
-    public static void setRoutesConfigPath(String routesConfigPath) {
-        RouteUtils.routesConfigPath = routesConfigPath;
-    }
-
-    public static void addFunction(String function, String type, String apiID, String routeConfigPath,
-                                   String projectName) {
+    public static void addFunction(String function, String type, String apiID) {
 
         APIRouteEndpointConfig api = RouteUtils.getGlobalEpConfig(apiID);
 
@@ -563,7 +561,7 @@ public class RouteUtils {
         writeRoutesConfig(jn);
     }
 
-    public static void AddGlobalFunction(String routeConfigPath, String function, String type) {
+    public static void AddGlobalFunction(String function, String type) {
 
         JsonNode rootNode = getRoutesConfig();
         JsonNode jsonNode = rootNode.get(GLOBAL_FUNCTION);
@@ -595,10 +593,7 @@ public class RouteUtils {
         writeRoutesConfig(rootNode);
     }
 
-    public static boolean hasApi(String apiId){
-        if(getGlobalEpConfig(apiId) == null){
-            return false;
-        }
-        return true;
+    public static boolean hasApiInRoutesConfig(String apiId){
+        return null != getGlobalEpConfig(apiId);
     }
 }

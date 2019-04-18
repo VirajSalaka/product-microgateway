@@ -20,7 +20,7 @@ import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import org.wso2.apimgt.gateway.cli.exception.BallerinaServiceGenException;
-import org.wso2.apimgt.gateway.cli.model.mgwServiceMap.MgwEndpointConfigDTO;
+import org.wso2.apimgt.gateway.cli.model.mgwcodegen.MgwEndpointConfigDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 
 import java.util.ArrayList;
@@ -73,7 +73,7 @@ public class BallerinaOperation implements BallerinaOpenAPIObject<BallerinaOpera
         this.parameters = new ArrayList<>();
         this.methods = null;
         Map<String, Object> extension =  operation.getExtensions();
-        if(extension != null){
+        if (extension != null) {
             Optional<Object> resourceTier = Optional.ofNullable(extension.get(X_THROTTLING_TIER));
             resourceTier.ifPresent(value -> this.resourceTier = value.toString());
             Optional<Object> scopes = Optional.ofNullable(extension.get(X_SCOPE));
@@ -183,10 +183,10 @@ public class BallerinaOperation implements BallerinaOpenAPIObject<BallerinaOpera
 
     public void setEpConfigDTO(MgwEndpointConfigDTO epConfigDTO) {
         this.epConfig = epConfigDTO;
-        if(epConfigDTO.getProdEndpointList() != null){
+        if (epConfigDTO.getProdEndpointList() != null) {
             hasProdEpConfig = true;
         }
-        if(epConfigDTO.getSandboxEndpointList() != null){
+        if (epConfigDTO.getSandboxEndpointList() != null) {
             hasSandEpConfig = true;
         }
     }

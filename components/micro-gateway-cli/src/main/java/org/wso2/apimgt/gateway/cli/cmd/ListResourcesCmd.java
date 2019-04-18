@@ -20,19 +20,18 @@ package org.wso2.apimgt.gateway.cli.cmd;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.wso2.apimgt.gateway.cli.model.route.ResourceRepresentation;
+import org.wso2.apimgt.gateway.cli.model.rest.ResourceRepresentation;
 import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
 import org.wso2.apimgt.gateway.cli.utils.OpenAPICodegenUtils;
-import org.wso2.apimgt.gateway.cli.utils.RouteUtils;
 
 import java.io.PrintStream;
 import java.util.List;
 
+/**
+ * This class represents the "list resources" command and it holds arguments and flags specified by the user.
+ */
 @Parameters(commandNames = "list resources", commandDescription = "list routes of the microgateway")
-public class ListResourcesCmd implements GatewayLauncherCmd{
-    private static final Logger LOGGER = LoggerFactory.getLogger(ListResourcesCmd.class);
+public class ListResourcesCmd implements GatewayLauncherCmd {
     private static PrintStream outStream = System.out;
 
     @Parameter(names = {"--project"}, hidden = true)
@@ -44,7 +43,6 @@ public class ListResourcesCmd implements GatewayLauncherCmd{
     @Override
     public void execute() {
         projectName = GatewayCmdUtils.buildProjectName(projectName);
-        RouteUtils.setRoutesConfigPath(GatewayCmdUtils.getProjectRoutesConfFilePath(projectName));
 
         if (mainArgs == null) {
             printResourceDetailsForSingleAPI(OpenAPICodegenUtils.getAllResources(projectName));

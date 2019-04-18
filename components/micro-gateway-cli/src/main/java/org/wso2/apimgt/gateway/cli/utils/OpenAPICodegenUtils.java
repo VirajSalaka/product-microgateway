@@ -30,9 +30,9 @@ import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
 import org.wso2.apimgt.gateway.cli.exception.CLIRuntimeException;
 import org.wso2.apimgt.gateway.cli.hashing.HashUtils;
-import org.wso2.apimgt.gateway.cli.model.mgwServiceMap.MgwEndpointConfigDTO;
+import org.wso2.apimgt.gateway.cli.model.mgwcodegen.MgwEndpointConfigDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
-import org.wso2.apimgt.gateway.cli.model.route.ResourceRepresentation;
+import org.wso2.apimgt.gateway.cli.model.rest.ResourceRepresentation;
 
 import java.io.File;
 import java.io.IOException;
@@ -279,7 +279,7 @@ public class OpenAPICodegenUtils {
      * @param filePath path to openAPI definition
      * @return openAPI as a String
      */
-    public static String readApi(String filePath) {
+    public static String readJson(String filePath) {
         String responseStr;
         try {
             responseStr = new String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8);

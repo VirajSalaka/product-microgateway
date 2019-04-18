@@ -67,7 +67,6 @@ public class FunctionCmd implements GatewayLauncherCmd {
     public void execute() {
 
         String projectName = GatewayCmdUtils.getSingleArgument(mainArgs);
-        RouteUtils.setRoutesConfigPath(GatewayCmdUtils.getProjectRoutesConfFilePath(projectName));
         File projectLocation = new File(GatewayCmdUtils.getProjectDirectoryPath(projectName)
                 + File.separator +"src");
 
@@ -90,26 +89,22 @@ public class FunctionCmd implements GatewayLauncherCmd {
         if (inFunction != null) {
             if (apiID != null) {
                 //api level inFunction
-                RouteUtils.addFunction(inFunction, RouteUtils.IN, apiID,
-                        GatewayCmdUtils.getProjectRoutesConfFilePath(projectName), projectName);
+                RouteUtils.addFunction(inFunction, RouteUtils.IN, apiID);
             } else if (resourceID != null) {
                 //add resource level inFunction
             } else {
                 //global level in function
-                RouteUtils.AddGlobalFunction(GatewayCmdUtils.getProjectRoutesConfFilePath(projectName),
-                        inFunction, "in");
+                RouteUtils.AddGlobalFunction(inFunction, "in");
             }
         } else if (outFunction != null) {
             //api level outFunction
             if (apiID != null) {
-                RouteUtils.addFunction(outFunction, RouteUtils.OUT, apiID,
-                        GatewayCmdUtils.getProjectRoutesConfFilePath(projectName), projectName);
+                RouteUtils.addFunction(outFunction, RouteUtils.OUT, apiID);
             } else if (resourceID != null) {
                 //add resource level outFunction
             } else {
                 //global level outFunction
-                RouteUtils.AddGlobalFunction(GatewayCmdUtils.getProjectRoutesConfFilePath(projectName),
-                        outFunction, "out");
+                RouteUtils.AddGlobalFunction(outFunction, "out");
             }
         }
 

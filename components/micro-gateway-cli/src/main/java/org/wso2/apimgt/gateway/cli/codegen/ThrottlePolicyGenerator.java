@@ -24,7 +24,6 @@ import com.github.jknack.handlebars.context.FieldValueResolver;
 import com.github.jknack.handlebars.context.JavaBeanValueResolver;
 import com.github.jknack.handlebars.context.MapValueResolver;
 import org.wso2.apimgt.gateway.cli.constants.GeneratorConstants;
-import org.wso2.apimgt.gateway.cli.exception.BallerinaServiceGenException;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.ApplicationThrottlePolicyListDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.policy.SubscriptionThrottlePolicyDTO;
@@ -47,33 +46,13 @@ import java.util.List;
  */
 public class ThrottlePolicyGenerator {
 
-    public void generate(String outPath, List<ApplicationThrottlePolicyDTO> applicationPolicies,
-            List<SubscriptionThrottlePolicyDTO> subscriptionPolicies) throws IOException, BallerinaServiceGenException {
-        List<GenSrcFile> genFiles = new ArrayList<>();
-        List<GenSrcFile> genAppFiles = generateApplicationPolicies(applicationPolicies);
-
-        if(genAppFiles != null){
-            genFiles.addAll(genAppFiles);
-        }
-
-        List<GenSrcFile> genSubsFiles = generateSubscriptionPolicies(subscriptionPolicies);
-
-        if(genSubsFiles != null){
-            genFiles.addAll(genSubsFiles);
-        }
-
-        GenSrcFile initGenFile = generateInitBal(applicationPolicies, subscriptionPolicies);
-        genFiles.add(initGenFile);
-        CodegenUtils.writeGeneratedSources(genFiles, Paths.get(outPath), true);
-    }
-
     /**
-     * Generate ballerina and stream source for a given app and subs policies
+     * Generate ballerina and stream source for a given app and subs policies.
      *
-     * @param outPath  Destination file path to save generated source files. If not provided
-     *                 {@code definitionPath} will be used as the default destination path
-     * @param projectName  Project name
-     * @throws IOException                  when file operations fail
+     * @param outPath     Destination file path to save generated source files. If not provided
+     *                    {@code definitionPath} will be used as the default destination path
+     * @param projectName Project name
+     * @throws IOException when file operations fail
      */
     public void generate(String outPath, String projectName) throws IOException {
 
@@ -81,25 +60,23 @@ public class ThrottlePolicyGenerator {
         ApplicationThrottlePolicyListDTO applicationPolicies = restoreApplicationThrottlePolicy(projectName);
         SubscriptionThrottlePolicyListDTO subscriptionPolicies = restoreSubscriptionThrottlePolicy(projectName);
 
-        if(applicationPolicies == null && subscriptionPolicies == null){
+        if (applicationPolicies == null && subscriptionPolicies == null) {
             return;
         }
 
         List<GenSrcFile> genFiles = new ArrayList<>();
-        if(applicationPolicies != null){
+        if (applicationPolicies != null) {
             List<GenSrcFile> genAppFiles = generateApplicationPolicies(applicationPolicies.getList());
             genFiles.addAll(genAppFiles);
-        }
-        else{
+        } else {
             //declare empty object to avoid null pointer issue
             applicationPolicies = new ApplicationThrottlePolicyListDTO();
         }
 
-        if(subscriptionPolicies != null){
+        if (subscriptionPolicies != null) {
             List<GenSrcFile> genSubsFiles = generateSubscriptionPolicies(subscriptionPolicies.getList());
             genFiles.addAll(genSubsFiles);
-        }
-        else{
+        } else {
             //declare empty object to avoid null pointer issue
             subscriptionPolicies = new SubscriptionThrottlePolicyListDTO();
         }
@@ -120,7 +97,7 @@ public class ThrottlePolicyGenerator {
             throws IOException {
         ThrottlePolicy policyContext;
 
-        if(applicationPolicies == null){
+        if (applicationPolicies == null) {
             return null;
         }
         List<GenSrcFile> sourceFiles = new ArrayList<>();
@@ -134,7 +111,7 @@ public class ThrottlePolicyGenerator {
     private ApplicationThrottlePolicyListDTO restoreApplicationThrottlePolicy(String projectName) throws IOException {
         String applicationPolicyPath = GatewayCmdUtils.getProjectAppThrottlePoliciesFilePath(projectName);
 
-        if(new File(applicationPolicyPath).exists()){
+        if (new File(applicationPolicyPath).exists()) {
             ObjectMapper objectMapper = new ObjectMapper();
             return objectMapper.readValue(new File(applicationPolicyPath), ApplicationThrottlePolicyListDTO.class);
         }
@@ -143,7 +120,7 @@ public class ThrottlePolicyGenerator {
     }
 
     /**
-     * Generate subscription policies source
+     * Generate subscription policies source.
      *
      * @param subscriptionPolicies list of subscription policies
      * @return list of {@code GenSrcFile}
@@ -186,10 +163,10 @@ public class ThrottlePolicyGenerator {
             List<SubscriptionThrottlePolicyDTO> subscriptionPolicies) throws IOException {
         ThrottlePolicyInitializer context = new ThrottlePolicyInitializer();
 
-        if(applicationPolicies != null) {
+        if (applicationPolicies != null) {
             context = context.buildAppContext(applicationPolicies);
         }
-        if(subscriptionPolicies != null){
+        if (subscriptionPolicies != null) {
             context = context.buildSubsContext(subscriptionPolicies);
         }
         return generateInitBalFile(context);

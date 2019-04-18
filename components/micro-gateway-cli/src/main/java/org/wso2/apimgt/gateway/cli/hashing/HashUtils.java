@@ -246,32 +246,34 @@ public class HashUtils {
 
     /**
      * Get the MD5 hash for an API.
+     *
      * @param apiName API name
      * @param version API version
      * @return md5 hash value for concatenated string (apiName:version)
      */
-    public static String generateAPIId(String apiName, String version){
+    public static String generateAPIId(String apiName, String version) {
         String concatString = apiName + ":" + version;
-        try{
+        try {
             return getMD5Hex(concatString);
-        } catch (HashingException e){
+        } catch (HashingException e) {
             throw new CLIInternalException("Error while generating md5 hash for API");
         }
     }
 
     /**
      * Get the MD5 hash for the given specific resource of an API.
-     * @param apiName API name
-     * @param version API version
-     * @param resource Resource name
-     * @param method  operation associated with the resource
+     *
+     * @param apiName  API name
+     * @param version  API version
+     * @param resource resource name
+     * @param method   operation associated with the resource
      * @return md5 hash value for concatenated string (apiName:version:resource:method)
      */
-    public static String generateResourceId(String apiName, String version, String resource, String method){
+    public static String generateResourceId(String apiName, String version, String resource, String method) {
         String concatString = apiName + ":" + version + ":" + resource + ":" + method;
-        try{
+        try {
             return getMD5Hex(concatString);
-        } catch (HashingException e){
+        } catch (HashingException e) {
             throw new CLIInternalException("Error while generating md5 hash for API resource");
         }
     }

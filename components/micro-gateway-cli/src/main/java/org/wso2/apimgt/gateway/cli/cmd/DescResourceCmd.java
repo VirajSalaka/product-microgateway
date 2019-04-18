@@ -14,14 +14,15 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- */package org.wso2.apimgt.gateway.cli.cmd;
+ */
+package org.wso2.apimgt.gateway.cli.cmd;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.apimgt.gateway.cli.model.route.ResourceRepresentation;
+import org.wso2.apimgt.gateway.cli.model.rest.ResourceRepresentation;
 import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
 import org.wso2.apimgt.gateway.cli.utils.OpenAPICodegenUtils;
 import org.wso2.apimgt.gateway.cli.utils.RouteUtils;
@@ -29,6 +30,9 @@ import org.wso2.apimgt.gateway.cli.utils.RouteUtils;
 import java.io.PrintStream;
 import java.util.List;
 
+/**
+ * This class represents the "desc resource" command and it holds arguments and flags specified by the user.
+ */
 @Parameters(commandNames = "desc resource", commandDescription = "describe the given resource in the microgateway")
 public class DescResourceCmd implements GatewayLauncherCmd {
 
@@ -49,18 +53,17 @@ public class DescResourceCmd implements GatewayLauncherCmd {
     public void execute() {
 
         projectName = GatewayCmdUtils.buildProjectName(projectName);
-        RouteUtils.setRoutesConfigPath(GatewayCmdUtils.getProjectRoutesConfFilePath(projectName));
 
-        String resource_id = GatewayCmdUtils.getSingleArgument(mainArgs);
-        ResourceRepresentation resource = OpenAPICodegenUtils.getResource(projectName, resource_id);
+        String resourceId = GatewayCmdUtils.getSingleArgument(mainArgs);
+        ResourceRepresentation resource = OpenAPICodegenUtils.getResource(projectName, resourceId);
         if (resource != null) {
             printResourceDetails(resource);
         } else {
-            outStream.println("No resource available for the ID : " + resource_id);
+            outStream.println("No resource available for the ID : " + resourceId);
         }
     }
 
-    private void printResourceDetails(ResourceRepresentation resource){
+    private void printResourceDetails(ResourceRepresentation resource) {
         outStream.println("Resource_id : " + resource.getId());
         outStream.println("API Name : " + resource.getApi());
         outStream.println("API version : " + resource.getId());

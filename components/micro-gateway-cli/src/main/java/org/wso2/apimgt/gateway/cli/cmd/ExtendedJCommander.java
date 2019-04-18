@@ -19,23 +19,38 @@ package org.wso2.apimgt.gateway.cli.cmd;
 
 import com.beust.jcommander.JCommander;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This class is to parse JCommander arguments containing space.
  */
 public class ExtendedJCommander extends JCommander {
+    private List<String> specialCommandList = new ArrayList<>();
 
-    ExtendedJCommander(Object object){
+    ExtendedJCommander(Object object) {
         super(object);
     }
 
     @Override
+    public void addCommand(String var1, Object var2) {
+        String[] commandArgs = var1.split(" ");
+        if (commandArgs.length == 2 && !specialCommandList.contains(commandArgs[0])) {
+            specialCommandList.add(commandArgs[0]);
+        }
+        super.addCommand(var1, var2);
+    }
+
+    @Override
     public void parse(String... args) {
-        if(args[0].equals("add") || args[0].equals("list") || args[0].equals("desc") || args[0].equals("update")){
+        if (specialCommandList.contains(args[0])) {
+            //if any special command which appears with space, the args will be modified before executed by parent
+            // class
             String[] modifiedCmdArgs = new String[args.length - 1];
-            System.arraycopy(args, 2, modifiedCmdArgs,1, modifiedCmdArgs.length - 1);
-            modifiedCmdArgs[0] = args[0]+" "+args[1];
+            System.arraycopy(args, 2, modifiedCmdArgs, 1, modifiedCmdArgs.length - 1);
+            modifiedCmdArgs[0] = args[0] + " " + args[1];
             super.parse(modifiedCmdArgs);
-        } else{
+        } else {
             super.parse(args);
         }
     }

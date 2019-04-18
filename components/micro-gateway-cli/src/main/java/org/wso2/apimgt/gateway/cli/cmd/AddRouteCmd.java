@@ -13,6 +13,9 @@ import org.wso2.apimgt.gateway.cli.utils.RouteUtils;
 
 import java.io.PrintStream;
 
+/**
+ * This class represents the "add route" command and it holds arguments and flags specified by the user.
+ */
 @Parameters(commandNames = "add route", commandDescription = "add api to the microgateway")
 public class AddRouteCmd implements GatewayLauncherCmd {
     private static final Logger logger = LoggerFactory.getLogger(AddRouteCmd.class);
@@ -31,24 +34,44 @@ public class AddRouteCmd implements GatewayLauncherCmd {
     private String endpointConfig;
 
     @Parameter(names = {"-r", "--resource"}, hidden = true)
-    private String resource_id;
+    private String resourceId;
+
+    @Parameter(names = {"-a", "--api"}, hidden = true)
+    private String apiId;
+
+    @Parameter(names = {"-f", "--force"}, hidden = true, arity = 0)
+    private boolean isForcefully;
 
     @Override
     public void execute() {
-
         projectName = GatewayCmdUtils.buildProjectName(projectName);
-        RouteUtils.setRoutesConfigPath(GatewayCmdUtils.getProjectRoutesConfFilePath(projectName));
 
-        if (resource_id == null || resource_id.isEmpty()) {
-            if ((resource_id = GatewayCmdUtils.promptForTextInput(outStream, "Enter Resource ID: "))
-                    .trim().isEmpty()) {
-                throw GatewayCmdUtils.createUsageException("Micro gateway add route failed: " +
-                        "resource_id is not provided");
+        //if both ids are provided, should not proceed
+        if ((apiId == null || apiId.isEmpty()) && (resourceId == null || resourceId.isEmpty())) {
+            throw new CLIRuntimeException("Error: API Id or resource id is not provided.");
+        }
+
+        //if no id is provided should not proceed
+        if ((apiId != null) && (resourceId != null)) {
+            throw new CLIRuntimeException("Error: Please provide one Id.");
+        }
+
+        if (apiId != null) {
+            //check if the apiId is already available
+            if (!RouteUtils.hasApiInRoutesConfig(apiId)) {
+                throw GatewayCmdUtils.createUsageException("API id '" + apiId + "' does not exist.");
+            }
+        } else {
+            if (RouteUtils.hasResourceInRoutesConfig(resourceId) && !isForcefully) {
+                throw GatewayCmdUtils.createUsageException("Resource id `" + resourceId + "` already has an " +
+                        "endpointConfiguration. use -f or --force to forcefully update the endpointConfiguration");
+            }
+            if (OpenAPICodegenUtils.getResource(projectName, resourceId) == null) {
+                throw new CLIRuntimeException("Provided resource id '" + resourceId + "' does not exist.");
             }
         }
-        if (OpenAPICodegenUtils.getResource(projectName, resource_id) == null) {
-            throw new CLIRuntimeException("Provided resource id is not available");
-        }
+
+        //setup endpoint configuration json
         String endpointConfigString;
         if (StringUtils.isEmpty(endpointConfig)) {
             if (StringUtils.isEmpty(endpoint)) {
@@ -57,32 +80,20 @@ public class AddRouteCmd implements GatewayLauncherCmd {
                  * the user
                  */
                 if ((endpoint = GatewayCmdUtils.promptForTextInput(outStream, "Enter Endpoint URL for Resource " +
-                        resource_id + ": ")).trim().isEmpty()) {
+                        resourceId + ": ")).trim().isEmpty()) {
                     throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty endpoint.");
                 }
             }
             endpointConfigString = "{\"prod\": {\"type\": \"http\", \"endpoints\" : [\"" + endpoint.trim() + "\"]}}";
         } else {
-            endpointConfigString = OpenAPICodegenUtils.readApi(endpointConfig);
+            endpointConfigString = OpenAPICodegenUtils.readJson(endpointConfig);
         }
-        if (RouteUtils.hasResource(resource_id)) {
-            String UserResponse;
-            if ((UserResponse = GatewayCmdUtils.promptForTextInput(outStream, "For the provided resource id " +
-                    resource_id + " enpoint configuration already exist. Do you need to overwrite ? yes[y] or no[n] :"))
-                    .trim().isEmpty()) {
-                throw new CLIRuntimeException("No argument is provided.");
-            }
-            if (UserResponse.toLowerCase().equals("n") || UserResponse.toLowerCase().equals("no")) {
-                outStream.println("Add route command is aborted :" + resource_id);
-            } else if (UserResponse.toLowerCase().equals("y") || UserResponse.toLowerCase().equals("yes")) {
-                RouteUtils.saveResourceRoute(resource_id, endpointConfigString);
-                outStream.println("Successfully added route for resource ID : " + resource_id);
-            } else {
-                throw new CLIRuntimeException("Provided argument is not valid :" + UserResponse);
-            }
+
+        if (apiId != null) {
+            RouteUtils.updateAPIRoute(apiId, endpointConfigString);
         } else {
-            RouteUtils.saveResourceRoute(resource_id, endpointConfigString);
-            outStream.println("Successfully added route for resource ID : " + resource_id);
+            RouteUtils.saveResourceRoute(resourceId, endpointConfigString);
+            outStream.println("Successfully added route for resource ID '" + resourceId + "'.");
         }
     }
 

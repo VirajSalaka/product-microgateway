@@ -24,10 +24,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.cli.constants.GatewayCliConstants;
-import org.wso2.apimgt.gateway.cli.exception.*;
+import org.wso2.apimgt.gateway.cli.exception.CLIInternalException;
+import org.wso2.apimgt.gateway.cli.exception.HashingException;
 import org.wso2.apimgt.gateway.cli.hashing.LibHashUtils;
 import org.wso2.apimgt.gateway.cli.model.config.Etcd;
-import org.wso2.apimgt.gateway.cli.utils.*;
+import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
+import org.wso2.apimgt.gateway.cli.utils.ZipUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +43,7 @@ import java.util.List;
  */
 @Parameters(commandNames = "setup", commandDescription = "setup information")
 public class SetupCmd implements GatewayLauncherCmd {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SetupCmd.class);
+    private static final Logger logger = LoggerFactory.getLogger(SetupCmd.class);
     private static PrintStream outStream = System.out;
 
     @SuppressWarnings("unused")
@@ -109,13 +111,14 @@ public class SetupCmd implements GatewayLauncherCmd {
     @Parameter(names = {"-b", "--basepath"}, hidden = true)
     private String basepath;
 
-    @Parameter(names = { "-etcd", "--enable-etcd" }, hidden = true, arity = 0)
+    @Parameter(names = {"-etcd", "--enable-etcd"}, hidden = true, arity = 0)
     private boolean isEtcdEnabled;
 
     private String[] addCmdArgs;
 
     /**
-     * This method is to support existing setup command
+     * This method is to support existing setup command.
+     *
      * @param args commandLine arguments
      */
     void setArgsForAddCmd(String[] args) {
@@ -143,7 +146,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             throw GatewayCmdUtils.createUsageException("Project name `" + projectName
                     + "` already exist. use -f or --force to forcefully update the project directory.");
         }
-        if(new File(workspace + File.separator + projectName).exists()){
+        if (new File(workspace + File.separator + projectName).exists()) {
             GatewayCmdUtils.deleteProject(projectName);
         }
         // Extracts the zipped ballerina platform and runtime
@@ -155,7 +158,7 @@ public class SetupCmd implements GatewayLauncherCmd {
         etcd.setEtcdEnabled(isEtcdEnabled);
         //todo: needs to persist ?
         GatewayCmdUtils.setEtcd(etcd);
-        LOGGER.debug("Etcd is enabled : " + isEtcdEnabled);
+        logger.debug("Etcd is enabled : " + isEtcdEnabled);
 
         if ((openApi != null) || (apiName != null) || (label != null)) {
             Main.main(addCmdArgs);
@@ -173,8 +176,9 @@ public class SetupCmd implements GatewayLauncherCmd {
     }
 
     /**
-     * Create project folder structure and initial deployment configuration
-     * @param projectName projectName
+     * Create project folder structure and initial deployment configuration.
+     *
+     * @param projectName          projectName
      * @param deploymentConfigPath deploymentConfigPath
      */
     private static void init(String projectName, String deploymentConfigPath) {
@@ -183,7 +187,7 @@ public class SetupCmd implements GatewayLauncherCmd {
             GatewayCmdUtils.createProjectStructure(projectName);
             GatewayCmdUtils.createDeploymentConfig(projectName, deploymentConfigPath);
         } catch (IOException e) {
-            LOGGER.error("Error occurred while generating project configurations", e);
+            logger.error("Error occurred while generating project configurations", e);
             throw new CLIInternalException("Error occurred while loading configurations.");
         }
     }
@@ -208,7 +212,7 @@ public class SetupCmd implements GatewayLauncherCmd {
                     Files.deleteIfExists(Paths.get(platformExtractedPath));
                 }
             } catch (HashingException e) {
-                LOGGER.error("Error while detecting changes in gateway libraries", e);
+                logger.error("Error while detecting changes in gateway libraries", e);
             }
             if (!Files.exists(Paths.get(runtimeExtractedPath))) {
                 ZipUtils.unzip(runtimeExtractedPath + GatewayCliConstants.EXTENSION_ZIP, runtimeExtractedPath, false);
@@ -234,7 +238,7 @@ public class SetupCmd implements GatewayLauncherCmd {
 
         } catch (IOException e) {
             String message = "Error while unzipping platform and runtime while project setup";
-            LOGGER.error(message, e);
+            logger.error(message, e);
             throw new CLIInternalException(message);
         }
     }

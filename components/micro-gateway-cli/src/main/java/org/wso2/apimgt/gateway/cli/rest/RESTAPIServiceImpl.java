@@ -181,10 +181,6 @@ public class RESTAPIServiceImpl implements RESTAPIService {
     }
 
     private void setAdditionalConfigs(ExtendedAPI api) throws IOException {
-        String endpointConfig = api.getEndpointConfig();
-        //todo: remove the comment
-        //api.setEndpointConfigRepresentation((endpointConfig));
-        // set default values from config if per api cors is not enabled
         Config config = GatewayCmdUtils.getConfig();
         if (config == null) {
             if (!api.getCorsConfiguration().getCorsConfigurationEnabled()) {

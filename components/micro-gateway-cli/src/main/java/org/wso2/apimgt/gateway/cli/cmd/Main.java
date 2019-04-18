@@ -69,7 +69,7 @@ public class Main {
     }
 
     /**
-     * Get the invoke CMD from the specified arguments
+     * Get the invoke CMD from the specified arguments.
      *
      * @param args list of arguments
      * @return invoked CMD
@@ -122,7 +122,7 @@ public class Main {
             descResourceCmd.setParentCmdParser(cmdParser);
 
             FunctionCmd functionCmd = new FunctionCmd();
-            cmdParser.addCommand(GatewayCliCommands.FUNCTION,functionCmd);
+            cmdParser.addCommand(GatewayCliCommands.FUNCTION, functionCmd);
             functionCmd.setParentCmdParser(cmdParser);
 
             SetProjectCmd setProjectCmd = new SetProjectCmd();

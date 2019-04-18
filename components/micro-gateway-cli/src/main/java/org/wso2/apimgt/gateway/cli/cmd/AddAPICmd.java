@@ -26,7 +26,6 @@ import org.ballerinalang.packerina.init.InitHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.apimgt.gateway.cli.codegen.CodeGenerator;
-import org.wso2.apimgt.gateway.cli.config.TOMLConfigParser;
 import org.wso2.apimgt.gateway.cli.constants.GatewayCliConstants;
 import org.wso2.apimgt.gateway.cli.constants.RESTServiceConstants;
 import org.wso2.apimgt.gateway.cli.exception.BallerinaServiceGenException;
@@ -58,15 +57,17 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import static org.wso2.apimgt.gateway.cli.utils.grpc.GrpcGen.BalGenerationConstants.PROTO_SUFFIX;
 
+/**
+ * This class represents the "add api" command and it holds arguments and flags specified by the user.
+ */
 @Parameters(commandNames = "add api", commandDescription = "add api to the microgateway")
 public class AddAPICmd implements GatewayLauncherCmd {
     private static final Logger logger = LoggerFactory.getLogger(AddAPICmd.class);
@@ -161,9 +162,6 @@ public class AddAPICmd implements GatewayLauncherCmd {
                     + "` does not exist");
         }
 
-        //todo: remove
-        RouteUtils.setRoutesConfigPath(GatewayCmdUtils.getProjectRoutesConfFilePath(projectName));
-
         //Security Schemas settings
         if (StringUtils.isEmpty(security)) {
             security = "oauth2";
@@ -178,7 +176,7 @@ public class AddAPICmd implements GatewayLauncherCmd {
         {
             if (isOpenApi) {
                 outStream.println("Loading Open Api Specification from Path: " + openApi);
-                String api = OpenAPICodegenUtils.readApi(openApi);
+                String api = OpenAPICodegenUtils.readJson(openApi);
 
                 if (openApi.toLowerCase(Locale.ENGLISH).endsWith(PROTO_SUFFIX)) {
                     grpc = openApi;
@@ -191,12 +189,13 @@ public class AddAPICmd implements GatewayLauncherCmd {
                         if (StringUtils.isEmpty(endpointConfig)) {
                             if (StringUtils.isEmpty(endpoint)) {
                                 /*
-                                 * if an endpoint config or an endpoint is not provided as an argument, it is prompted from
-                                 * the user
+                                 * if an endpoint config or an endpoint is not provided as an argument, it is prompted
+                                 * from the user
                                  */
-                                if ((endpoint = GatewayCmdUtils.promptForTextInput(outStream,"Enter Endpoint URL: "))
+                                if ((endpoint = GatewayCmdUtils.promptForTextInput(outStream, "Enter Endpoint URL: "))
                                         .trim().isEmpty()) {
-                                    throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty endpoint.");
+                                    throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty " +
+                                            "endpoint.");
                                 }
                             }
                         }
@@ -217,14 +216,10 @@ public class AddAPICmd implements GatewayLauncherCmd {
                     //generate API_ID from OpenAPI specification
                     String apiId = OpenAPICodegenUtils.generateAPIdForSwagger(apiDefPath);
 
-                    boolean isForcedUpdate = false;
-
-                    if(RouteUtils.hasApi(apiId)) {
-                        isForcedUpdate = checkAPIAndProceed(apiId);
-                        if(!isForcedUpdate){
-                            outStream.println("add api command is aborted");
-                            return;
-                        }
+                    if (RouteUtils.hasApiInRoutesConfig(apiId) && !isForcefully) {
+                        throw GatewayCmdUtils.createUsageException("The provided API id '" + apiId + "' already " +
+                                "has an endpointConfiguration. use -f or --force to forcefully update the " +
+                                "endpointConfiguration");
                     }
 
                     //set endpoint configuration
@@ -235,30 +230,32 @@ public class AddAPICmd implements GatewayLauncherCmd {
                              * if an endpoint config or an endpoint is not provided as an argument, it is prompted from
                              * the user
                              */
-                            if ((endpoint = GatewayCmdUtils.promptForTextInput(outStream,"Enter Endpoint URL: "))
+                            if ((endpoint = GatewayCmdUtils.promptForTextInput(outStream, "Enter Endpoint URL: "))
                                     .trim().isEmpty()) {
-                                throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty endpoint.");
+                                throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty " +
+                                        "endpoint.");
                             }
                         }
                         endpointConfigString = "{\"prod\": {\"type\": \"http\", \"endpoints\" : [\"" + endpoint.trim() +
                                 "\"]}}";
                     } else {
-                        endpointConfigString = OpenAPICodegenUtils.readApi(endpointConfig);
+                        endpointConfigString = OpenAPICodegenUtils.readJson(endpointConfig);
                     }
 
                     //set basePath
                     if (StringUtils.isEmpty(basepath)) {
                         basepath = OpenAPICodegenUtils.getBasePathFromSwagger(apiDefPath);
                         if (StringUtils.isEmpty(basepath)) {
-                            if ((basepath = GatewayCmdUtils.promptForTextInput(outStream,"Enter basePath: "))
+                            if ((basepath = GatewayCmdUtils.promptForTextInput(outStream, "Enter basePath: "))
                                     .trim().isEmpty()) {
-                                throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty basepath");
+                                throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty " +
+                                        "basepath");
                             }
                         }
                     }
 
                     //to revert the folders created if any exception is thrown
-                    try{
+                    try {
                         //Create folder structure for the API
                         GatewayCmdUtils.createPerAPIFolderStructure(projectName, apiId);
                         //save OpenAPI Specification
@@ -267,26 +264,23 @@ public class AddAPICmd implements GatewayLauncherCmd {
                         JsonProcessingUtils.saveAPIMetadata(projectName, apiId, security);
                         //Save route configurations for the given endpointConfiguration
                         RouteUtils.saveGlobalEpAndBasepath(apiDefPath, basepath, endpointConfigString);
-
-
-                    } catch (Exception e){
-                        if(!isForcedUpdate){
-                            GatewayCmdUtils.deletePerAPIFolder(projectName, apiId);
-                        }
+                        outStream.println("Add route command executed successfully");
+                    } catch (Exception e) {
+                        GatewayCmdUtils.deletePerAPIFolder(projectName, apiId);
                         throw e;
                     }
                     try {
                         //copy policies folder
                         String policyDir = GatewayCmdUtils.getProjectSrcDirectoryPath(projectName) + File.separator +
                                 GatewayCliConstants.GW_DIST_POLICIES;
-                        if((new File(policyDir)).list().length == 0) {
+                        if (Objects.requireNonNull((new File(policyDir)).list()).length == 0) {
                             GatewayCmdUtils.copyFolder(GatewayCmdUtils.getPoliciesFolderLocation(),
                                     GatewayCmdUtils.getProjectSrcDirectoryPath(projectName) + File.separator +
                                             GatewayCliConstants.GW_DIST_POLICIES);
                         }
 
                     } catch (IOException e) {
-                        throw new CLIRuntimeException("cannot read source directory");
+                        throw new CLIRuntimeException("Error while copying policies directory.");
                     }
                 }
             } else {
@@ -296,7 +290,7 @@ public class AddAPICmd implements GatewayLauncherCmd {
                 if (StringUtils.isEmpty(configuredUser)) {
                     if (StringUtils.isEmpty(username)) {
                         isOverwriteRequired = true;
-                        if ((username = GatewayCmdUtils.promptForTextInput(outStream,"Enter Username: "))
+                        if ((username = GatewayCmdUtils.promptForTextInput(outStream, "Enter Username: "))
                                 .trim().isEmpty()) {
                             throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty username.");
                         }
@@ -313,7 +307,8 @@ public class AddAPICmd implements GatewayLauncherCmd {
                             password = promptForPasswordInput(
                                     "Password can't be empty; enter password for " + username + ": ");
                             if (password.trim().isEmpty()) {
-                                throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty password.");
+                                throw GatewayCmdUtils.createUsageException("Micro gateway setup failed: empty " +
+                                        "password.");
                             }
                         }
                     }
@@ -329,7 +324,8 @@ public class AddAPICmd implements GatewayLauncherCmd {
                     if (StringUtils.isEmpty(trustStoreLocation)) {
                         isOverwriteRequired = true;
                         if ((trustStoreLocation = GatewayCmdUtils.promptForTextInput(outStream,
-                                "Enter Trust store location: [" + RESTServiceConstants.DEFAULT_TRUSTSTORE_PATH + "]")).trim().isEmpty()) {
+                                "Enter Trust store location: [" + RESTServiceConstants.DEFAULT_TRUSTSTORE_PATH +
+                                        "]")).trim().isEmpty()) {
                             trustStoreLocation = RESTServiceConstants.DEFAULT_TRUSTSTORE_PATH;
                         }
                     }
@@ -394,8 +390,8 @@ public class AddAPICmd implements GatewayLauncherCmd {
                 }
 
                 if (StringUtils.isEmpty(clientID) || StringUtils.isEmpty(clientSecret)) {
-                    String[] clientInfo = manager
-                            .generateClientIdAndSecret(registrationEndpoint, username, password.toCharArray(), isInsecure);
+                    String[] clientInfo = manager.generateClientIdAndSecret(registrationEndpoint, username,
+                            password.toCharArray(), isInsecure);
                     clientID = clientInfo[0];
                     clientSecret = clientInfo[1];
                 }
@@ -436,12 +432,14 @@ public class AddAPICmd implements GatewayLauncherCmd {
                 JsonProcessingUtils.saveClientCertMetadata(projectName, clientCertificates);
 
                 //delete the folder if an exception is thrown in following steps
-                try{
+                try {
                     GatewayCmdUtils.saveSwaggerDefinitionForMultipleAPIs(projectName, apis);
                     JsonProcessingUtils.saveAPIMetadataForMultipleAPIs(projectName, apis, security);
-                    RouteUtils.saveGlobalEpAndBasepath(apis);
-                } catch (Exception e){
-                    for(ExtendedAPI api: apis){
+                    //existence of the API is checked inside the method body
+                    RouteUtils.saveGlobalEpAndBasepath(apis, isForcefully);
+                    outStream.println("Add route command executed successfully");
+                } catch (Exception e) {
+                    for (ExtendedAPI api : apis) {
                         String apiId = HashUtils.generateAPIId(api.getName(), api.getVersion());
                         GatewayCmdUtils.deletePerAPIFolder(projectName, apiId);
                     }
@@ -475,14 +473,7 @@ public class AddAPICmd implements GatewayLauncherCmd {
 
     private static void init(String configPath) {
         try {
-            Path configurationFile = Paths.get(configPath);
-            if (Files.exists(configurationFile)) {
-                Config config = TOMLConfigParser.parse(configPath, Config.class);
-                GatewayCmdUtils.setConfig(config);
-            } else {
-                logger.error("Configuration: {} Not found.", configPath);
-                throw new CLIInternalException("Error occurred while loading configurations.");
-            }
+            GatewayCmdUtils.setConfiguration(configPath);
         } catch (ConfigParserException e) {
             logger.error("Error occurred while parsing the configurations {}", configPath, e);
             throw new CLIInternalException("Error occurred while loading configurations.");
@@ -505,16 +496,17 @@ public class AddAPICmd implements GatewayLauncherCmd {
     }
 
     /**
-     * prompt to get the base URL
+     * prompt to get the base URL.
      */
     private String getBaseURLfromCmd(String defaultBaseURL) {
         String userInputURL;
-        userInputURL = GatewayCmdUtils.promptForTextInput(outStream, "Enter APIM base URL [" + defaultBaseURL + "]: ").trim();
+        userInputURL = GatewayCmdUtils.promptForTextInput(outStream, "Enter APIM base URL [" +
+                defaultBaseURL + "]: ").trim();
         return userInputURL;
     }
 
     /**
-     * Set endpoints of publisher, admin, registration and token
+     * Set endpoints of publisher, admin, registration and token.
      *
      * @param token token from config file
      * @return TokenBuilder modified token to be written back to configuration file
@@ -622,7 +614,7 @@ public class AddAPICmd implements GatewayLauncherCmd {
     }
 
     /**
-     * validate URLs
+     * validate URLs.
      *
      * @param urlString url string to be validated
      */
@@ -638,7 +630,7 @@ public class AddAPICmd implements GatewayLauncherCmd {
     }
 
     /**
-     * inform user on REST version of endpoint URLs
+     * inform user on REST version of endpoint URLs.
      *
      * @param restVersion API Manager's REST version
      */
@@ -667,21 +659,6 @@ public class AddAPICmd implements GatewayLauncherCmd {
                             + "should be provided."
                             + "\n\nEx:\tmicro-gw setup accounts-project -l accounts"
                             + "\n\tmicro-gw setup pizzashack-project -a Pizzashack -v 1.0.0");
-        }
-    }
-
-    private boolean checkAPIAndProceed(String apiId){
-        String UserResponse;
-        if ((UserResponse = GatewayCmdUtils.promptForTextInput(outStream, "The provided API already exists. " +
-                "Do you need to overwrite ? yes[y] or no[n] :")).trim().isEmpty()) {
-            throw new CLIRuntimeException("No argument is provided.");
-        }
-        if (UserResponse.toLowerCase().equals("n") || UserResponse.toLowerCase().equals("no")) {
-            return false;
-        } else if (UserResponse.toLowerCase().equals("y") || UserResponse.toLowerCase().equals("yes")) {
-            return true;
-        } else {
-            throw new CLIRuntimeException("Provided argument is not valid :" + UserResponse);
         }
     }
 }

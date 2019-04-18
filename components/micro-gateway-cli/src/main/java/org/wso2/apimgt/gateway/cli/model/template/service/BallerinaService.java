@@ -27,7 +27,7 @@ import org.wso2.apimgt.gateway.cli.exception.BallerinaServiceGenException;
 import org.wso2.apimgt.gateway.cli.model.config.BasicAuth;
 import org.wso2.apimgt.gateway.cli.model.config.Config;
 import org.wso2.apimgt.gateway.cli.model.config.ContainerConfig;
-import org.wso2.apimgt.gateway.cli.model.mgwServiceMap.MgwEndpointConfigDTO;
+import org.wso2.apimgt.gateway.cli.model.mgwcodegen.MgwEndpointConfigDTO;
 import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.utils.CodegenUtils;
 import org.wso2.apimgt.gateway.cli.utils.GatewayCmdUtils;
@@ -77,11 +77,10 @@ public class BallerinaService implements BallerinaOpenAPIObject<BallerinaService
         this.externalDocs = openAPI.getExternalDocs();
         this.tags = openAPI.getTags();
         this.containerConfig = GatewayCmdUtils.getContainerConfig();
-        //todo: fix this properly
         Config config = GatewayCmdUtils.getConfig();
         setSecuritySchemas(api.getApiSecurity());
         this.config = config;
-        //todo: fix this -> not working
+        //todo: fix this
         this.etcd = GatewayCmdUtils.getEtcd();
         setPaths(openAPI);
         return this;
@@ -151,7 +150,6 @@ public class BallerinaService implements BallerinaOpenAPIObject<BallerinaService
      * @throws BallerinaServiceGenException when context building fails
      */
     private void setPaths(OpenAPI openAPI) throws BallerinaServiceGenException {
-        //todo: remove comment
         if (openAPI.getPaths() == null) {
             return;
         }
@@ -170,7 +168,7 @@ public class BallerinaService implements BallerinaOpenAPIObject<BallerinaService
                 }
                 MgwEndpointConfigDTO epConfig = RouteUtils.getResourceEpConfigForCodegen(openAPI.getInfo().getTitle(), openAPI.getInfo().getVersion(),
                         path.getKey(), operation.getKey());
-                if(epConfig != null){
+                if (epConfig != null) {
                     operation.getValue().setEpConfigDTO(epConfig);
                 }
             });

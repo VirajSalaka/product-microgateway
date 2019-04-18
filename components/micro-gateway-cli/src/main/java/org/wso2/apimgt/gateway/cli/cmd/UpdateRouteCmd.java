@@ -39,7 +39,6 @@ public class UpdateRouteCmd implements GatewayLauncherCmd{
         if(projectName == null || projectName.isEmpty()){
             throw new CLIRuntimeException("Project name is not provided.");
         }
-        RouteUtils.setRoutesConfigPath(GatewayCmdUtils.getProjectRoutesConfFilePath(projectName));
 
         if((apiId == null || apiId.isEmpty()) && (resourceId == null || resourceId.isEmpty())){
             throw new CLIRuntimeException("Error: API Id or resource id is not provided.");
@@ -63,7 +62,7 @@ public class UpdateRouteCmd implements GatewayLauncherCmd{
             }
             endpointConfigString = "{\"prod\": {\"type\": \"http\", \"endpoints\" : [\"" + endpoint.trim() + "\"]}}";
         } else {
-            endpointConfigString = OpenAPICodegenUtils.readApi(endpointConfig);
+            endpointConfigString = OpenAPICodegenUtils.readJson(endpointConfig);
         }
 
         if(apiId != null){
