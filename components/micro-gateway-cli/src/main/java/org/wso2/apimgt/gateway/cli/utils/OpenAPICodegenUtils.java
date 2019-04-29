@@ -315,11 +315,7 @@ public class OpenAPICodegenUtils {
                 api.getEndpointSecurity());
         api.setEndpointConfigRepresentation(RouteUtils.convertToMgwServiceMap(endpointConfig.getProdEndpointList(),
                 endpointConfig.getSandboxEndpointList()));
-        if(api.getIsDefaultVersion()) {
-            api.setSpecificBasepath(api.getContext());
-        } else {
-            api.setSpecificBasepath(api.getContext() + "/" + api.getVersion());
-        }
+        api.setSpecificBasepath(api.getContext() + "/" + api.getVersion());
     }
 
 

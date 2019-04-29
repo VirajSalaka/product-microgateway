@@ -68,9 +68,8 @@ public class ImportCmd implements GatewayLauncherCmd {
     private static final Logger logger = LoggerFactory.getLogger(ImportCmd.class);
     private static PrintStream outStream = System.out;
 
-    @SuppressWarnings("unused")
-    @Parameter(hidden = true, required = true)
-    private List<String> mainArgs;
+    @Parameter(names = {"--project"}, hidden = true)
+    private String projectName;
 
     @SuppressWarnings("unused")
     @Parameter(names = "--java.debug", hidden = true)
@@ -111,14 +110,18 @@ public class ImportCmd implements GatewayLauncherCmd {
     private String version;
 
     @SuppressWarnings("unused")
+    @Parameter(names = {"-f", "--force"}, hidden = true, arity = 0)
+    private boolean isForcefully;
+
+    @SuppressWarnings("unused")
     @Parameter(names = {"-k", "--insecure"}, hidden = true, arity = 0)
     private boolean isInsecure;
 
-    @Parameter(names = {"-b", "--security"}, hidden = true)
+    @Parameter(names = {"-sec", "--security"}, hidden = true)
     private String security;
 
-    @Parameter(names = {"--help", "-h", "?"}, hidden = true, description = "for more information", help = true)
-    private boolean helpFlag;
+    @Parameter(names = {"-b", "--basepath"}, hidden = true)
+    private String basepath;
 
     private String publisherEndpoint;
     private String adminEndpoint;
@@ -129,13 +132,8 @@ public class ImportCmd implements GatewayLauncherCmd {
 
     @Override
     public void execute() {
-        if (helpFlag) {
-            String commandUsageInfo = getCommandUsageInfo("import");
-            outStream.println(commandUsageInfo);
-            return;
-        }
         String clientID;
-        String projectName = GatewayCmdUtils.getSingleArgument(mainArgs);
+        projectName = GatewayCmdUtils.buildProjectName(projectName);
         File projectLocation = new File(GatewayCmdUtils.getProjectDirectoryPath(projectName));
 
         if (!projectLocation.exists()) {
@@ -152,7 +150,7 @@ public class ImportCmd implements GatewayLauncherCmd {
             toolkitConfigPath = GatewayCmdUtils.getMainConfigLocation();
         }
 
-        init(toolkitConfigPath, deploymentConfigPath, projectName);
+        init(toolkitConfigPath, projectName);
         Config config = GatewayCmdUtils.getConfig();
         isOverwriteRequired = false;
 
@@ -355,7 +353,7 @@ public class ImportCmd implements GatewayLauncherCmd {
         return System.console().readLine();
     }
 
-    private static void init(String configPath, String deploymentConfig, String projectName) {
+    private static void init(String configPath, String projectName) {
         try {
             Path configurationFile = Paths.get(configPath);
             if (Files.exists(configurationFile)) {
@@ -365,20 +363,13 @@ public class ImportCmd implements GatewayLauncherCmd {
                 logger.error("Configuration: {} Not found.", configPath);
                 throw new CLIInternalException("Error occurred while loading configurations.");
             }
-            if(deploymentConfig != null){
-                Path deploymentConfigFile = Paths.get(deploymentConfig);
-                if(Files.exists(deploymentConfigFile)){
-                    GatewayCmdUtils.createDeploymentConfig(projectName, deploymentConfig);
-                }
-            }
+
             String deploymentConfigPath = GatewayCmdUtils.getDeploymentConfigLocation(projectName);
             ContainerConfig containerConfig = TOMLConfigParser.parse(deploymentConfigPath, ContainerConfig.class);
             GatewayCmdUtils.setContainerConfig(containerConfig);
         } catch (ConfigParserException e) {
             logger.error("Error occurred while parsing the configurations {}", configPath, e);
             throw new CLIInternalException("Error occurred while loading configurations.");
-        } catch (IOException e){
-            throw new CLIInternalException("Error occured while reading the deployment configuration", e);
         }
     }
 
