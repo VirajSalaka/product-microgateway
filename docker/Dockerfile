@@ -20,4 +20,6 @@ LABEL maintainer="dev@wso2.org"
 COPY runtime/ /ballerina/runtime/bre/lib/
 ADD conf/ /home/ballerina/conf/
 
+ENV JAVA_OPTS="${JAVA_OPTS}"
+
 CMD ballerina run  --config /home/ballerina/conf/micro-gw.conf /home/exec/${project}.balx
