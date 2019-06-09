@@ -21,5 +21,10 @@ COPY runtime/ /ballerina/runtime/bre/lib/
 COPY security/ /ballerina/runtime/bre/security/
 COPY license/ /home/ballerina/
 ADD conf/ /home/ballerina/conf/
+COPY gc.log /home/ballerina/gc.log
+COPY heap-dump.hprof /home/ballerina/heap-dump.hprof
 
-CMD ballerina run --config /home/ballerina/conf/micro-gw.conf /home/exec/${project}.balx
+ENV JAVA_OPTS="${JAVA_OPTS}"
+
+CMD ballerina run -e b7a.http.worker.nonblocking=true --config /home/ballerina/conf/micro-gw.conf /home/exec/${project}.balx
+
