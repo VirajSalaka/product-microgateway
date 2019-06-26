@@ -89,7 +89,7 @@ public class ValidationTestCase extends BaseTestCase {
         jwtTokenProd = getJWT(api, application, "Unlimited", TestConstant.KEY_TYPE_PRODUCTION, 360000);
         jwtTokenSand = getJWT(api, application, "Unlimited", TestConstant.KEY_TYPE_SANDBOX, 360000);
         //generate apis with CLI and start the micro gateway server
-        String configPath = getClass().getClassLoader().getResource("confs/validation.conf").getPath();
+        String configPath = "confs/validation.conf";
         String[] openAPIFiles = new String[] { "validation/PizzaShackAPI_swagger.json" };
         super.init(project, openAPIFiles, null, configPath);
     }
