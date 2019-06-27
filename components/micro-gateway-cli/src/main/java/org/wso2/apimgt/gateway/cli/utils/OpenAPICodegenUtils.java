@@ -722,11 +722,10 @@ public class OpenAPICodegenUtils {
             }
             //generate scopes string
             for (String scope : scopeList) {
-                scope = "\"" + scope + "\"";
                 if (scopeBuilder.length() == 0) {
-                    scopeBuilder.append(scope);
+                    scopeBuilder.append("\"" + scope + "\"");
                 } else {
-                    scopeBuilder.append(',' + scope);
+                    scopeBuilder.append(',' + "\"" + scope + "\"");
                 }
             }
 
