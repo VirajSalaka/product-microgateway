@@ -725,7 +725,7 @@ public class OpenAPICodegenUtils {
                 if (scopeBuilder.length() == 0) {
                     scopeBuilder.append("\"" + scope + "\"");
                 } else {
-                    scopeBuilder.append(',' + "\"" + scope + "\"");
+                    scopeBuilder.append(",\"" + scope + "\"");
                 }
             }
 
