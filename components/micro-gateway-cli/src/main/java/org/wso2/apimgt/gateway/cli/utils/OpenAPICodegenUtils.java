@@ -702,6 +702,7 @@ public class OpenAPICodegenUtils {
                     v.forEach(scope -> {
                         if (!scopeList.contains(scope)) {
                             scopeList.add(scope);
+                            System.out.println(k + " Scope : " + scope);
                         }
                     });
                     //if the key's type is basic
