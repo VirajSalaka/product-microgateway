@@ -190,7 +190,7 @@
                             ${basedir}/../tests/target/micro-gwtmp/wso2am-micro-gw-macos-${project.version}
                         </runtime_macos>
                         <runtime_windows>
-                            ${basedir}/../tests/target/micro-gwtmp/wso2am-micro-gw-windows-${project.version}
+                            ${basedir}\..\tests\target\micro-gwtmp\wso2am-micro-gw-windows-${project.version}
                         </runtime_windows>
                         <runtime_linux>
                             ${basedir}/../tests/target/micro-gwtmp/wso2am-micro-gw-linux-${project.version}
