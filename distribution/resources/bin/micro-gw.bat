@@ -85,8 +85,8 @@ REM of arguments (up to the command line limit, anyway).
 	if %verbose%==T ECHO Processing argument : `%1`
 	if ""%1""=="""" goto passToJar
 	if ""%1""==""help""     goto passToJar
-	if ""%1""==""build""     goto commandBuild
 	if ""%1""==""--java.debug""  goto commandDebug
+	if ""%1""==""build""     goto commandBuild
 	SHIFT
 goto setupArgs
 
@@ -145,6 +145,7 @@ goto :end
 	if NOT "%JAVA_OPTS%"=="" ECHO Warning !!!. User specified JAVA_OPTS will be ignored, once you give the --java.debug option.
 	SET JAVA_OPTS=-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=%DEBUG_PORT%
 	ECHO Please start the remote debugging client to continue...
+	if ""%1""==""build""     goto commandBuild
 goto passToJar
 
 :noDebugPort
