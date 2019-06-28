@@ -76,7 +76,8 @@ public class CLIExecutor {
      */
     private void runProcess(String[] cmdArray, String homeDirectory, String errorMessage) throws MicroGWTestException {
         try {
-            Process process = Runtime.getRuntime().exec(cmdArray, new String[] {"MICROGW_HOME=" + cliHome}, new File(homeDirectory));
+            Process process = Runtime.getRuntime().exec(cmdArray, new String[] {"MICROGW_HOME=" + cliHome, "JAVA_HOME=" +System.getenv("JAVA_HOME")}, new File(homeDirectory));
+            System.out.println(System.getenv("JAVA_HOME") + " is JAVA_HOME");
             new ServerLogReader("errorStream", process.getErrorStream()).start();
             new ServerLogReader("inputStream", process.getInputStream()).start();
             boolean isCompleted = process.waitFor(2, TimeUnit.MINUTES);
