@@ -702,7 +702,6 @@ public class OpenAPICodegenUtils {
                     v.forEach(scope -> {
                         if (!scopeList.contains(scope)) {
                             scopeList.add(scope);
-                            System.out.println(k + " Scope : " + scope);
                         }
                     });
                     //if the key's type is basic
@@ -724,7 +723,7 @@ public class OpenAPICodegenUtils {
             //generate scopes string
             for (String scope : scopeList) {
                 if (scopeBuilder.length() == 0) {
-                    scopeBuilder.append("\"" + scope + "\"");
+                    scopeBuilder.append("\"" + scope + "xxx\"");
                 } else {
                     scopeBuilder.append(", \"" + scope + "\"");
                 }
