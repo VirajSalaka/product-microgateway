@@ -184,7 +184,7 @@
                 <configuration>
                     <systemPropertyVariables>
                         <toolkit>
-                            ${toolkit.dir}
+                            ${basedir}/../tests/target/micro-gwtmp/wso2am-micro-gw-toolkit-${project.version}
                         </toolkit>
                         <runtime_macos>
                             ${basedir}/../tests/target/micro-gwtmp/wso2am-micro-gw-macos-${project.version}
@@ -244,7 +244,6 @@
             </activation>
             <properties>
                 <host.os>macos</host.os>
-                <toolkit.dir>${basedir}/../tests/target/micro-gwtmp/wso2am-micro-gw-toolkit-${project.version}</toolkit.dir>
             </properties>
         </profile>
         <profile>
@@ -257,7 +256,6 @@
             </activation>
             <properties>
                 <host.os>linux</host.os>
-                <toolkit.dir>${basedir}/../tests/target/micro-gwtmp/wso2am-micro-gw-toolkit-${project.version}</toolkit.dir>
             </properties>
         </profile>
         <profile>
@@ -269,7 +267,6 @@
             </activation>
             <properties>
                 <host.os>windows</host.os>
-                <toolkit.dir>${basedir}\..\tests\target\micro-gwtmp\wso2am-micro-gw-toolkit-${project.version}</toolkit.dir>
             </properties>
         </profile>
         <profile>
