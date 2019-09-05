@@ -30,6 +30,8 @@ public class ExtendedAPI extends APIDetailedDTO {
     private String mgwApiSecurity = null;
     //Scopes
     private String mgwApiScope = null;
+    //isGrpc
+    private boolean isGrpc = false;
 
     public MgwEndpointConfigDTO getEndpointConfigRepresentation() {
         return endpointConfigRepresentation;
@@ -61,5 +63,13 @@ public class ExtendedAPI extends APIDetailedDTO {
 
     public String getMgwApiScope() {
         return mgwApiScope;
+    }
+
+    public boolean isGrpc() {
+        return isGrpc;
+    }
+
+    public void setGrpc(boolean grpc) {
+        isGrpc = grpc;
     }
 }
