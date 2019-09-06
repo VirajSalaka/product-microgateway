@@ -34,7 +34,7 @@ map<json> openAPIs = getOpenAPIs();
 // Extension filter
 ExtensionFilter extensionFilter = new;
 //GrpcFilter filter
-//gateway:GrpcFilter grpcFilter = new;
+gateway:GrpcFilter grpcFilter = new;
 
 http:ListenerConfiguration secureServiceEndpointConfiguration = { {{>http2}},
                                                                            {{>mutualSSL}}
