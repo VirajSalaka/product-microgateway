@@ -157,7 +157,9 @@ public class ProtoOpenAPIGenerator {
     private void addOauth2SecurityRequirement(Operation operation, String[] scopes) {
         //if Oauth2 is not available as a security scheme, adding scopes would be meaningless.
         if (!isOauth2Enabled) {
-            throw new CLIRuntimeException("Scopes cannot be added if \"oauth2\" is not provided as security type.");
+            if (scopes != null && scopes.length > 0 && !scopes[0].isEmpty()) {
+                throw new CLIRuntimeException("Scopes cannot be added if \"oauth2\" is not provided as security type.");
+            }
         }
         SecurityRequirement oauth2Req = new SecurityRequirement();
         //Since the scopes are not known at the start, the security scheme should be updated with newly identified
