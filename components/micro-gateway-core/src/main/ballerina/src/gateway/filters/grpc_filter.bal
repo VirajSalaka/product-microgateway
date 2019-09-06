@@ -47,6 +47,10 @@ public type GrpcFilter object {
             return true;
         }
         string statusCode = response.statusCode.toString();
+
+        if (statusCode == "0") {
+            return true;
+        }
         string grpcStatus = self.httpGrpcStatusCodeMap[statusCode] ?: "";
         string grpcErrorMessage = self.httpGrpcErrorMsgMap[statusCode] ?: "";
 
@@ -58,7 +62,6 @@ public type GrpcFilter object {
         response.setHeader("grpc-status", grpcStatus);
         response.setHeader("grpc-message", grpcErrorMessage);
         response.setContentType("application/grpc");
-        response.setPayload("");
         return true;
     }
 };
