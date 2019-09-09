@@ -21,6 +21,23 @@ import ballerina/runtime;
 // Pre Authentication filter
 
 public type PreAuthnFilter object {
+    map<string> httpGrpcStatusCodeMap = {};
+    map<string> httpGrpcErrorMsgMap = {};
+
+    public function _init() returns error? {
+        self.httpGrpcStatusCodeMap["401"] = "16";
+        self.httpGrpcStatusCodeMap["403"] = "7";
+        self.httpGrpcStatusCodeMap["404"] = "12";
+        self.httpGrpcStatusCodeMap["429"] = "8";
+        //todo: verify https://github.com/grpc/grpc/blob/master/doc/statuscodes.md
+        self.httpGrpcStatusCodeMap["500"] = "2";
+
+        self.httpGrpcErrorMsgMap["401"] = "Unauthenticated";
+        self.httpGrpcErrorMsgMap["403"] = "Unauthorized";
+        self.httpGrpcErrorMsgMap["404"] = "Service not found";
+        self.httpGrpcErrorMsgMap["429"] = "Too many function calls";
+        self.httpGrpcErrorMsgMap["500"] = "Internal server error";
+    }
 
     public function filterRequest(http:Caller caller, http:Request request, @tainted http:FilterContext context)
                         returns boolean {
@@ -30,13 +47,37 @@ public type PreAuthnFilter object {
         checkOrSetMessageID(context);
         setHostHeaderToFilterContext(request, context);
         setLatency(startingTime, context, SECURITY_LATENCY_AUTHN);
+        addGrpcToFilterContext(context);
+        printDebug(KEY_GRPC_FILTER, "Grpc filter is applied for request" + context.attributes[MESSAGE_ID].toString());
         return doAuthnFilterRequest(caller, request, <@untainted>context);
     }
 
     public function filterResponse(http:Response response, http:FilterContext context) returns boolean {
-        if(response.statusCode == 401) {
-            sendErrorResponseFromInvocationContext(response);
+        printDebug(KEY_GRPC_FILTER, "Grpc filter is applied for response" + context.attributes[MESSAGE_ID].toString());
+        if (!filterGrpcResponse(response, context)) {
+            if(response.statusCode == 401) {
+                sendErrorResponseFromInvocationContext(response);
+            }
+           return true;
         }
+        string statusCode = response.statusCode.toString();
+        printDebug(KEY_GRPC_FILTER, "http status code, " + statusCode + " " + context.attributes[MESSAGE_ID].toString());
+        if (statusCode == "0") {
+           printDebug(KEY_GRPC_FILTER, "Grpc message is status code 0 " + context.attributes[MESSAGE_ID].toString());
+           return true;
+        }
+        string grpcStatus = self.httpGrpcStatusCodeMap[statusCode] ?: "";
+        string grpcErrorMessage = self.httpGrpcErrorMsgMap[statusCode] ?: "";
+        
+        if(statusCode == "") {
+           response.setHeader("grpc-status", "2");
+           response.setHeader("grpc-message", "Response is not recognized by the gateway.");
+           return true;
+        }
+        response.setHeader("grpc-status", grpcStatus);
+        response.setHeader("grpc-message", grpcErrorMessage);
+        response.setContentType("application/grpc");
+
         return true;
     }
 };
@@ -46,7 +87,7 @@ function doAuthnFilterRequest(http:Caller caller, http:Request request, http:Fil
     boolean isOauth2Enabled = false;
     runtime:InvocationContext invocationContext = runtime:getInvocationContext();
     invocationContext.attributes[MESSAGE_ID] = <string>context.attributes[MESSAGE_ID];
-    printDebug(KEY_AUTHN_FILTER, "Processing request via Pre Authentication filter.");
+    printDebug(KEY_AUTHN_FILTER, "Processing request via Pre Authentication filter test.");
 
     context.attributes[REMOTE_ADDRESS] = getClientIp(request, caller);
     context.attributes[FILTER_FAILED] = false;
@@ -154,4 +195,26 @@ function getAuthCookieIfPresent(http:Request request) returns string? {
         }
     }
     return authCookie;
+}
+
+function addGrpcToFilterContext(http:FilterContext context){
+    //todo: check if ballerina map support boolean
+    context.attributes["isGrpc"] = true;
+    printDebug(KEY_GRPC_FILTER, "\"isGrpc\" key is added to the request " + context.attributes[MESSAGE_ID].toString());
+}
+
+function filterGrpcResponse(http:Response response, http:FilterContext context) returns boolean {
+    //todo: check if needs to check the content type as well.
+    if(response.hasHeader("grpc-status")){
+        string grpcStatus = response.getHeader("grpc-status").toUpperAscii();
+            if(grpcStatus != "UNIMPLEMENTED") {
+                return false;
+            }
+        }
+    any isGrpcAttr = context.attributes["isGrpc"];
+
+    if(isGrpcAttr is boolean){
+        return true;
+    }
+    return false;
 }
