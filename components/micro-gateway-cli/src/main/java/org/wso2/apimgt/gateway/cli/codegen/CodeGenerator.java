@@ -35,6 +35,7 @@ import org.wso2.apimgt.gateway.cli.model.rest.ext.ExtendedAPI;
 import org.wso2.apimgt.gateway.cli.model.template.GenSrcFile;
 import org.wso2.apimgt.gateway.cli.model.template.service.BallerinaService;
 import org.wso2.apimgt.gateway.cli.model.template.service.ListenerEndpoint;
+import org.wso2.apimgt.gateway.cli.protobuf.ProtobufParser;
 import org.wso2.apimgt.gateway.cli.utils.CmdUtils;
 import org.wso2.apimgt.gateway.cli.utils.CodegenUtils;
 import org.wso2.apimgt.gateway.cli.utils.OpenAPICodegenUtils;
@@ -125,11 +126,12 @@ public class CodeGenerator {
         String projectSrcPath = CmdUtils.getProjectTargetModulePath((projectName));
         List<GenSrcFile> genFiles = new ArrayList<>();
         List<BallerinaService> serviceList = new ArrayList<>();
+        List<BallerinaService> openAPIServiceList = new ArrayList<>();
         List<String> openAPIDirectoryLocations = new ArrayList<>();
         String projectAPIDefGenLocation = CmdUtils.getProjectGenAPIDefinitionPath(projectName);
         openAPIDirectoryLocations.add(CmdUtils.getProjectDirectoryPath(projectName) + File.separator
                 + CliConstants.PROJECT_API_DEFINITIONS_DIR);
-
+        String grpcDirLocation = CmdUtils.getGrpcDefinitionsDirPath(projectName);
         if (Files.exists(Paths.get(projectAPIDefGenLocation))) {
             openAPIDirectoryLocations.add(projectAPIDefGenLocation);
         }
@@ -154,6 +156,7 @@ public class CodeGenerator {
                         genFiles.add(generateService(definitionContext));
 
                         serviceList.add(definitionContext);
+                        openAPIServiceList.add(definitionContext);
                     } catch (BallerinaServiceGenException e) {
                         throw new CLIRuntimeException("Swagger definition cannot be parsed to ballerina code", e);
                     } catch (IOException e) {
@@ -165,9 +168,30 @@ public class CodeGenerator {
                 throw new CLIInternalException("File write operations failed during ballerina code generation", e);
             }
         });
+        //to process protobuf files
+        Files.walk(Paths.get(grpcDirLocation)).filter(path -> {
+            Path filename = path.getFileName();
+            return filename != null && (filename.toString().endsWith(".proto"));
+        }).forEach(path -> {
+            String protocPath = CmdUtils.getProtocFilePath(projectName);
+            String descriptorPath = CmdUtils.getProtoDescriptorPath(projectName, path.getFileName().toString());
+            OpenAPI openAPI = new ProtobufParser().generateOpenAPI(protocPath, path.toString(), descriptorPath);
+            OpenAPICodegenUtils.validateOpenAPIDefinition(openAPI, path.toString());
+            try {
+                BallerinaService definitionContext = generateDefinitionContext(openAPI, path, true);
+                genFiles.add(generateService(definitionContext));
+                serviceList.add(definitionContext);
+            } catch (IOException e) {
+                throw new CLIRuntimeException("Protobuf file cannot be parsed to " +
+                        "ballerina code", e);
+            } catch (BallerinaServiceGenException e) {
+                throw new CLIInternalException("File write operations failed during ballerina code "
+                        + "generation for protobuf file", e);
+            }
+        });
 
         genFiles.add(generateMainBal(serviceList));
-        genFiles.add(generateOpenAPIJsonConstantsBal(serviceList));
+        genFiles.add(generateOpenAPIJsonConstantsBal(openAPIServiceList));
         genFiles.add(generateCommonEndpoints());
         CodegenUtils.writeGeneratedSources(genFiles, Paths.get(projectSrcPath), overwrite);
         CmdUtils.copyFilesToSources(CmdUtils.getProjectExtensionsDirectoryPath(projectName)
@@ -179,6 +203,20 @@ public class CodeGenerator {
         CmdUtils.copyFilesToSources(CmdUtils.getProjectExtensionsDirectoryPath(projectName)
                         + File.separator + CliConstants.GW_DIST_START_UP_EXTENSION,
                 projectSrcPath + File.separator + CliConstants.GW_DIST_START_UP_EXTENSION);
+    }
+
+    private BallerinaService generateDefinitionContext(OpenAPI openAPI, Path path, boolean isGrpc) throws IOException,
+            BallerinaServiceGenException {
+        ExtendedAPI api;
+        if (isGrpc) {
+            api = OpenAPICodegenUtils.generateGrpcAPIFromOpenAPI(openAPI);
+        } else {
+            api = OpenAPICodegenUtils.generateAPIFromOpenAPIDef(openAPI, path);
+        }
+        BallerinaService definitionContext;
+        OpenAPICodegenUtils.setAdditionalConfigsDevFirst(api, openAPI, path.toString());
+        definitionContext = new BallerinaService().buildContext(openAPI, api);
+        return definitionContext;
     }
 
     /**

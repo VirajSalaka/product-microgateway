@@ -257,6 +257,11 @@
                 <scope>compile</scope>
             </dependency>
             <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${com.google.protobuf.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.github.jknack</groupId>
                 <artifactId>handlebars</artifactId>
                 <version>${handlebars.version}</version>
@@ -410,6 +415,9 @@
                         <version>${maven.checkstyle.version}</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <excludes>org/wso2/apimgt/gateway/cli/protobuf/ExtensionHolder.java</excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <id>validate</id>
@@ -521,6 +529,7 @@
         <maven.checkstyle.plugin.version>3.0.0</maven.checkstyle.plugin.version>
         <maven.checkstyle.version>8.18</maven.checkstyle.version>
         <jcip.annotations.version>1.0</jcip.annotations.version>
+        <com.google.protobuf.version>3.7.1</com.google.protobuf.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

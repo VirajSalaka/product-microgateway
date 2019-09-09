@@ -208,22 +208,39 @@ public class OpenAPICodegenUtils {
     }
 
     /**
-     * generate ExtendedAPI object from openAPI definition
+     * generate ExtendedAPI object from openAPI definition.
      *
-     * @param openAPI {@link OpenAPI} object
-     * @return Extended API object
+     * @param openAPI {@link OpenAPI} object with all required properties
+     * @return {@link ExtendedAPI} object
      */
     public static ExtendedAPI generateAPIFromOpenAPIDef(OpenAPI openAPI, Path openAPIPath) throws IOException {
+        ExtendedAPI api = generateAPIFromOpenAPI(openAPI);
+        //open API content should be set in json in order to validation filter to work.
+        String openAPIContent = new String(Files.readAllBytes(openAPIPath), StandardCharsets.UTF_8);
+        api.setApiDefinition(getOpenAPIAsJson(openAPI, openAPIContent, openAPIPath));
+        return api;
+    }
 
+    /**
+     * Generate {@link ExtendedAPI} object from generated OpenAPI from protobuf file. This is used for the ballerina
+     * service generation.
+     *
+     * @param openAPI {@link OpenAPI} object with all required properties
+     * @return {@link ExtendedAPI} object for protobuf
+     */
+    public static ExtendedAPI generateGrpcAPIFromOpenAPI(OpenAPI openAPI) {
+        ExtendedAPI api = generateAPIFromOpenAPI(openAPI);
+        api.setGrpc(true);
+        return api;
+    }
+
+    private static ExtendedAPI generateAPIFromOpenAPI(OpenAPI openAPI) {
         String apiId = HashUtils.generateAPIId(openAPI.getInfo().getTitle(), openAPI.getInfo().getVersion());
         ExtendedAPI api = new ExtendedAPI();
         api.setId(apiId);
         api.setName(openAPI.getInfo().getTitle());
         api.setVersion(openAPI.getInfo().getVersion());
         api.setTransport(Arrays.asList("http", "https"));
-        //open API content should be set in json in order to validation filter to work.
-        String openAPIContent = new String(Files.readAllBytes(openAPIPath), StandardCharsets.UTF_8);
-        api.setApiDefinition(getOpenAPIAsJson(openAPI, openAPIContent, openAPIPath));
         return api;
     }
 
