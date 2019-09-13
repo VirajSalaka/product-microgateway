@@ -480,7 +480,7 @@
     </build>
 
     <properties>
-        <ballerina.platform.version>1.0.0-beta</ballerina.platform.version>
+        <ballerina.platform.version>1.0.0</ballerina.platform.version>
         <broker.version>0.970.5</broker.version>
         <assembly.plugin.version>3.1.1</assembly.plugin.version>
         <compiler.plugin.version>3.7.0</compiler.plugin.version>
@@ -533,6 +533,12 @@
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <jackson.core.version>2.8.6</jackson.core.version>
+        <jackson.annotation.version>2.8.0</jackson.annotation.version>
+        <jackson.dataformat.version>2.8.8</jackson.dataformat.version>
+        <kraal.version>0.0.16</kraal.version>
+        <kotlin.stdlib.version>1.3.31</kotlin.stdlib.version>
+        <asm.version>7.1</asm.version>
     </properties>
 
 </project>

@@ -495,6 +495,17 @@ public final class CmdUtils {
     }
 
     /**
+     * Returns path to the /target/gen of a given project in the current working directory
+     *
+     * @param projectName name of the project
+     * @return path to the /target/gen of a given project in the current working directory
+     */
+    public static String getProjectTargetGenDirectoryPath(String projectName) {
+        return getProjectDirectoryPath(projectName) + File.separator + CliConstants.PROJECT_TARGET_DIR
+                + File.separator + CliConstants.PROJECT_GEN_DIR;
+    }
+
+    /**
      * Returns the path to ballerina project module inside of a given mgw project
      * in the current working directory.
      *
@@ -502,8 +513,7 @@ public final class CmdUtils {
      * @return path to ballerina project module
      */
     public static String getProjectTargetModulePath(String projectName) {
-        return getProjectDirectoryPath(projectName) + File.separator + CliConstants.PROJECT_TARGET_DIR
-                + File.separator + CliConstants.PROJECT_GEN_DIR + File.separator +
+        return getProjectTargetGenDirectoryPath(projectName) + File.separator +
                 CliConstants.GEN_SRC_DIR + File.separator + projectName;
     }
 
@@ -514,8 +524,7 @@ public final class CmdUtils {
      * @return path to the /src of a given project in the current working directory
      */
     public static String getProjectGenSrcDirectoryPath(String projectName) {
-        return getProjectDirectoryPath(projectName) + File.separator + CliConstants.PROJECT_TARGET_DIR
-                + File.separator + CliConstants.PROJECT_GEN_DIR + File.separator
+        return getProjectTargetGenDirectoryPath(projectName) + File.separator
                 + CliConstants.GEN_SRC_DIR;
     }
 
