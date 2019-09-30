@@ -34,15 +34,15 @@ map<json> openAPIs = getOpenAPIs();
 // Extension filter
 ExtensionFilter extensionFilter = new;
 //GrpcFilter filter
-gateway:GrpcFilter grpcFilter = new;
+//gateway:GrpcFilter grpcFilter = new;
 
 http:ListenerConfiguration secureServiceEndpointConfiguration = { {{>http2}},
                                                                            {{>mutualSSL}}
                                                                            auth: {
                                                                                 authHandlers: gateway:getAuthHandlers(),
-                                                                                position: 2
+                                                                                position: 1
                                                                            },
-                                                                           filters:[grpcFilter, preAuthnFilter, authorizationFilter, subscriptionFilter,throttleFilter,
+                                                                           filters:[preAuthnFilter, authorizationFilter, subscriptionFilter,throttleFilter,
                                                                            extensionFilter]
                                                                        };
 
@@ -53,7 +53,7 @@ listener gateway:APIGatewaySecureListener apiSecureListener = new(9095, secureSe
 
 http:ListenerConfiguration serviceEndpointConfiguration = { {{>http2}},
 
-                                                                     filters:[grpcFilter, preAuthnFilter, authorizationFilter, subscriptionFilter,throttleFilter,
+                                                                     filters:[preAuthnFilter, authorizationFilter, subscriptionFilter,throttleFilter,
                                                                      extensionFilter]
                                                                  };
 

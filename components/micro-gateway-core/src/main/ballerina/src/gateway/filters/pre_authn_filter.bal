@@ -21,23 +21,10 @@ import ballerina/runtime;
 // Pre Authentication filter
 
 public type PreAuthnFilter object {
-    map<string> httpGrpcStatusCodeMap = {};
-    map<string> httpGrpcErrorMsgMap = {};
-
-    public function _init() returns error? {
-        self.httpGrpcStatusCodeMap["401"] = "16";
-        self.httpGrpcStatusCodeMap["403"] = "7";
-        self.httpGrpcStatusCodeMap["404"] = "12";
-        self.httpGrpcStatusCodeMap["429"] = "8";
-        //todo: verify https://github.com/grpc/grpc/blob/master/doc/statuscodes.md
-        self.httpGrpcStatusCodeMap["500"] = "2";
-
-        self.httpGrpcErrorMsgMap["401"] = "Unauthenticated";
-        self.httpGrpcErrorMsgMap["403"] = "Unauthorized";
-        self.httpGrpcErrorMsgMap["404"] = "Service not found";
-        self.httpGrpcErrorMsgMap["429"] = "Too many function calls";
-        self.httpGrpcErrorMsgMap["500"] = "Internal server error";
-    }
+    //todo: verify https://github.com/grpc/grpc/blob/master/doc/statuscodes.md
+    map<string> httpGrpcStatusCodeMap = { "401" : "16", "403" : "7", "404" : "12", "429" : "8", "500" : "2" };
+    map<string> httpGrpcErrorMsgMap = { "401" : "Unauthenticated", "403" : "Unauthorized", "404" : "Service not found",
+        "429" : "Too many function calls", "500" : "Internal server error" };
 
     public function filterRequest(http:Caller caller, http:Request request, @tainted http:FilterContext context)
                         returns boolean {
@@ -47,7 +34,9 @@ public type PreAuthnFilter object {
         checkOrSetMessageID(context);
         setHostHeaderToFilterContext(request, context);
         setLatency(startingTime, context, SECURITY_LATENCY_AUTHN);
-        addGrpcToFilterContext(context);
+        if ( request.getContentType() == "application/grpc") {
+            addGrpcToFilterContext(context);
+        }
         printDebug(KEY_GRPC_FILTER, "Grpc filter is applied for request" + context.attributes[MESSAGE_ID].toString());
         return doAuthnFilterRequest(caller, request, <@untainted>context);
     }
@@ -76,6 +65,7 @@ public type PreAuthnFilter object {
         }
         response.setHeader("grpc-status", grpcStatus);
         response.setHeader("grpc-message", grpcErrorMessage);
+        printDebug(KEY_GRPC_FILTER, "grpc status is " + grpcStatus + " and grpc Message is " + grpcErrorMessage);
         response.setContentType("application/grpc");
 
         return true;

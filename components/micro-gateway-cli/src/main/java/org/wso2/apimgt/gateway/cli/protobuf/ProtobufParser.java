@@ -146,8 +146,11 @@ public class ProtobufParser {
                 String methodScopesString = method.getOptions().getExtension(ExtensionHolder.xWso2MethodScopes);
                 String methodThrottlingTier = method.getOptions()
                         .getExtension(ExtensionHolder.xWso2MethodThrottlingTier);
-                protoOpenAPIGenerator.addOpenAPIPath(method.getName(), methodScopesString.split(","),
-                        methodThrottlingTier);
+                String[] methodScopes = null;
+                if (!methodScopesString.isEmpty()) {
+                    methodScopes = methodScopesString.split(",");
+                }
+                protoOpenAPIGenerator.addOpenAPIPath(method.getName(), methodScopes, methodThrottlingTier);
             });
         });
         return protoOpenAPIGenerator.getOpenAPI();
