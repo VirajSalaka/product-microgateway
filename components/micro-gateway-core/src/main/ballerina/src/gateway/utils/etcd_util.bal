@@ -78,7 +78,8 @@ public function etcdTimerTask() returns error? {
             string currentUrl = <string>value;
             string fetchedUrl = etcdLookup(<string>key);
             if (currentUrl != fetchedUrl) {
-                etcdUrls[<string>key] = fetchedUrl;
+                //todo: mark untainted after checking if necessary
+                etcdUrls[<string>key] = <@untainted> fetchedUrl;
                 urlChanged[<string>key] = true;
             }
             printDebug(KEY_ETCD_UTIL, key + " : " + <string>etcdUrls[<string>key]);
@@ -131,7 +132,8 @@ public function etcdSetup(string key, string etcdConfigKey, string defaultUrl, s
             printDebug(KEY_ETCD_UTIL, "Etcd Key provided for: " + key);
             defaultUrls[etcdKey] = config:getAsString(key, defaultUrl);
             urlChanged[etcdKey] = false;
-            etcdUrls[etcdKey] = etcdLookup(etcdKey);
+//todo: mark untainted after checking if necessary
+            etcdUrls[etcdKey] = <@untainted> etcdLookup(etcdKey);
             endpointUrl = <string>etcdUrls[etcdKey];
         }
     }
