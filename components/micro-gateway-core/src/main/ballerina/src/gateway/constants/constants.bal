@@ -305,6 +305,7 @@
  const string KEY_MUTUAL_SSL_FILTER = "MutualSSLFilter";
  const string KEY_VALIDATION_FILTER = "ValidationFilter";
  const string KEY_BASIC_AUTH_FILTER = "BasicAuthFilter";
+ const string KEY_GRPC_FILTER = "GrpcFilter";
  const string KEY_THROTTLE_UTIL = "ThrottleUtil";
  const string KEY_GW_CACHE = "GatewayCache";
  const string KEY_UTILS = "Utils";

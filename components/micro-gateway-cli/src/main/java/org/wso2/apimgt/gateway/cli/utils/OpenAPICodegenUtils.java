@@ -228,14 +228,25 @@ public class OpenAPICodegenUtils {
     }
 
     /**
-     * generate ExtendedAPI object from openAPI definition
+     * Generate {@link ExtendedAPI} object from generated OpenAPI from protobuf file. This is used for the ballerina
+     * service generation.
      *
-     * @param openAPI {@link OpenAPI} object
-     * @return Extended API object
+     * @param openAPI {@link OpenAPI} object with all required properties
+     * @return {@link ExtendedAPI} object for protobuf
      */
-    public static ExtendedAPI generateAPIFromOpenAPIDef(OpenAPI openAPI, String openAPIContent, Path openAPIPath)
-            throws IOException {
+    public static ExtendedAPI generateGrpcAPIFromOpenAPI(OpenAPI openAPI) {
+        ExtendedAPI api = generateAPIFromOpenAPIDef(openAPI, openAPI.toString());
+        api.setGrpc(true);
+        return api;
+    }
 
+    /**
+     * generate ExtendedAPI object from openAPI definition.
+     *
+     * @param openAPI {@link OpenAPI} object with all required properties
+     * @return {@link ExtendedAPI} object
+     */
+    public static ExtendedAPI generateAPIFromOpenAPIDef(OpenAPI openAPI, String openAPIContent) {
         String apiId = HashUtils.generateAPIId(openAPI.getInfo().getTitle(), openAPI.getInfo().getVersion());
         ExtendedAPI api = new ExtendedAPI();
         api.setId(apiId);

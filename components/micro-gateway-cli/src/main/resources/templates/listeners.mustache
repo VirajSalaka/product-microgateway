@@ -35,6 +35,8 @@ map<json> openAPIs = <@untainted>getOpenAPIMapFromFile();
 gateway:AnalyticsRequestFilter analyticsFilter = new;
 // Extension filter
 ExtensionFilter extensionFilter = new;
+//GrpcFilter filter
+//gateway:GrpcFilter grpcFilter = new;
 
 http:ListenerConfiguration secureServiceEndpointConfiguration = { {{>http2}},
                                                                            {{>mutualSSL}}
