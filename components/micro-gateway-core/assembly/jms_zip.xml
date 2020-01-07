@@ -22,11 +22,11 @@
     </formats>
     <files>
         <file>
-            <source>${project.basedir}/src/main/ballerina/target/tmp/wso2-jms-${jms-module.version}.jar</source>
+            <source>/Users/viraj/Downloads/module-jms/jms/target/caches/jar_cache/wso2/jms/0.6.2/wso2-jms-0.6.2.jar</source>
             <outputDirectory></outputDirectory>
         </file>
         <file>
-            <source>${project.basedir}/src/main/ballerina/target/tmp/jms-utils-${jms-module.version}.jar</source>
+            <source>/Users/viraj/Downloads/module-jms/jms/target/balo/jms-2019r3-java8-0.6.2/jms-utils-0.6.2.jar</source>
             <outputDirectory></outputDirectory>
         </file>
     </files>
