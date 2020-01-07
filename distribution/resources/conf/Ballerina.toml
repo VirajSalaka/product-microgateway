@@ -5,9 +5,9 @@ version= "3.1.0"
 [platform]
 target = "java8"
 
-    [[platform.libraries]]
-    path = "${MICROGW_HOME}/lib/gateway/platform/org.wso2.micro.gateway.core-3.0.2-SNAPSHOT.jar"
+    #[[platform.libraries]]
+    #path = "${MICROGW_HOME}/lib/gateway/platform/org.wso2.micro.gateway.core-3.0.2-SNAPSHOT.jar"
 
 [dependencies]
-"wso2/jms" = { path = "/Users/viraj/Downloads/module-jms/jms/target/balo/jms-2019r3-java8-0.6.2.balo"}
+"wso2/gateway" = { path = "${MICROGW_HOME}/lib/gateway-balo/gateway-2019r3-java8-3.1.0.balo"}
 
