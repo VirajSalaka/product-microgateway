@@ -30,16 +30,9 @@ RUN mkdir -p /wso2/files \
     && apk add --update --no-cache bash \
     && unzip /root/${MGW_DIST} -d /wso2/ > /dev/null 2>&1 \
     && mv /wso2/wso2* /wso2/mgw \
-    && mkdir -p /wso2/mgw/runtime \
-    && unzip /wso2/mgw/runtime.zip -d wso2/mgw/runtime \
-    && rm -rf /wso2/mgw/runtime.zip \
-    && cp /wso2/mgw/lib/gateway/*.jar /wso2/mgw/runtime/bre/lib/ \
     && chown -R wso2:wso2 /wso2 \
     && rm -rf /root/${MGW_DIST} > /dev/null 2>&1 \
     && rm -rf /var/cache/apk/*
-
-ENV BALLERINA_HOME /wso2/mgw/runtime
-ENV PATH $BALLERINA_HOME/bin:$PATH
 
 WORKDIR /home/wso2
 VOLUME /home/wso2
