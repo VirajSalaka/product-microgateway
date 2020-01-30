@@ -180,7 +180,7 @@ java_cmd_gateway_background () {
     -XX:HeapDumpPath="$GW_HOME/heap-dump.hprof" \
     $JAVA_OPTS \
     -Dmgw-runtime.home=${GW_HOME} \
-    -Dballerina.home=${GW_HOME} \
+    -Dballerina.home=${GW_HOME}/runtime \
     -jar $args --api.usage.data.path=$GW_HOME/api-usage-data --b7a.http.accesslog.path=$GW_HOME/logs/access_logs --b7a.config.file=$GW_HOME/conf/micro-gw.conf 2>&1 | tee -a $GW_HOME/logs/microgateway.log
 EOF
 }
