@@ -95,7 +95,7 @@ public function getFilters() returns http:RequestFilter[] {
     map<json> openAPIs = <@untainted>getOpenAPIMapFromFile();
 
     // Authentication filter
-    gateway:PreAuthnFilter preAuthnFilter;
+    gateway:PreAuthnFilter | gateway:PreAuthnFilterWrapper preAuthnFilter;
     // Throttling filter
     gateway:ThrottleFilter | gateway:ThrottleFilterWrapper throttleFilter;
     // Analytic filter

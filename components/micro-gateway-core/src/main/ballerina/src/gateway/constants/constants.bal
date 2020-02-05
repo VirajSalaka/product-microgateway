@@ -356,6 +356,7 @@ public const string TOKEN_SERVICE = "TokenService";
 
 public const int DEFAULT_LISTENER_TIMEOUT = 120000;//2 mins
 public const int DEFAULT_ETCD_TRIGGER_TIME = 10000;//10 seconds
+public const string KEY_GRPC_FILTER = "GrpcFilter";
 
 //jwt claims
 const string APPLICATION = "application";

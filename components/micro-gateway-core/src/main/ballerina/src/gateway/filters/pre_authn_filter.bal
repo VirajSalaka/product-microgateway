@@ -18,10 +18,15 @@ import ballerina/config;
 import ballerina/http;
 import ballerina/runtime;
 import ballerina/stringutils;
+import ballerina/mime;
 
 // Pre Authentication filter
 
 public type PreAuthnFilter object {
+    //todo: verify https://github.com/grpc/grpc/blob/master/doc/statuscodes.md
+    map<string> httpGrpcStatusCodeMap = { "401" : "16", "403" : "7", "404" : "12", "429" : "8", "500" : "2" };
+    map<string> httpGrpcErrorMsgMap = { "401" : "Unauthenticated", "403" : "Unauthorized", "404" : "Service not found",
+        "429" : "Too many function calls", "500" : "Internal server error" };
 
     public function filterRequest(http:Caller caller, http:Request request,@tainted http:FilterContext context) returns boolean {
         setFilterSkipToFilterContext(context);
@@ -35,25 +40,47 @@ public type PreAuthnFilter object {
         checkOrSetMessageID(context);
         setHostHeaderToFilterContext(request, context);
         setLatency(startingTime, context, SECURITY_LATENCY_AUTHN);
-        boolean result = doAuthnFilterRequest(caller, request, <@untainted>context);
-        return result;
+        if ( request.getContentType() == "application/grpc") {
+            addGrpcToFilterContext(context);
+        }
+        printDebug(KEY_GRPC_FILTER, "Grpc filter is applied for request" + context.attributes[MESSAGE_ID].toString());
+        return doAuthnFilterRequest(caller, request, <@untainted>context);
     }
 
     public function filterResponse(http:Response response, http:FilterContext context) returns boolean {
-        if (context.attributes.hasKey(SKIP_ALL_FILTERS) && <boolean>context.attributes[SKIP_ALL_FILTERS]) {
-            printDebug(KEY_PRE_AUTHN_FILTER, "Skip all filter annotation set in the service. Skip the filter");
-            return true;
-        }
-        if (response.statusCode == 401) {
-            runtime:InvocationContext invocationContext = runtime:getInvocationContext();
-            //This handles the case where the empty Bearer/Basic value provided for authorization header. If all the
-            //auth handlers are invoked and returning 401 without proper error message in the context means, invalid
-            //credentials are provided. Hence we seth invalid credentials message to context
-            if (!invocationContext.attributes.hasKey(ERROR_CODE)) {
-                setErrorMessageToInvocationContext(API_AUTH_INVALID_CREDENTIALS);
+        printDebug(KEY_GRPC_FILTER, "Grpc filter is applied for response" + context.attributes[MESSAGE_ID].toString());
+        if (!filterGrpcResponse(response, context)) {
+            if(response.statusCode == 401) {
+                runtime:InvocationContext invocationContext = runtime:getInvocationContext();
+                //This handles the case where the empty Bearer/Basic value provided for authorization header. If all the
+                //auth handlers are invoked and returning 401 without proper error message in the context means, invalid
+                //credentials are provided. Hence we seth invalid credentials message to context
+                if (!invocationContext.attributes.hasKey(ERROR_CODE)) {
+                    setErrorMessageToInvocationContext(API_AUTH_INVALID_CREDENTIALS);
+                }
+                sendErrorResponseFromInvocationContext(response);
             }
-            sendErrorResponseFromInvocationContext(response);
+           return true;
         }
+        string statusCode = response.statusCode.toString();
+        printDebug(KEY_GRPC_FILTER, "http status code, " + statusCode + " " + context.attributes[MESSAGE_ID].toString());
+        if (statusCode == "0") {
+           printDebug(KEY_GRPC_FILTER, "Grpc message is status code 0 " + context.attributes[MESSAGE_ID].toString());
+           return true;
+        }
+        string grpcStatus = self.httpGrpcStatusCodeMap[statusCode] ?: "";
+        string grpcErrorMessage = self.httpGrpcErrorMsgMap[statusCode] ?: "";
+        
+        if(statusCode == "") {
+           response.setHeader("grpc-status", "2");
+           response.setHeader("grpc-message", "Response is not recognized by the gateway.");
+           return true;
+        }
+        response.setHeader("grpc-status", grpcStatus, mime:TRAILING);
+        response.setHeader("grpc-message", grpcErrorMessage, mime:TRAILING);
+        printDebug(KEY_GRPC_FILTER, "grpc status is " + grpcStatus + " and grpc Message is " + grpcErrorMessage);
+        response.setContentType("application/grpc");
+
         return true;
     }
 };
@@ -217,4 +244,26 @@ function getAuthCookieIfPresent(http:Request request) returns string? {
         }
     }
     return authCookie;
+}
+
+function addGrpcToFilterContext(http:FilterContext context){
+    //todo: check if ballerina map support boolean
+    context.attributes["isGrpc"] = true;
+    printDebug(KEY_GRPC_FILTER, "\"isGrpc\" key is added to the request " + context.attributes[MESSAGE_ID].toString());
+}
+
+function filterGrpcResponse(http:Response response, http:FilterContext context) returns boolean {
+    //todo: check if needs to check the content type as well.
+    if(response.hasHeader("grpc-status")){
+        string grpcStatus = response.getHeader("grpc-status").toUpperAscii();
+            if(grpcStatus != "UNIMPLEMENTED") {
+                return false;
+            }
+        }
+    any isGrpcAttr = context.attributes["isGrpc"];
+
+    if(isGrpcAttr is boolean){
+        return true;
+    }
+    return false;
 }
