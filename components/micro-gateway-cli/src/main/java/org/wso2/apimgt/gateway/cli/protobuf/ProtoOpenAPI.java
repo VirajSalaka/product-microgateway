@@ -21,9 +21,9 @@ import java.util.Arrays;
 import java.util.UUID;
 
 /**
- * Generate custom OpenAPI object for mapping the grpc service definition (protobuf).
+ * custom OpenAPI object for mapping the grpc service definition (protobuf).
  */
-public class ProtoOpenAPIGenerator {
+public class ProtoOpenAPI {
     private static final String OAUTH2_SCHEME = "grpc-oauth2-scheme";
     private static final String BASIC_SCHEME = "grpc-basic-scheme";
     private boolean isBasicAuthEnabled = false;
@@ -32,7 +32,7 @@ public class ProtoOpenAPIGenerator {
     private boolean endpointsAvailable = false;
     private OpenAPI openAPI;
 
-    ProtoOpenAPIGenerator() {
+    ProtoOpenAPI() {
         openAPI = new OpenAPI();
     }
 

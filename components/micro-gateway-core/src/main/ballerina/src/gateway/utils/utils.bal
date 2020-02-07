@@ -641,3 +641,8 @@ public function setFilterSkipToFilterContext(http:FilterContext context) {
 public function getFilterConfigAnnotationMap() returns map<FilterConfiguration?> {
     return filterConfigAnnotationMap;
 }
+
+function isGrpcRequest(http:FilterContext context) returns boolean {
+    //if the key is there, the value is always set to true.
+    return context.attributes.hasKey(IS_GRPC);
+}

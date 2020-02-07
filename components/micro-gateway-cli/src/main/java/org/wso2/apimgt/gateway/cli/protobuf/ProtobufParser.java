@@ -20,7 +20,6 @@ import java.util.Locale;
  * Class for generate file descriptors for proto files and create OpenAPI objects out of those descriptors.
  */
 public class ProtobufParser {
-    private static ProtoOpenAPIGenerator protoOpenAPIGenerator = new ProtoOpenAPIGenerator();
     /**
      * Compile the protobuf and generate descriptor file.
      *
@@ -121,29 +120,30 @@ public class ProtobufParser {
         if (descriptor.getServiceCount() == 0) {
             return null;
         }
+        ProtoOpenAPI protoOpenAPI = new ProtoOpenAPI();
         descriptor.getServiceList().forEach(service -> {
-            protoOpenAPIGenerator.addOpenAPIInfo(descriptor.getPackage() + "." + service.getName());
+            protoOpenAPI.addOpenAPIInfo(descriptor.getPackage() + "." + service.getName());
             //set endpoint configurations
-            protoOpenAPIGenerator.addAPIProdEpExtension(generateEpList(service.getOptions()
+            protoOpenAPI.addAPIProdEpExtension(generateEpList(service.getOptions()
                     .getExtension(ExtensionHolder.xWso2ProductionEndpoints)));
-            protoOpenAPIGenerator.addAPISandEpExtension(generateEpList(service.getOptions()
+            protoOpenAPI.addAPISandEpExtension(generateEpList(service.getOptions()
                     .getExtension(ExtensionHolder.xWso2SandboxEndpoints)));
             //set API level security
             List<ExtensionHolder.Security> securityList = service.getOptions()
                     .getExtension(ExtensionHolder.xWso2Security);
             if (securityList.contains(ExtensionHolder.Security.NONE)) {
-                protoOpenAPIGenerator.disableAPISecurity();
+                protoOpenAPI.disableAPISecurity();
             }
             if (securityList.contains(ExtensionHolder.Security.BASIC)) {
-                protoOpenAPIGenerator.addAPIBasicSecurityRequirement();
+                protoOpenAPI.addAPIBasicSecurityRequirement();
             }
             if (securityList.contains(ExtensionHolder.Security.OAUTH2) ||
                     securityList.contains(ExtensionHolder.Security.JWT)) {
-                protoOpenAPIGenerator.addAPIOauth2SecurityRequirement();
+                protoOpenAPI.addAPIOauth2SecurityRequirement();
             }
             //set API level throttling tier
             String throttlingTier = service.getOptions().getExtension(ExtensionHolder.xWso2ThrottlingTier);
-            protoOpenAPIGenerator.setAPIThrottlingTier(throttlingTier);
+            protoOpenAPI.setAPIThrottlingTier(throttlingTier);
             service.getMethodList().forEach(method -> {
                 //set operation level scopes and throttling tiers
                 String methodScopesString = method.getOptions().getExtension(ExtensionHolder.xWso2MethodScopes);
@@ -153,10 +153,10 @@ public class ProtobufParser {
                 if (!methodScopesString.isEmpty()) {
                     methodScopes = methodScopesString.split(",");
                 }
-                protoOpenAPIGenerator.addOpenAPIPath(method.getName(), methodScopes, methodThrottlingTier);
+                protoOpenAPI.addOpenAPIPath(method.getName(), methodScopes, methodThrottlingTier);
             });
         });
-        return protoOpenAPIGenerator.getOpenAPI();
+        return protoOpenAPI.getOpenAPI();
     }
 
     /**
