@@ -20,7 +20,7 @@ import java.util.Locale;
  * Class for generate file descriptors for proto files and create OpenAPI objects out of those descriptors.
  */
 public class ProtobufParser {
-
+    private static ProtoOpenAPIGenerator protoOpenAPIGenerator = new ProtoOpenAPIGenerator();
     /**
      * Compile the protobuf and generate descriptor file.
      *
@@ -117,7 +117,10 @@ public class ProtobufParser {
         if (descriptor == null) {
             throw new RuntimeException("descriptor is not available");
         }
-        ProtoOpenAPIGenerator protoOpenAPIGenerator = new ProtoOpenAPIGenerator();
+
+        if (descriptor.getServiceCount() == 0) {
+            return null;
+        }
         descriptor.getServiceList().forEach(service -> {
             protoOpenAPIGenerator.addOpenAPIInfo(descriptor.getPackage() + "." + service.getName());
             //set endpoint configurations

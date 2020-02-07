@@ -184,14 +184,16 @@ public class CodeGenerator {
             String descriptorPath = CmdUtils.getProtoDescriptorPath(projectName, path.getFileName().toString());
             try {
                 OpenAPI openAPI = new ProtobufParser().generateOpenAPI(protocPath, path.toString(), descriptorPath);
-                String openAPIContent = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-                String openAPIAsJson = OpenAPICodegenUtils.getOpenAPIAsJson(openAPI, openAPIContent, path);
-                String openAPIContentAsJson = openAPIAsJson;
-                String openAPIVersion = OpenAPICodegenUtils.findSwaggerVersion(openAPIContentAsJson, false);
-                OpenAPICodegenUtils.validateOpenAPIDefinition(openAPI, openAPIContent, openAPIVersion);
-                BallerinaService definitionContext = generateDefinitionContext(openAPI, openAPIContent, path, true);
-                genFiles.add(generateService(definitionContext));
-                serviceList.add(definitionContext);
+                if (openAPI != null) {
+                    String openAPIContent = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+                    String openAPIAsJson = OpenAPICodegenUtils.getOpenAPIAsJson(openAPI, openAPIContent, path);
+                    String openAPIContentAsJson = openAPIAsJson;
+                    String openAPIVersion = OpenAPICodegenUtils.findSwaggerVersion(openAPIContentAsJson, false);
+                    OpenAPICodegenUtils.validateOpenAPIDefinition(openAPI, openAPIContent, openAPIVersion);
+                    BallerinaService definitionContext = generateDefinitionContext(openAPI, openAPIContent, path, true);
+                    genFiles.add(generateService(definitionContext));
+                    serviceList.add(definitionContext);
+                }
             } catch (IOException e) {
                 throw new CLIRuntimeException("Protobuf file cannot be parsed to " +
                         "ballerina code", e);
