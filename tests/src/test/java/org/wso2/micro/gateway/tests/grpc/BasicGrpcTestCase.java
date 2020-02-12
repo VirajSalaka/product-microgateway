@@ -1,27 +1,53 @@
 package org.wso2.micro.gateway.tests.grpc;
 
-import org.json.JSONObject;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 import org.wso2.micro.gateway.tests.common.BaseTestCase;
-import org.wso2.micro.gateway.tests.common.model.ApplicationDTO;
-import org.wso2.micro.gateway.tests.util.TestConstant;
-import org.wso2.micro.gateway.tests.util.TokenUtil;
+
+import java.util.concurrent.TimeUnit;
 
 public class BasicGrpcTestCase extends BaseTestCase {
-    private String jwtTokenProd;
+    private GrpcServer grpcServer;
     @BeforeClass
     public void start() throws Exception {
         String project = "OpenApiThrottlingProject";
-        //Define application info
-        ApplicationDTO application = new ApplicationDTO();
-        application.setName("jwtApp");
-        application.setTier("Unlimited");
-        application.setId((int) (Math.random() * 1000));
-
-        jwtTokenProd = TokenUtil.getBasicJWT(application, new JSONObject(),
-                TestConstant.KEY_TYPE_PRODUCTION, 3600);
+        String configPath = "confs/http2-test.conf";
         //generate apis with CLI and start the micro gateway server
-        super.init(project, new String[]{"common_api.yaml"});
+        super.init(project, new String[]{"common_api.yaml", "../protobuf/mgwProto/basicProto.proto"},
+                new String[]{"--b7a.log.level=DEBUG", "--b7a.http.tracelog.console=true"}, configPath);
+
+        grpcServer = new GrpcServer();
+        grpcServer.start();
+    }
+
+    @Test(description = "Test Basic Grpc Passthrough")
+    public void testPerResourceRequestInterceptor() throws Exception {
+        String response = testGrpcService("localhost:9590", "sample-request");
+        Assert.assertNotNull(response);
+        Assert.assertEquals(response, "response received :sample-request");
+    }
+
+    @AfterClass
+    public void stop() throws Exception {
+        grpcServer.stop();
+        //Stop all the mock servers
+        super.finalize();
+    }
+
+    public String testGrpcService(String targetUrl, String requestText) throws InterruptedException {
+        // Create a communication channel to the server, known as a Channel.
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(targetUrl).usePlaintext().build();
+        try {
+            GrpcBlockingClient client = new GrpcBlockingClient(channel);
+            String responseText = client.testCall(requestText);
+            return responseText;
+        } finally {
+            channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+        }
     }
 
 }

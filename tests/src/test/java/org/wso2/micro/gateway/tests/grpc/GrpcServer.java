@@ -12,17 +12,16 @@ public class GrpcServer {
     private static final Logger log = LoggerFactory.getLogger(GrpcServer.class);
     private Server server;
 
-    private void start() throws IOException {
+    public void start() throws IOException {
         /* The port on which the server should run */
         int port = 50051;
-        server = ServerBuilder.forPort(port)
-                .addService(new TestServiceImpl())
-                .build()
-                .start();
+        if (server == null || server.isShutdown() || server.isTerminated()) {
+            server = ServerBuilder.forPort(port).addService(new TestServiceImpl()).build().start();
+        }
         log.info("Server started, listening on " + port);
     }
 
-    private void stop() throws InterruptedException {
+    public void stop() throws InterruptedException {
         if (server != null) {
             server.shutdown().awaitTermination(30, TimeUnit.SECONDS);
         }

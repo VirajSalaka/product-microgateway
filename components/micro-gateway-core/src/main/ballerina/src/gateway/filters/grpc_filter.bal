@@ -27,7 +27,7 @@ public type GrpcFilter object {
     public function filterRequest(http:Caller caller, http:Request request,@tainted http:FilterContext context) returns boolean {
         setFilterSkipToFilterContext(context);
         if (context.attributes.hasKey(SKIP_ALL_FILTERS) && <boolean>context.attributes[SKIP_ALL_FILTERS]) {
-            printDebug(KEY_PRE_AUTHN_FILTER, "Skip all filter annotation set in the service. Skip the filter");
+            printDebug(KEY_GRPC_FILTER, "Skip all filter annotation set in the service. Skip the filter");
             return true;
         }
         //Setting UUID
@@ -38,9 +38,10 @@ public type GrpcFilter object {
         setLatency(startingTime, context, SECURITY_LATENCY_AUTHN);
         if ( request.getContentType() == GRPC_CONTENT_TYPE_HEADER) {
             addGrpcToFilterContext(context);
+            printDebug(KEY_GRPC_FILTER, "content-type is grpc");
         }
         printDebug(KEY_GRPC_FILTER, "Grpc filter is applied for request" + context.attributes[MESSAGE_ID].toString());
-        return doAuthnFilterRequest(caller, request, <@untainted>context);
+        return true;
     }
 
     public function filterResponse(http:Response response, http:FilterContext context) returns boolean {
@@ -50,7 +51,7 @@ public type GrpcFilter object {
         }
         string statusCode = response.statusCode.toString();
         printDebug(KEY_GRPC_FILTER, "http status code, " + statusCode + " " + context.attributes[MESSAGE_ID].toString());
-        if (statusCode == "0") {
+        if (statusCode == "200") {
            printDebug(KEY_GRPC_FILTER, "Grpc message is status code 0 " + context.attributes[MESSAGE_ID].toString());
            return true;
         }

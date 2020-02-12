@@ -44,6 +44,9 @@
         <fileSet>
             <directory>${project.build.directory}/resources/grpc/protoc</directory>
             <outputDirectory>wso2am-micro-gw-toolkit-${project.version}/resources/grpc</outputDirectory>
+            <includes>
+                <include>*.exe</include>
+            </includes>
             <fileMode>755</fileMode>
         </fileSet>
         <fileSet>

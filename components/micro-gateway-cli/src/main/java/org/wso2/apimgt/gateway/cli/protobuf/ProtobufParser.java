@@ -3,6 +3,7 @@ package org.wso2.apimgt.gateway.cli.protobuf;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.ExtensionRegistry;
 import io.swagger.v3.oas.models.OpenAPI;
+import org.apache.commons.lang3.StringUtils;
 import org.wso2.apimgt.gateway.cli.model.route.EndpointListRouteDTO;
 import org.wso2.apimgt.gateway.cli.model.route.EndpointType;
 
@@ -122,7 +123,12 @@ public class ProtobufParser {
         }
         ProtoOpenAPI protoOpenAPI = new ProtoOpenAPI();
         descriptor.getServiceList().forEach(service -> {
-            protoOpenAPI.addOpenAPIInfo(descriptor.getPackage() + "." + service.getName());
+            if (StringUtils.isEmpty(descriptor.getPackage())) {
+                protoOpenAPI.addOpenAPIInfo(service.getName());
+            } else {
+                protoOpenAPI.addOpenAPIInfo(descriptor.getPackage() + "." + service.getName());
+            }
+
             //set endpoint configurations
             protoOpenAPI.addAPIProdEpExtension(generateEpList(service.getOptions()
                     .getExtension(ExtensionHolder.xWso2ProductionEndpoints)));

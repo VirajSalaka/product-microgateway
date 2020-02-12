@@ -109,7 +109,7 @@ service {{cut qualifiedServiceName " "}} on {{#api.transport}}{{#equals . "http"
         map<string> endpointEtcdConfigValues = {};
         {{#endpointConfig.prodEndpoints}}
             {{#endpointConfig.sandEndpoints}}
-                if("PRODUCTION" == <string>invocationContext.attributes["KEY_TYPE"]) {
+                if("PRODUCTION" == "PRODUCTION") {
                 {{#if hasProdEpConfig}}
                     {{>useResourceProdEp}}
                 {{else}}
@@ -124,7 +124,7 @@ service {{cut qualifiedServiceName " "}} on {{#api.transport}}{{#equals . "http"
                 }
             {{/endpointConfig.sandEndpoints}}
             {{^endpointConfig.sandEndpoints}}
-                if("PRODUCTION" == <string>invocationContext.attributes["KEY_TYPE"]) {
+                if("PRODUCTION" == "PRODUCTION") {
                 {{#if hasProdEpConfig}}
                     {{>useResourceProdEp}}
                 {{else}}
