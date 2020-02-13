@@ -29,7 +29,11 @@ public type PreAuthnFilter object {
             printDebug(KEY_PRE_AUTHN_FILTER, "Skip all filter annotation set in the service. Skip the filter");
             return true;
         }
-        return doAuthnFilterRequest(caller, request, <@untainted>context);
+        int startingTime = getCurrentTimeForAnalytics();
+        context.attributes[REQUEST_TIME] = startingTime;
+        boolean result = doAuthnFilterRequest(caller, request, <@untainted>context);
+        setLatency(startingTime, context, SECURITY_LATENCY_AUTHN);
+        return result;
     }
 
     public function filterResponse(http:Response response, http:FilterContext context) returns boolean {
@@ -106,7 +110,8 @@ returns boolean {
                             setAPIKeyAuth(inName, name);
                             authHeader = AUTH_SCHEME_API_KEY;
                             break;
-                        } else if (stringutils:equalsIgnoreCase(QUERY, inName) && request.getQueryParamValue(name) is string) {
+                        } else if (stringutils:equalsIgnoreCase(QUERY, inName)
+                                && request.getQueryParamValue(name) is string) {
                             printDebug(KEY_PRE_AUTHN_FILTER, "Request has apikey query : " + name);
                             isAPIKeyAuth = true;
                             setAPIKeyAuth(inName, name);

@@ -1,5 +1,6 @@
 syntax = "proto3";
-package org.wso2.apimgt.gateway.cli.protobuf;
+option java_package = "org.wso2.apimgt.gateway.cli.protobuf";
+option java_outer_classname = "ExtensionHolder";
 
 import "google/protobuf/descriptor.proto";
 

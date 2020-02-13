@@ -97,8 +97,10 @@ public class BallerinaService implements BallerinaOpenAPIObject<BallerinaService
         this.endpointConfig = api.getEndpointConfigRepresentation();
         this.isGrpc = api.isGrpc();
         this.setBasepath(api.getSpecificBasepath());
-        this.authProviders = OpenAPICodegenUtils.getAuthProviders(api.getMgwApiSecurity());
-        this.apiKeys = OpenAPICodegenUtils.generateAPIKeysFromSecurity(definition.getSecurity());
+        this.authProviders = OpenAPICodegenUtils
+                .getAuthProviders(api.getMgwApiSecurity(), api.getApplicationSecurity());
+        this.apiKeys = OpenAPICodegenUtils.generateAPIKeysFromSecurity(definition.getSecurity(),
+                this.authProviders.contains(OpenAPIConstants.APISecurity.apikey.name()));
         setPaths(definition);
 
         return buildContext(definition);
@@ -161,11 +163,11 @@ public class BallerinaService implements BallerinaOpenAPIObject<BallerinaService
         for (Map.Entry<String, PathItem> path : pathList.entrySet()) {
             BallerinaPath balPath = new BallerinaPath().buildContext(path.getValue(), this.api);
             balPath.getOperations().forEach(operation -> {
-                // set the ballerina function name as {http_method}{UUID} ex : get_2345_sdfd_4324_dfds
-                String operationId = operation.getKey() + "_" + UUID.randomUUID().toString().replaceAll("-", "_");
+                // set the ballerina function name as {http_method}{UUID} ex : get2345sdfd4324dfds
+                String operationId = operation.getKey() + UUID.randomUUID().toString().replaceAll("-", "");
                 operation.getValue().setOperationId(operationId);
                 //to set auth providers property corresponding to the security schema in API-level
-                operation.getValue().setSecuritySchemas(this.api.getMgwApiSecurity());
+                operation.getValue().setSecuritySchemas(this.authProviders);
                 //if it is the developer first approach
                 if (isDevFirst) {
                     //to add API level request interceptor

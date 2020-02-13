@@ -21,6 +21,9 @@ import ballerina/runtime;
 // Subscription filter to validate the subscriptions which is available in the  jwt token
 // This filter should only be engaged when jwt token is is used for authentication. For oauth2
 // OAuthnFilter will handle the subscription validation as well.
+
+boolean subscriptionValEnabled = getConfigBooleanValue(JWT_INSTANCE_ID, VALIDATE_SUBSCRIPTION, false);
+
 public type SubscriptionFilter object {
     public function filterRequest(http:Caller caller, http:Request request,@tainted http:FilterContext filterContext)
     returns boolean {
@@ -31,8 +34,7 @@ public type SubscriptionFilter object {
         if (isGrpcRequest(filterContext)) {
             printDebug(KEY_SUBSCRIPTION_FILTER, "Skip the filter as the request is GRPC");
         }
-        int startingTime = getCurrentTime();
-        checkOrSetMessageID(filterContext);
+        int startingTime = getCurrentTimeForAnalytics();
         boolean result = doSubscriptionFilterRequest(caller, request, filterContext);
         setLatency(startingTime, filterContext, SECURITY_LATENCY_SUBS);
         return result;
@@ -46,7 +48,6 @@ public type SubscriptionFilter object {
 function doSubscriptionFilterRequest(http:Caller caller, http:Request request,
 @tainted http:FilterContext filterContext) returns boolean {
     boolean subscriptionValidated = false;
-    boolean subscriptionValEnabled = getConfigBooleanValue(JWT_INSTANCE_ID, VALIDATE_SUBSCRIPTION, false);
 
     runtime:InvocationContext invocationContext = runtime:getInvocationContext();
     runtime:AuthenticationContext? authContext = runtime:getInvocationContext()?.authenticationContext;
@@ -81,7 +82,8 @@ function doSubscriptionFilterRequest(http:Caller caller, http:Request request,
                         sendErrorResponse(caller, request, <@untainted>filterContext);
                         return false;
                     }
-                    subscriptionValidated = handleSubscribedAPIs(jwtToken, payload, subscribedAPIList, subscriptionValEnabled);
+                    subscriptionValidated = handleSubscribedAPIs(jwtToken, payload, subscribedAPIList,
+                        subscriptionValEnabled);
                     if (subscriptionValidated || !subscriptionValEnabled) {
                         printDebug(KEY_SUBSCRIPTION_FILTER, "Subscriptions validated.");
                         return true;

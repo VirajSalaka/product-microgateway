@@ -84,7 +84,7 @@ public class BallerinaOperation implements BallerinaOpenAPIObject<BallerinaOpera
 
         // OperationId with spaces with special characters will cause errors in ballerina code.
         // Replacing it with uuid so that we can identify there was a ' ' when doing bal -> swagger
-        operation.setOperationId(UUID.randomUUID().toString().replaceAll("-", "_"));
+        operation.setOperationId(UUID.randomUUID().toString().replaceAll("-", ""));
         this.operationId = operation.getOperationId();
         this.tags = operation.getTags();
         this.summary = operation.getSummary();
@@ -92,8 +92,9 @@ public class BallerinaOperation implements BallerinaOpenAPIObject<BallerinaOpera
         this.externalDocs = operation.getExternalDocs();
         this.parameters = new ArrayList<>();
         //to provide resource level security in dev-first approach
-        this.apiKeys = OpenAPICodegenUtils.generateAPIKeysFromSecurity(operation.getSecurity());
-        this.authProviders = OpenAPICodegenUtils.getMgwResourceSecurity(operation);
+        this.authProviders = OpenAPICodegenUtils.getMgwResourceSecurity(operation, api.getApplicationSecurity());
+        this.apiKeys = OpenAPICodegenUtils.generateAPIKeysFromSecurity(operation.getSecurity(),
+                this.authProviders.contains(OpenAPIConstants.APISecurity.apikey.name()));
         //to set resource level scopes in dev-first approach
         this.scope = OpenAPICodegenUtils.getMgwResourceScope(operation);
         //set resource level endpoint configuration
@@ -274,10 +275,10 @@ public class BallerinaOperation implements BallerinaOpenAPIObject<BallerinaOpera
         }
     }
 
-    public void setSecuritySchemas(String schemas) {
+    public void setSecuritySchemas(List<String> authProviders) {
         //update the Resource auth providers property only if there is no security scheme provided during instantiation
-        if (this.authProviders.size() < 1) {
-            authProviders = OpenAPICodegenUtils.getAuthProviders(schemas);
+        if (this.authProviders.isEmpty()) {
+            this.authProviders = authProviders;
         }
     }
 }

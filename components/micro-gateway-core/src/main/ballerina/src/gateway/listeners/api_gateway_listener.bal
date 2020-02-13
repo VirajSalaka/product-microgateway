@@ -24,6 +24,7 @@ import ballerina/oauth2;
 import ballerina/stringutils;
 
 boolean isConfigInitiated = false;
+boolean isDebugEnabled = false;
 
 public type APIGatewayListener object {
     *lang:Listener;
@@ -37,6 +38,10 @@ public type APIGatewayListener object {
         // each listener. This check will make sure that configurations are read only once and respective
         //objects are initialized only once.
         if (!isConfigInitiated) {
+            string logLevel = getConfigValue(B7A_LOG, LOG_LEVEL, INFO);
+            if (stringutils:equalsIgnoreCase(DEBUG, logLevel) || stringutils:equalsIgnoreCase(TRACE, logLevel)) {
+                isDebugEnabled = true;
+            }
             initiateGatewayConfigurations(config);
         }
         if ((config.secureSocket is ())) {
@@ -180,7 +185,7 @@ public function getAuthHandlers() returns http:InboundAuthHandler[] {
             http:BearerAuthHandler bearerAuthOutboundHandler = new (oauth2Provider);
             auth = {authHandler: bearerAuthOutboundHandler};
         } else {
-            printFullError(KEY_GW_LISTNER, oauth2Provider);
+            printError(KEY_GW_LISTNER, "Failed to get oauth2 outbound provider", oauth2Provider);
         }
     } else {
         printWarn(KEY_GW_LISTNER, "Key validation service security confogurations not enabled.");
@@ -200,6 +205,7 @@ public function getAuthHandlers() returns http:InboundAuthHandler[] {
     introspectURL = (introspectURL.endsWith(PATH_SEPERATOR)) ? introspectURL + INTROSPECT_CONTEXT : introspectURL + PATH_SEPERATOR + INTROSPECT_CONTEXT;
     oauth2:IntrospectionServerConfig introspectionServerConfig = {
         url: introspectURL,
+        oauth2Cache: introspectCache,
         clientConfig: clientConfig
     };
     OAuth2KeyValidationProvider oauth2KeyValidationProvider = new (keyValidationConfig);
