@@ -16,6 +16,7 @@
 
 import ballerina/http;
 import ballerina/mime;
+import ballerina/runtime;
 
 // GRPC filter
 public type GrpcFilter object {
@@ -73,7 +74,9 @@ public type GrpcFilter object {
 };
 
 function addGrpcToFilterContext(http:FilterContext context){
+    runtime:InvocationContext invocationContext = runtime:getInvocationContext();
     context.attributes[IS_GRPC] = true;
+    invocationContext.attributes[IS_GRPC] = true;
     printDebug(KEY_GRPC_FILTER, "\"isGrpc\" key is added to the request " + context.attributes[MESSAGE_ID].toString());
 }
 

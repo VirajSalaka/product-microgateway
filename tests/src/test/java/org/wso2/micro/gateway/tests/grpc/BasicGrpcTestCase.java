@@ -18,7 +18,7 @@ public class BasicGrpcTestCase extends BaseTestCase {
         String configPath = "confs/http2-test.conf";
         //generate apis with CLI and start the micro gateway server
         super.init(project, new String[]{"common_api.yaml", "../protobuf/mgwProto/basicProto.proto"},
-                new String[]{"--b7a.log.level=DEBUG", "--b7a.http.tracelog.console=true"}, configPath);
+                new String[]{"--b7a.log.level=DEBUG"}, configPath);
 
         grpcServer = new GrpcServer();
         grpcServer.start();
