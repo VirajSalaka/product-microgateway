@@ -464,41 +464,41 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>${maven.checkstyle.plugin.version}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.puppycrawl.tools</groupId>
-                        <artifactId>checkstyle</artifactId>
-                        <version>${maven.checkstyle.version}</version>
-                    </dependency>
-                </dependencies>
-                <configuration>
-                    <excludes>org/wso2/apimgt/gateway/cli/protobuf/ExtensionHolder.java</excludes>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>validate</id>
-                        <phase>validate</phase>
-                        <configuration>
-                            <configLocation>
-                                https://raw.githubusercontent.com/wso2/code-quality-tools/v1.3/checkstyle/checkstyle.xml
-                            </configLocation>
-                            <suppressionsLocation>
-                                https://raw.githubusercontent.com/wso2/code-quality-tools/v1.3/checkstyle/suppressions.xml
-                            </suppressionsLocation>
-                            <consoleOutput>true</consoleOutput>
-                            <failsOnError>true</failsOnError>
-                            <includeTestSourceDirectory>false</includeTestSourceDirectory>
-                        </configuration>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-checkstyle-plugin</artifactId>-->
+<!--                <version>${maven.checkstyle.plugin.version}</version>-->
+<!--                <dependencies>-->
+<!--                    <dependency>-->
+<!--                        <groupId>com.puppycrawl.tools</groupId>-->
+<!--                        <artifactId>checkstyle</artifactId>-->
+<!--                        <version>${maven.checkstyle.version}</version>-->
+<!--                    </dependency>-->
+<!--                </dependencies>-->
+<!--                <configuration>-->
+<!--                    <excludes>org/wso2/apimgt/gateway/cli/protobuf/ExtensionHolder.java</excludes>-->
+<!--                </configuration>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>validate</id>-->
+<!--                        <phase>validate</phase>-->
+<!--                        <configuration>-->
+<!--                            <configLocation>-->
+<!--                                https://raw.githubusercontent.com/wso2/code-quality-tools/v1.3/checkstyle/checkstyle.xml-->
+<!--                            </configLocation>-->
+<!--                            <suppressionsLocation>-->
+<!--                                https://raw.githubusercontent.com/wso2/code-quality-tools/v1.3/checkstyle/suppressions.xml-->
+<!--                            </suppressionsLocation>-->
+<!--                            <consoleOutput>true</consoleOutput>-->
+<!--                            <failsOnError>true</failsOnError>-->
+<!--                            <includeTestSourceDirectory>false</includeTestSourceDirectory>-->
+<!--                        </configuration>-->
+<!--                        <goals>-->
+<!--                            <goal>check</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
         </plugins>
 
         <pluginManagement>
@@ -615,6 +615,8 @@
         <fasterxml.jackson.databind.version>2.9.10</fasterxml.jackson.databind.version>
         <org.wso2.json.version>3.0.0.wso2v1</org.wso2.json.version>
         <carbon.callhome.version>1.0.4</carbon.callhome.version>
+        <org.wso2.carbon.analytics-common>6.1.45</org.wso2.carbon.analytics-common>
+        <org.wso2.orbit.com.lmax>3.4.2.wso2v1</org.wso2.orbit.com.lmax>
     </properties>
 
 </project>
