@@ -21,10 +21,6 @@ package org.wso2.micro.gateway.core.databridge.throttling.publisher;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.synapse.MessageContext;
-import org.wso2.carbon.apimgt.gateway.handlers.security.AuthenticationContext;
-import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
-import org.wso2.carbon.apimgt.impl.dto.ThrottleProperties;
 import org.wso2.micro.gateway.core.databridge.agent.DataPublisher;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointAgentConfigurationException;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointAuthenticationException;
@@ -62,27 +58,25 @@ public class ThrottleDataPublisher {
      * publisher which we used to publish throttle data.
      */
     public ThrottleDataPublisher() {
-        ThrottleProperties throttleProperties = ServiceReferenceHolder.getInstance().getThrottleProperties();
-        if (throttleProperties != null) {
-            ThrottleProperties.DataPublisher dataPublisherConfiguration = ServiceReferenceHolder.getInstance()
-                    .getThrottleProperties().getDataPublisher();
-            if (dataPublisherConfiguration != null && dataPublisherConfiguration.isEnabled()) {
+//        ThrottleProperties throttleProperties = ServiceReferenceHolder.getInstance().getThrottleProperties();
+//        if (throttleProperties != null) {
+//            ThrottleProperties.DataPublisher dataPublisherConfiguration = ServiceReferenceHolder.getInstance()
+//                    .getThrottleProperties().getDataPublisher();
+//            if (dataPublisherConfiguration != null && dataPublisherConfiguration.isEnabled()) {
                 dataPublisherPool = ThrottleDataPublisherPool.getInstance();
-                ThrottleProperties.DataPublisherThreadPool dataPublisherThreadPoolConfiguration = ServiceReferenceHolder
-                        .getInstance().getThrottleProperties().getDataPublisherThreadPool();
+                //todo: change the hardcoded value
+                String hostName = "localhost";
 
                 try {
-                    executor = new DataPublisherThreadPoolExecutor(dataPublisherThreadPoolConfiguration.getCorePoolSize(),
-                            dataPublisherThreadPoolConfiguration.getMaximumPoolSize(), dataPublisherThreadPoolConfiguration
-                            .getKeepAliveTime(),
+                    //todo: change hardcoded value
+                    executor = new DataPublisherThreadPoolExecutor(1, 1, 20,
                             TimeUnit
                                     .SECONDS,
                             new LinkedBlockingDeque<Runnable>() {
                             });
-                    dataPublisher = new DataPublisher(dataPublisherConfiguration.getType(), dataPublisherConfiguration
-                            .getReceiverUrlGroup(), dataPublisherConfiguration.getAuthUrlGroup(), dataPublisherConfiguration
-                            .getUsername(),
-                            dataPublisherConfiguration.getPassword());
+                    //todo: change the hardcoded value
+                    dataPublisher = new DataPublisher("Binary", "tcp://" + hostName + ":9601" ,
+                            "ssl://" + hostName + ":9701", "admin", "admin");
 
                 } catch (DataEndpointAgentConfigurationException e) {
                     log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
@@ -100,14 +94,12 @@ public class ThrottleDataPublisher {
                     log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
                             e.getMessage(), e);
                 }
-            }
-        }
+//            }
+//        }
     }
 
     /**
      * This method used to pass message context and let it run within separate thread.
-     *
-     * @param messageContext is message context object that holds
      */
     public void publishNonThrottledEvent(
             String applicationLevelThrottleKey, String applicationLevelTier,
@@ -115,8 +107,7 @@ public class ThrottleDataPublisher {
             String subscriptionLevelThrottleKey, String subscriptionLevelTier,
             String resourceLevelThrottleKey, String resourceLevelTier,
             String authorizedUser, String apiContext, String apiVersion, String appTenant, String apiTenant,
-            String appId, MessageContext messageContext,
-            AuthenticationContext authenticationContext) {
+            String appId, String apiName, String messageId) {
         try {
             if (dataPublisherPool != null) {
                 DataProcessAndPublishingAgent agent = dataPublisherPool.get();
@@ -124,17 +115,17 @@ public class ThrottleDataPublisher {
                         apiLevelThrottleKey, apiLevelTier,
                         subscriptionLevelThrottleKey, subscriptionLevelTier,
                         resourceLevelThrottleKey, resourceLevelTier,
-                        authorizedUser, apiContext, apiVersion, appTenant, apiTenant, appId, messageContext,
-                        authenticationContext);
+                        authorizedUser, apiContext, apiVersion, appTenant, apiTenant, appId, apiName,
+                        messageId);
                 if (log.isDebugEnabled()) {
                     log.debug("Publishing throttle data from gateway to traffic-manager for: " + apiContext
-                            + " with ID: " + messageContext.getMessageID() + " started" + " at "
+                            + " with ID: " + messageId + " started" + " at "
                             + new SimpleDateFormat("[yyyy.MM.dd HH:mm:ss,SSS zzz]").format(new Date()));
                 }
                 executor.execute(agent);
                 if (log.isDebugEnabled()) {
                     log.debug("Publishing throttle data from gateway to traffic-manager for: " + apiContext
-                            + " with ID: " + messageContext.getMessageID() + " ended" + " at "
+                            + " with ID: " + messageId + " ended" + " at "
                             + new SimpleDateFormat("[yyyy.MM.dd HH:mm:ss,SSS zzz]").format(new Date()));
                 }
             } else {

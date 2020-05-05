@@ -23,8 +23,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.StackObjectPool;
-import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
-import org.wso2.carbon.apimgt.impl.dto.ThrottleProperties;
+//import org.wso2.carbon.apimgt.gateway.internal.ServiceReferenceHolder;
+//import org.wso2.carbon.apimgt.impl.dto.ThrottleProperties;
 
 /**
  * This class implemented to hold throttle data publishing agent pool. Reason for implement this is to
@@ -45,8 +45,7 @@ public class ThrottleDataPublisherPool {
         // active" instance created by the pool, but is quite useful for re-using Objects without introducing
         // artificial limits.
         //Proper tuning is mandatory for good performance according to system load.
-        ThrottleProperties.DataPublisherPool dataPublisherPoolConfiguration = ServiceReferenceHolder
-                .getInstance().getThrottleProperties().getDataPublisherPool();
+        //todo: fetch these items from a config
         clientPool = new StackObjectPool(new BasePoolableObjectFactory() {
             @Override
             public Object makeObject() throws Exception {
@@ -55,7 +54,7 @@ public class ThrottleDataPublisherPool {
                 }
                 return new DataProcessAndPublishingAgent();
             }
-        }, dataPublisherPoolConfiguration.getMaxIdle(), dataPublisherPoolConfiguration.getInitIdleCapacity());
+        }, 250, 250);
     }
 
     private static class ThrottleDataPublisherPoolHolder {
