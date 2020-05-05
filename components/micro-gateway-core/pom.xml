@@ -124,6 +124,42 @@
             <groupId>org.wso2.carbon.callhome</groupId>
             <artifactId>core</artifactId>
         </dependency>
+<!--        dependencies for distributed throttling-->
+        <dependency>
+            <groupId>org.wso2.carbon.analytics-common</groupId>
+            <artifactId>org.wso2.carbon.databridge.commons</artifactId>
+            <version>6.1.45</version>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.analytics-common</groupId>
+            <artifactId>org.wso2.carbon.databridge.commons.binary</artifactId>
+            <version>6.1.45</version>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.wso2.carbon.analytics-common</groupId>-->
+<!--            <artifactId>org.wso2.carbon.databridge.core</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <groupId>org.ops4j.pax.logging</groupId>-->
+<!--                    <artifactId>pax-logging-api</artifactId>-->
+<!--                </exclusion>-->
+<!--                <exclusion>-->
+<!--                    <groupId>org.ops4j.pax.logging</groupId>-->
+<!--                    <artifactId>pax-logging-log4j2</artifactId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>org.wso2.orbit.com.lmax</groupId>
+            <artifactId>disruptor</artifactId>
+            <version>3.4.2.wso2v1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon</groupId>
+            <artifactId>org.wso2.carbon.core</artifactId>
+            <version>5.2.12</version>
+        </dependency>
     </dependencies>
 
     <profiles>
