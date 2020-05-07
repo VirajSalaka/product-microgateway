@@ -262,8 +262,12 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/lib/dependencies/</outputDirectory>
-                            <includeGroupIds>org.wso2.orbit.org.everit.json, org.json.wso2</includeGroupIds>
-                            <includeArtifactIds>org.everit.json.schema, json</includeArtifactIds>
+<!--                            <includeGroupIds>org.wso2.orbit.org.everit.json, org.json.wso2, org.wso2.orbit.com.lmax,-->
+<!--                                org.wso2.carbon.analytics-common, org.wso2.carbon</includeGroupIds>-->
+<!--                            <includeArtifactIds>org.everit.json.schema, json,-->
+<!--                                org.wso2.carbon.core, disruptor, org.wso2.carbon.databridge.commons.binary,-->
+<!--                                org.wso2.carbon.databridge.commons-->
+<!--                            </includeArtifactIds>-->
                         </configuration>
                     </execution>
                 </executions>

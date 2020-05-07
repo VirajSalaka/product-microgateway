@@ -38,7 +38,7 @@ public class AgentConfiguration {
     private String publishingStrategy = "async";
 
     @Element(description = "Trust store path", required = false)
-    private String trustStorePath = "";
+    private String trustStorePath = "/Users/viraj/mgw_workspace/webinar-grpc/wso2am-micro-gw-macos-3.1.0/runtime/bre/security/ballerinaTruststore.p12";
 
     @Element(description = "Trust store password", required = false)
     private String trustStorePassword = "ballerina";

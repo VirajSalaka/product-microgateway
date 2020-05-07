@@ -223,6 +223,9 @@ public abstract class DataEndpoint {
             DataEndpointException, SessionTimeoutException, UndefinedEventTypeException;
 
     protected DataEndpointConfiguration getDataEndpointConfiguration() {
+        if (connectionWorker == null) {
+            return null;
+        }
         return this.connectionWorker.getDataEndpointConfiguration();
     }
 
@@ -350,6 +353,9 @@ public abstract class DataEndpoint {
     }
 
     public String toString() {
+        if (getDataEndpointConfiguration() == null) {
+            return "DataConfiguration is null as the connection worker is null. xxxx";
+        }
         return "( Receiver URL : " + getDataEndpointConfiguration().getReceiverURL() + ", Authentication URL : " +
                 getDataEndpointConfiguration().getAuthURL() + ")";
     }

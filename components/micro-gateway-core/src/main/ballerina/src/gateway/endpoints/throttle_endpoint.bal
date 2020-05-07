@@ -15,7 +15,7 @@
 // under the License.
 
 import ballerina/http;
-import ballerina/log;
+//import ballerina/log;
 
 string throttleEndpointUrl = getConfigValue(THROTTLE_CONF_INSTANCE_ID, THROTTLE_ENDPOINT_URL, DEFAULT_THROTTLE_ENDPOINT_URL);
 string throttleEndpointbase64Header = getConfigValue(THROTTLE_CONF_INSTANCE_ID, THROTTLE_ENDPOINT_BASE64_HEADER,
@@ -35,45 +35,45 @@ http:Client throttleEndpoint = new (throttleEndpointUrl,
 
 public function publishThrottleEventToTrafficManager(RequestStreamDTO throttleEvent) {
 
-    json sendEvent = {
-        event: {
-            metaData: {},
-            correlationData: {},
-            payloadData: {
-                messageID: throttleEvent.messageID,
-                appKey: throttleEvent.appKey,
-                appTier: throttleEvent.appTier,
-                apiKey: throttleEvent.apiKey,
-                apiTier: throttleEvent.apiTier,
-                subscriptionKey: throttleEvent.subscriptionKey,
-                subscriptionTier: throttleEvent.subscriptionTier,
-                resourceKey: throttleEvent.resourceKey,
-                resourceTier: throttleEvent.resourceTier,
-                userId: throttleEvent.userId,
-                apiContext: throttleEvent.apiContext,
-                apiVersion: throttleEvent.apiVersion,
-                appTenant: throttleEvent.appTenant,
-                apiTenant: throttleEvent.apiTenant,
-                appId: throttleEvent.appId,
-                apiName: throttleEvent.apiName,
-                properties: throttleEvent.properties
-            }
-        }
-    };
-
-    http:Request clientRequest = new;
-    string encodedBasicAuthHeader = throttleEndpointbase64Header.toBytes().toBase64();
-    clientRequest.setHeader(AUTHORIZATION_HEADER, BASIC_PREFIX_WITH_SPACE + encodedBasicAuthHeader);
-    clientRequest.setPayload(sendEvent);
-
+    //json sendEvent = {
+    //    event: {
+    //        metaData: {},
+    //        correlationData: {},
+    //        payloadData: {
+    //            messageID: throttleEvent.messageID,
+    //            appKey: throttleEvent.appKey,
+    //            appTier: throttleEvent.appTier,
+    //            apiKey: throttleEvent.apiKey,
+    //            apiTier: throttleEvent.apiTier,
+    //            subscriptionKey: throttleEvent.subscriptionKey,
+    //            subscriptionTier: throttleEvent.subscriptionTier,
+    //            resourceKey: throttleEvent.resourceKey,
+    //            resourceTier: throttleEvent.resourceTier,
+    //            userId: throttleEvent.userId,
+    //            apiContext: throttleEvent.apiContext,
+    //            apiVersion: throttleEvent.apiVersion,
+    //            appTenant: throttleEvent.appTenant,
+    //            apiTenant: throttleEvent.apiTenant,
+    //            appId: throttleEvent.appId,
+    //            apiName: throttleEvent.apiName,
+    //            properties: throttleEvent.properties
+    //        }
+    //    }
+    //};
+    //
+    //http:Request clientRequest = new;
+    //string encodedBasicAuthHeader = throttleEndpointbase64Header.toBytes().toBase64();
+    //clientRequest.setHeader(AUTHORIZATION_HEADER, BASIC_PREFIX_WITH_SPACE + encodedBasicAuthHeader);
+    //clientRequest.setPayload(sendEvent);
+    //
+    //
+    //var response = throttleEndpoint->post("/throttleEventReceiver", clientRequest);
+    //
+    //if (response is http:Response) {
+    //    printDebug(KEY_THROTTLE_UTIL, "\nStatus Code: " + response.statusCode.toString());
+    //} else {
+    //    log:printError(response.reason(), err = response);
+    //}
+    publishGlobalThrottleEventFromDto(throttleEvent);
     printDebug(KEY_THROTTLE_UTIL, "ThrottleMessage is sent to traffic manager");
-
-    var response = throttleEndpoint->post("/throttleEventReceiver", clientRequest);
-
-    if (response is http:Response) {
-        printDebug(KEY_THROTTLE_UTIL, "\nStatus Code: " + response.statusCode.toString());
-    } else {
-        log:printError(response.reason(), err = response);
-    }
-
 }

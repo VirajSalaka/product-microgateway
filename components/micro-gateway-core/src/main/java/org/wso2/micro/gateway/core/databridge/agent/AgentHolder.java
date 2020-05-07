@@ -60,14 +60,15 @@ public class AgentHolder {
     private AgentHolder() throws DataEndpointAgentConfigurationException {
         try {
             dataEndpointAgents = new HashMap<String, DataEndpointAgent>();
-            DataAgentsConfiguration dataAgentsConfiguration = loadConfiguration();
-            boolean isDefault = true;
-            for (Agent agent : dataAgentsConfiguration.getAgents()) {
-                addAgentConfiguration(agent.getAgentConfiguration(), isDefault);
-                if (isDefault) {
-                    isDefault = false;
-                }
-            }
+//            DataAgentsConfiguration dataAgentsConfiguration = loadConfiguration();
+//            boolean isDefault = true;
+//            for (Agent agent : dataAgentsConfiguration.getAgents()) {
+//                addAgentConfiguration(agent.getAgentConfiguration(), isDefault);
+//                if (isDefault) {
+//                    isDefault = false;
+//                }
+//            }
+            addAgentConfiguration(generateAgentConfiguration(), true);
         } catch (DataEndpointAgentConfigurationException e) {
             log.error("Unable to complete initialization of agents." + e.getMessage(), e);
             throw e;
@@ -235,5 +236,12 @@ public class AgentHolder {
      */
     public DataEndpointAgent getDefaultDataEndpointAgent() throws DataEndpointAgentConfigurationException {
         return getDataEndpointAgent(defaultDataEndpointAgentName);
+    }
+
+    //todo: under default configuration
+    public AgentConfiguration generateAgentConfiguration() {
+        AgentConfiguration agentConfiguration = new AgentConfiguration("binary",
+                "org.wso2.micro.gateway.core.databridge.agent.endpoint.binary.BinaryDataEndpoint" );
+        return agentConfiguration;
     }
 }

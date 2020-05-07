@@ -75,8 +75,8 @@ public class ThrottleDataPublisher {
                             new LinkedBlockingDeque<Runnable>() {
                             });
                     //todo: change the hardcoded value
-                    dataPublisher = new DataPublisher("Binary", "tcp://" + hostName + ":9601" ,
-                            "ssl://" + hostName + ":9701", "admin", "admin");
+                    dataPublisher = new DataPublisher("Binary", "tcp://" + hostName + ":9611" ,
+                            "ssl://" + hostName + ":9711", "admin", "admin");
 
                 } catch (DataEndpointAgentConfigurationException e) {
                     log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
