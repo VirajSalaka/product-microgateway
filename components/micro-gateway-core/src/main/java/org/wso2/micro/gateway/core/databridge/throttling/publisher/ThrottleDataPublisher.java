@@ -18,7 +18,6 @@
 
 package org.wso2.micro.gateway.core.databridge.throttling.publisher;
 
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.micro.gateway.core.databridge.agent.DataPublisher;
@@ -64,20 +63,20 @@ public class ThrottleDataPublisher {
 //                    .getThrottleProperties().getDataPublisher();
 //            if (dataPublisherConfiguration != null && dataPublisherConfiguration.isEnabled()) {
                 dataPublisherPool = ThrottleDataPublisherPool.getInstance();
-        PublisherConfiguration configuration = PublisherConfiguration.getInstance();
+        PublisherConfiguration publisherConfiguration = PublisherConfiguration.getInstance();
 
                 try {
-                    executor = new DataPublisherThreadPoolExecutor(configuration.getProcessThreadPoolCoreSize(),
-                            configuration.getProcessThreadPoolMaximumSize(),
-                            configuration.getProcessThreadPoolKeepAliveTime(),
-                            TimeUnit
-                                    .SECONDS,
+                    executor = new DataPublisherThreadPoolExecutor(
+                            publisherConfiguration.getProcessThreadPoolCoreSize(),
+                            publisherConfiguration.getProcessThreadPoolMaximumSize(),
+                            publisherConfiguration.getProcessThreadPoolKeepAliveTime(),
+                            TimeUnit.SECONDS,
                             new LinkedBlockingDeque<Runnable>() {
                             });
                     //todo: change the hardcoded value
-                    dataPublisher = new DataPublisher("Binary", configuration.getReceiverUrlGroup() ,
-                            configuration.getAuthUrlGroup(), configuration.getUserName(),
-                            configuration.getPassword());
+                    dataPublisher = new DataPublisher("Binary", publisherConfiguration.getReceiverUrlGroup() ,
+                            publisherConfiguration.getAuthUrlGroup(), publisherConfiguration.getUserName(),
+                            publisherConfiguration.getPassword());
 
                 } catch (DataEndpointAgentConfigurationException e) {
                     log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +

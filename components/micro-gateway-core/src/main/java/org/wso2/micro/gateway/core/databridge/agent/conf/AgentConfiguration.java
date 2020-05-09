@@ -18,93 +18,36 @@
 
 package org.wso2.micro.gateway.core.databridge.agent.conf;
 
-
-import org.wso2.carbon.config.annotation.Configuration;
-import org.wso2.carbon.config.annotation.Element;
-
 /**
  * Data agent configuration.
  */
-@Configuration(description = "Data agent configuration")
 public class AgentConfiguration {
 
-    @Element(description = "Data agent name", required = true)
-    private String name = "";
-
-    @Element(description = "Data endpoint class", required = true)
-    private String dataEndpointClass = "";
-
-    @Element(description = "Data publisher strategy", required = false)
     private String publishingStrategy = "async";
-
-    @Element(description = "Trust store path", required = false)
+    //TODO: change this
     private String trustStorePath = "/Users/viraj/mgw_workspace/webinar-grpc/wso2am-micro-gw-macos-3.1.0/runtime/bre/security/ballerinaTruststore.p12";
-
-    @Element(description = "Trust store password", required = false)
     private String trustStorePassword = "ballerina";
-
-    @Element(description = "Queue Size", required = false)
     private int queueSize = 32768;
-
-    @Element(description = "Batch Size", required = false)
     private int batchSize = 200;
-
-    @Element(description = "Core pool size", required = false)
     private int corePoolSize = 1;
-
-    @Element(description = "Socket timeout in milliseconds", required = false)
     private int socketTimeoutMS = 30000;
-
-    @Element(description = "Maximum pool size", required = false)
     private int maxPoolSize = 1;
-
-    @Element(description = "Keep alive time in pool", required = false)
     private int keepAliveTimeInPool = 20;
-
-    @Element(description = "Reconnection interval", required = false)
     private int reconnectionInterval = 30;
-
-    @Element(description = "Max transport pool size", required = false)
     private int maxTransportPoolSize = 250;
-
-    @Element(description = "Max idle connections", required = false)
     private int maxIdleConnections = 250;
-
-    @Element(description = "Eviction time interval", required = false)
     private int evictionTimePeriod = 5500;
-
-    @Element(description = "Min idle time in pool", required = false)
     private int minIdleTimeInPool = 5000;
-
-    @Element(description = "Secure max transport pool size", required = false)
     private int secureMaxTransportPoolSize = 250;
-
-    @Element(description = "Secure max idle connections", required = false)
     private int secureMaxIdleConnections = 250;
-
-    @Element(description = "secure eviction time period", required = false)
     private int secureEvictionTimePeriod = 5500;
-
-    @Element(description = "Secure min idle time in pool", required = false)
     private int secureMinIdleTimeInPool = 5000;
-
-    @Element(description = "SSL enabled protocols", required = false)
     private String sslEnabledProtocols = "TLSv1,TLSv1.1,TLSv1.2";
-
-    @Element(description = "Ciphers", required = false)
     private String ciphers = "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256," +
             "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA," +
             "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_DHE_RSA_WITH_AES_128_CBC_SHA," +
             "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256," +
             "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256";
-
-    public String getName() {
-        return name;
-    }
-
-    public String getDataEndpointClass() {
-        return dataEndpointClass;
-    }
 
     public String getTrustStorePath() {
         return trustStorePath;
@@ -194,14 +137,6 @@ public class AgentConfiguration {
         this.trustStorePassword = trustStorePassword;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setDataEndpointClass(String dataEndpointClass) {
-        this.dataEndpointClass = dataEndpointClass;
-    }
-
     public void setPublishingStrategy(String publishingStrategy) {
         this.publishingStrategy = publishingStrategy;
     }
@@ -276,9 +211,7 @@ public class AgentConfiguration {
 
     @Override
     public String toString() {
-        return ", Name : " + name +
-                "DataEndpointClass : " + dataEndpointClass +
-                "PublishingStrategy : " + publishingStrategy +
+        return ", PublishingStrategy : " + publishingStrategy +
                 "TrustSorePath" + trustStorePath +
                 "TrustSorePassword" + trustStorePassword +
                 "QueueSize" + queueSize +
@@ -298,13 +231,5 @@ public class AgentConfiguration {
                 "SecureMinIdleTimeInPool" + secureMinIdleTimeInPool +
                 "SSLEnabledProtocols" + sslEnabledProtocols +
                 "Ciphers" + ciphers;
-    }
-
-    public AgentConfiguration(String name, String dataEndpointClass) {
-        this.name = name;
-        this.dataEndpointClass = dataEndpointClass;
-    }
-
-    public AgentConfiguration() {
     }
 }

@@ -82,7 +82,7 @@ public class DataPublisher {
             throws DataEndpointAgentConfigurationException,
             DataEndpointException, DataEndpointConfigurationException,
             DataEndpointAuthenticationException, TransportException {
-        dataEndpointAgent = AgentHolder.getInstance().getDefaultDataEndpointAgent();
+        dataEndpointAgent = AgentHolder.getInstance().getDataEndpointAgent();
         processEndpoints(dataEndpointAgent, receiverURLSet, DataPublisherUtil.
                 getDefaultAuthURLSet(receiverURLSet), username, password);
         dataEndpointAgent.addDataPublisher(this);
@@ -115,11 +115,7 @@ public class DataPublisher {
             throws DataEndpointAgentConfigurationException,
             DataEndpointException, DataEndpointConfigurationException,
             DataEndpointAuthenticationException, TransportException {
-        if (type == null) {
-            dataEndpointAgent = AgentHolder.getInstance().getDefaultDataEndpointAgent();
-        } else {
-            dataEndpointAgent = AgentHolder.getInstance().getDataEndpointAgent(type);
-        }
+            dataEndpointAgent = AgentHolder.getInstance().getDataEndpointAgent();
         if (authURLSet == null) {
             authURLSet = DataPublisherUtil.getDefaultAuthURLSet(receiverURLSet);
         }

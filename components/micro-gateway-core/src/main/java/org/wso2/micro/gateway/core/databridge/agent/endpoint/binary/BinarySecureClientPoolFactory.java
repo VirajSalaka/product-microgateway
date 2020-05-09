@@ -45,15 +45,11 @@ public class BinarySecureClientPoolFactory extends AbstractSecureClientPoolFacto
     public Object createClient(String protocol, String hostName, int port) throws DataEndpointException,
             DataEndpointSecurityException, DataEndpointAgentConfigurationException {
         if (protocol.equalsIgnoreCase(DataEndpointConfiguration.Protocol.SSL.toString())) {
-            int timeout = AgentHolder.getInstance().getDataEndpointAgent(DataEndpointConstants.
-                    BINARY_DATA_AGENT_TYPE)
-                    .getAgentConfiguration().getSocketTimeoutMS();
-            String sslProtocols = AgentHolder.getInstance().getDataEndpointAgent(DataEndpointConstants.
-                    BINARY_DATA_AGENT_TYPE).
-                    getAgentConfiguration().getSslEnabledProtocols();
-            String ciphers = AgentHolder.getInstance().getDataEndpointAgent(DataEndpointConstants.
-                    BINARY_DATA_AGENT_TYPE).
-                    getAgentConfiguration().getCiphers();
+            int timeout = AgentHolder.getInstance().getDataEndpointAgent().getAgentConfiguration()
+                    .getSocketTimeoutMS();
+            String sslProtocols = AgentHolder.getInstance().getDataEndpointAgent().getAgentConfiguration()
+                    .getSslEnabledProtocols();
+            String ciphers = AgentHolder.getInstance().getDataEndpointAgent().getAgentConfiguration().getCiphers();
 
             try {
                 SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();

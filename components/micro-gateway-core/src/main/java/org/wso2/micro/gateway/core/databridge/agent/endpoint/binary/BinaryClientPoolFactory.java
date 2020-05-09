@@ -23,7 +23,6 @@ import org.wso2.micro.gateway.core.databridge.agent.client.AbstractClientPoolFac
 import org.wso2.micro.gateway.core.databridge.agent.conf.DataEndpointConfiguration;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointAgentConfigurationException;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointException;
-import org.wso2.micro.gateway.core.databridge.agent.util.DataEndpointConstants;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -38,8 +37,8 @@ public class BinaryClientPoolFactory extends AbstractClientPoolFactory {
     public Object createClient(String protocol, String hostName, int port) throws DataEndpointException,
             DataEndpointAgentConfigurationException {
         if (protocol.equalsIgnoreCase(DataEndpointConfiguration.Protocol.TCP.toString())) {
-            int timeout = AgentHolder.getInstance().getDataEndpointAgent(DataEndpointConstants.BINARY_DATA_AGENT_TYPE)
-                    .getAgentConfiguration().getSocketTimeoutMS();
+            int timeout = AgentHolder.getInstance().getDataEndpointAgent().getAgentConfiguration()
+                    .getSocketTimeoutMS();
             try {
                 Socket socket = new Socket(hostName, port);
                 socket.setSoTimeout(timeout);

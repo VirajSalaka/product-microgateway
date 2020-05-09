@@ -155,11 +155,11 @@
             <artifactId>disruptor</artifactId>
             <version>3.4.2.wso2v1</version>
         </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon</groupId>
-            <artifactId>org.wso2.carbon.core</artifactId>
-            <version>5.2.12</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.wso2.carbon</groupId>-->
+<!--            <artifactId>org.wso2.carbon.core</artifactId>-->
+<!--            <version>5.2.12</version>-->
+<!--        </dependency>-->
     </dependencies>
 
     <profiles>
