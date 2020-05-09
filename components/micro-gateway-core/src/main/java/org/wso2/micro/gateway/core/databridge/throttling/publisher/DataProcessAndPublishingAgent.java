@@ -63,8 +63,6 @@ public class DataProcessAndPublishingAgent implements Runnable {
     String apiName;
     String appId;
     String messageId;
-//    Map<String, String> headersMap;
-//    private AuthenticationContext authenticationContext;
 
     private long messageSizeInBytes;
 
@@ -100,6 +98,7 @@ public class DataProcessAndPublishingAgent implements Runnable {
     /**
      * This method will use to set message context.
      */
+    //TODO: Introduce mapvalue
     public void setDataReference(String applicationLevelThrottleKey, String applicationLevelTier,
                                  String apiLevelThrottleKey, String apiLevelTier,
                                  String subscriptionLevelThrottleKey, String subscriptionLevelTier,
@@ -272,20 +271,13 @@ public class DataProcessAndPublishingAgent implements Runnable {
                 this.subscriptionLevelThrottleKey, this.subscriptionLevelTier,
                 this.resourceLevelThrottleKey, this.resourceLevelTier,
                 this.authorizedUser, this.apiContext, this.apiVersion,
+                //todo: change the hardcoded empty properties value
                 this.appTenant, this.apiTenant, this.appId, this.apiName, "{}"};
         org.wso2.carbon.databridge.commons.Event event = new org.wso2.carbon.databridge.commons.Event(streamID,
                 System.currentTimeMillis(), null, null, objects);
         dataPublisher.tryPublish(event);
     }
 
-//    protected void buildMessage(org.apache.axis2.context.MessageContext axis2MessageContext) throws IOException,
-//            XMLStreamException {
-//        RelayUtils.buildMessage(axis2MessageContext);
-//    }
-
-//    protected ThrottleProperties getThrottleProperties() {
-//        return ServiceReferenceHolder.getInstance().getThrottleProperties();
-//    }
     protected DataPublisher getDataPublisher() {
         return ThrottleDataPublisher.getDataPublisher();
     }

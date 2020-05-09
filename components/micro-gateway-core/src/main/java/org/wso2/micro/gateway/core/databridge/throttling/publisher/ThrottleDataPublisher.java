@@ -64,19 +64,20 @@ public class ThrottleDataPublisher {
 //                    .getThrottleProperties().getDataPublisher();
 //            if (dataPublisherConfiguration != null && dataPublisherConfiguration.isEnabled()) {
                 dataPublisherPool = ThrottleDataPublisherPool.getInstance();
-                //todo: change the hardcoded value
-                String hostName = "localhost";
+        PublisherConfiguration configuration = PublisherConfiguration.getInstance();
 
                 try {
-                    //todo: change hardcoded value
-                    executor = new DataPublisherThreadPoolExecutor(1, 1, 20,
+                    executor = new DataPublisherThreadPoolExecutor(configuration.getProcessThreadPoolCoreSize(),
+                            configuration.getProcessThreadPoolMaximumSize(),
+                            configuration.getProcessThreadPoolKeepAliveTime(),
                             TimeUnit
                                     .SECONDS,
                             new LinkedBlockingDeque<Runnable>() {
                             });
                     //todo: change the hardcoded value
-                    dataPublisher = new DataPublisher("Binary", "tcp://" + hostName + ":9611" ,
-                            "ssl://" + hostName + ":9711", "admin", "admin");
+                    dataPublisher = new DataPublisher("Binary", configuration.getReceiverUrlGroup() ,
+                            configuration.getAuthUrlGroup(), configuration.getUserName(),
+                            configuration.getPassword());
 
                 } catch (DataEndpointAgentConfigurationException e) {
                     log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
