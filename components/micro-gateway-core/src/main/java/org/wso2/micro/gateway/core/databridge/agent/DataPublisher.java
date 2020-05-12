@@ -70,8 +70,6 @@ public class DataPublisher {
      *                       or Failover URL set.
      * @param username       Authorized username at receiver.
      * @param password       The password of the username provided.
-     * @throws DataEndpointAgentConfigurationException Exception to be thrown for DataEndpointAgentConfiguration
-     *                                                 which was specified in the data.agent.config.yaml
      * @throws DataEndpointException                   Exception to be thrown when communicating with DataEndpoint.
      * @throws DataEndpointConfigurationException      Exception to be thrown When parsing the Data Endpoint
      *                                                 configurations when initializing data publisher
@@ -79,8 +77,7 @@ public class DataPublisher {
      * @throws TransportException                      Transport level exception
      */
     public DataPublisher(String receiverURLSet, String username, String password)
-            throws DataEndpointAgentConfigurationException,
-            DataEndpointException, DataEndpointConfigurationException,
+            throws DataEndpointException, DataEndpointConfigurationException,
             DataEndpointAuthenticationException, TransportException {
         dataEndpointAgent = AgentHolder.getInstance().getDataEndpointAgent();
         processEndpoints(dataEndpointAgent, receiverURLSet, DataPublisherUtil.
@@ -92,10 +89,6 @@ public class DataPublisher {
      * Creates the DataPublisher instance for a specific user, and the it creates
      * connection asynchronously to receiver endpoint.
      *
-     * @param type           The Agent name from which the DataPublisher that needs to be created. By default Thrift,
-     *                       and Binary is supported. The type should match with the parameter name.
-     *                       element in the data.agent.config.yaml, if null is passed one of the default type will be
-     *                       picked
      * @param receiverURLSet The receiving endpoint URL Set. This can be either load balancing URL set,
      *                       or Failover URL set.
      * @param authURLSet     The authenticating URL Set for the endpoints given in receiverURLSet parameter.
@@ -103,17 +96,14 @@ public class DataPublisher {
      *                       the authURLs will be offsetted by value of 100.
      * @param username       Authorized username at receiver.
      * @param password       The password of the username provided.
-     * @throws DataEndpointAgentConfigurationException Exception to be thrown for DataEndpointAgentConfiguration which
-     *                                                 was specified in the data.agent.config.yaml
      * @throws DataEndpointException                   Exception to be thrown when communicating with DataEndpoint.
      * @throws DataEndpointConfigurationException      Exception to be thrown When parsing the Data Endpoint
      *                                                 configurations when initializing data publisher
      * @throws DataEndpointAuthenticationException     Exception to be thrown when connecting the Data Endpoint
      * @throws TransportException                      Transport level exception
      */
-    public DataPublisher(String type, String receiverURLSet, String authURLSet, String username, String password)
-            throws DataEndpointAgentConfigurationException,
-            DataEndpointException, DataEndpointConfigurationException,
+    public DataPublisher(String receiverURLSet, String authURLSet, String username, String password)
+            throws DataEndpointException, DataEndpointConfigurationException,
             DataEndpointAuthenticationException, TransportException {
             dataEndpointAgent = AgentHolder.getInstance().getDataEndpointAgent();
         if (authURLSet == null) {
@@ -138,16 +128,14 @@ public class DataPublisher {
      * @param password          The password of the username provided.
      * @throws DataEndpointConfigurationException      Exception to be thrown When parsing the Data Endpoint
      *                                                 configurations when initializing data publisher
-     * @throws DataEndpointAgentConfigurationException Exception to be thrown for DataEndpointAgentConfiguration
-     *                                                 which was specified in the data.agent.config.yaml
      * @throws DataEndpointException                   Exception to be thrown when communicating with DataEndpoint.
      * @throws DataEndpointAuthenticationException     Exception to be thrown when connecting the Data Endpoint
      * @throws TransportException                      Transport level exception
      */
     private void processEndpoints(DataEndpointAgent dataEndpointAgent,
                                   String receiverURLSet, String authURLSet, String username, String password)
-            throws DataEndpointConfigurationException, DataEndpointAgentConfigurationException,
-            DataEndpointException, DataEndpointAuthenticationException, TransportException {
+            throws DataEndpointConfigurationException, DataEndpointException,
+            DataEndpointAuthenticationException, TransportException {
         ArrayList<Object[]> receiverURLGroups = DataPublisherUtil.getEndpointGroups(receiverURLSet);
         ArrayList<Object[]> authURLGroups = DataPublisherUtil.getEndpointGroups(authURLSet);
         DataPublisherUtil.validateURLs(receiverURLGroups, authURLGroups);

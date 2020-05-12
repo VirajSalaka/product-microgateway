@@ -21,7 +21,6 @@ import org.apache.log4j.Logger;
 import org.wso2.micro.gateway.core.databridge.agent.AgentHolder;
 import org.wso2.micro.gateway.core.databridge.agent.client.AbstractClientPoolFactory;
 import org.wso2.micro.gateway.core.databridge.agent.conf.DataEndpointConfiguration;
-import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointAgentConfigurationException;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointException;
 
 import java.io.IOException;
@@ -34,8 +33,7 @@ public class BinaryClientPoolFactory extends AbstractClientPoolFactory {
     private static final Logger log = Logger.getLogger(BinaryClientPoolFactory.class);
 
     @Override
-    public Object createClient(String protocol, String hostName, int port) throws DataEndpointException,
-            DataEndpointAgentConfigurationException {
+    public Object createClient(String protocol, String hostName, int port) throws DataEndpointException {
         if (protocol.equalsIgnoreCase(DataEndpointConfiguration.Protocol.TCP.toString())) {
             int timeout = AgentHolder.getInstance().getDataEndpointAgent().getAgentConfiguration()
                     .getSocketTimeoutMS();

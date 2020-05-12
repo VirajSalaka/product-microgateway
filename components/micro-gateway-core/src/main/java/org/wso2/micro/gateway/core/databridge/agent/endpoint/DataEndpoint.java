@@ -384,20 +384,4 @@ public abstract class DataEndpoint {
         log.info("Completed shutdown for data publisher endpoint URL - " +
                 getDataEndpointConfiguration().getReceiverURL());
     }
-
-    /**
-     * Get the class name of implementation for
-     * org.wso2.micro.gateway.core.databridge.agent.client.AbstractClientPoolFactory class.
-     *
-     * @return Canonical name of the implementing class.
-     */
-    public abstract String getClientPoolFactoryClass();
-
-    /**
-     * Get the class name of implementation for
-     * org.wso2.micro.gateway.core.databridge.agent.client.AbstractSecureClientPoolFactory class.
-     *
-     * @return Canonical name of the implementing class.
-     */
-    public abstract String getSecureClientPoolFactoryClass();
 }

@@ -18,10 +18,8 @@
 package org.wso2.micro.gateway.core.databridge.agent.client;
 
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
-import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointAgentConfigurationException;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointConfigurationException;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointException;
-import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointSecurityException;
 import org.wso2.micro.gateway.core.databridge.agent.util.DataPublisherUtil;
 
 /**
@@ -33,8 +31,7 @@ public abstract class AbstractClientPoolFactory extends BaseKeyedPoolableObjectF
 
     @Override
     public Object makeObject(Object key)
-            throws DataEndpointException, DataEndpointSecurityException, DataEndpointAgentConfigurationException,
-            DataEndpointConfigurationException {
+            throws DataEndpointException, DataEndpointConfigurationException {
         Object[] urlParams = DataPublisherUtil.getProtocolHostPort(key.toString());
         return createClient(urlParams[0].toString(), urlParams[1].toString(),
                 Integer.parseInt(urlParams[2].toString()));
@@ -49,10 +46,9 @@ public abstract class AbstractClientPoolFactory extends BaseKeyedPoolableObjectF
      * @return A valid client which has connected to the receiver and can be used
      * for rest of the operations regarding the endpoint.
      * @throws DataEndpointException         Exception to be thrown when communicating with DataEndpoint.
-     * @throws DataEndpointSecurityException Security Exception thrown when communicating with Data Endpoint.
      */
     public abstract Object createClient(String protocol, String hostName, int port)
-            throws DataEndpointException, DataEndpointSecurityException, DataEndpointAgentConfigurationException;
+            throws DataEndpointException;
 
     @Override
     public boolean validateObject(Object key, Object obj) {

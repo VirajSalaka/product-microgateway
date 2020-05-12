@@ -19,7 +19,6 @@ package org.wso2.micro.gateway.core.databridge.agent;
 
 import org.apache.log4j.Logger;
 import org.wso2.micro.gateway.core.databridge.agent.conf.AgentConfiguration;
-import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointAgentConfigurationException;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointException;
 
 /**
@@ -34,16 +33,11 @@ public class AgentHolder {
     //TODO: manupulate this properly
     private DataEndpointAgent agent;
 
-    private AgentHolder() throws DataEndpointAgentConfigurationException {
-        try {
-            addAgentConfiguration(generateAgentConfiguration());
-        } catch (DataEndpointAgentConfigurationException e) {
-            log.error("Unable to complete initialization of agents." + e.getMessage(), e);
-            throw e;
-        }
+    private AgentHolder() {
+        addAgentConfiguration(generateAgentConfiguration());
     }
 
-    public static synchronized AgentHolder getInstance() throws DataEndpointAgentConfigurationException {
+    public static synchronized AgentHolder getInstance() {
         if (instance == null) {
             instance = new AgentHolder();
         }
@@ -58,8 +52,7 @@ public class AgentHolder {
     }
 
     //TODO: Remove default agent concept
-    private void addAgentConfiguration(AgentConfiguration agentConfiguration)
-            throws DataEndpointAgentConfigurationException {
+    private void addAgentConfiguration(AgentConfiguration agentConfiguration) {
         agent = new DataEndpointAgent(agentConfiguration);
     }
 
@@ -68,17 +61,14 @@ public class AgentHolder {
      * is taken as default data publisher type.
      *
      * @return DataEndpointAgent for the default endpoint name.
-     * @throws DataEndpointAgentConfigurationException Exception to be thrown for DataEndpointAgentConfiguration
-     *                                                 which was specified in the data.agent.config.yaml.
      */
-    public DataEndpointAgent getDataEndpointAgent() throws DataEndpointAgentConfigurationException {
+    public DataEndpointAgent getDataEndpointAgent() {
         return agent;
     }
 
     //todo: under default configuration
     //TODO: Remove this
     public AgentConfiguration generateAgentConfiguration() {
-        AgentConfiguration agentConfiguration = new AgentConfiguration();
-        return agentConfiguration;
+        return new AgentConfiguration();
     }
 }

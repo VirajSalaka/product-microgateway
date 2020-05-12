@@ -21,7 +21,6 @@ package org.wso2.micro.gateway.core.databridge.throttling.publisher;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.micro.gateway.core.databridge.agent.DataPublisher;
-import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointAgentConfigurationException;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointAuthenticationException;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointConfigurationException;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointException;
@@ -74,13 +73,10 @@ public class ThrottleDataPublisher {
                             new LinkedBlockingDeque<Runnable>() {
                             });
                     //todo: change the hardcoded value
-                    dataPublisher = new DataPublisher("Binary", publisherConfiguration.getReceiverUrlGroup() ,
+                    dataPublisher = new DataPublisher(publisherConfiguration.getReceiverUrlGroup() ,
                             publisherConfiguration.getAuthUrlGroup(), publisherConfiguration.getUserName(),
                             publisherConfiguration.getPassword());
 
-                } catch (DataEndpointAgentConfigurationException e) {
-                    log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
-                            e.getMessage(), e);
                 } catch (DataEndpointException e) {
                     log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
                             e.getMessage(), e);

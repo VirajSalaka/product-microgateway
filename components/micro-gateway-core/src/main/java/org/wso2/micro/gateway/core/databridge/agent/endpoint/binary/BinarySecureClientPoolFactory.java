@@ -21,9 +21,7 @@ import org.apache.log4j.Logger;
 import org.wso2.micro.gateway.core.databridge.agent.AgentHolder;
 import org.wso2.micro.gateway.core.databridge.agent.client.AbstractSecureClientPoolFactory;
 import org.wso2.micro.gateway.core.databridge.agent.conf.DataEndpointConfiguration;
-import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointAgentConfigurationException;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointException;
-import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointSecurityException;
 import org.wso2.micro.gateway.core.databridge.agent.util.DataEndpointConstants;
 
 import javax.net.ssl.SSLSocket;
@@ -42,8 +40,7 @@ public class BinarySecureClientPoolFactory extends AbstractSecureClientPoolFacto
     }
 
     @Override
-    public Object createClient(String protocol, String hostName, int port) throws DataEndpointException,
-            DataEndpointSecurityException, DataEndpointAgentConfigurationException {
+    public Object createClient(String protocol, String hostName, int port) throws DataEndpointException {
         if (protocol.equalsIgnoreCase(DataEndpointConfiguration.Protocol.SSL.toString())) {
             int timeout = AgentHolder.getInstance().getDataEndpointAgent().getAgentConfiguration()
                     .getSocketTimeoutMS();

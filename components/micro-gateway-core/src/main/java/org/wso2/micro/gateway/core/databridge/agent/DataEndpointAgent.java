@@ -27,7 +27,6 @@ import org.wso2.micro.gateway.core.databridge.agent.endpoint.DataEndpoint;
 import org.wso2.micro.gateway.core.databridge.agent.endpoint.binary.BinaryClientPoolFactory;
 import org.wso2.micro.gateway.core.databridge.agent.endpoint.binary.BinaryDataEndpoint;
 import org.wso2.micro.gateway.core.databridge.agent.endpoint.binary.BinarySecureClientPoolFactory;
-import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointAgentConfigurationException;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointException;
 
 import java.lang.reflect.InvocationTargetException;

@@ -89,14 +89,4 @@ public class BinaryDataEndpoint extends DataEndpoint {
         }
     }
 
-    @Override
-    public String getClientPoolFactoryClass() {
-        return BinaryClientPoolFactory.class.getCanonicalName();
-    }
-
-    @Override
-    public String getSecureClientPoolFactoryClass() {
-        return BinarySecureClientPoolFactory.class.getCanonicalName();
-    }
-
 }

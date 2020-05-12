@@ -1,20 +1,20 @@
 /*
-*  Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package org.wso2.micro.gateway.core.databridge.agent.conf;
 
@@ -232,4 +232,42 @@ public class AgentConfiguration {
                 "SSLEnabledProtocols" + sslEnabledProtocols +
                 "Ciphers" + ciphers;
     }
+
+    private static class InnerAgentConfiguration {
+        private static final AgentConfiguration instance = new AgentConfiguration();
+    }
+
+    public static AgentConfiguration getInstance() {
+        return InnerAgentConfiguration.instance;
+    }
+
+    public void setConfiguration(String publishingStrategy, String trustStorePath, String trustStorePassword,
+                                 int queueSize, int batchSize, int corePoolSize, int socketTimeoutMS,
+                                 int maxPoolSize, int keepAliveTimeInPool, int reconnectionInterval,
+                                 int maxTransportPoolSize, int maxIdleConnections, int evictionTimePeriod,
+                                 int minIdleTimeInPool, int secureMaxTransportPoolSize, int secureMaxIdleConnections,
+                                 int secureEvictionTimePeriod, int secureMinIdleTimeInPool,
+                                 String sslEnabledProtocols, String ciphers) {
+        this.publishingStrategy = publishingStrategy;
+        this.trustStorePath = trustStorePath;
+        this.trustStorePassword = trustStorePassword;
+        this.queueSize = queueSize;
+        this.batchSize = batchSize;
+        this.corePoolSize = corePoolSize;
+        this.socketTimeoutMS = socketTimeoutMS;
+        this.maxPoolSize = maxPoolSize;
+        this.keepAliveTimeInPool = keepAliveTimeInPool;
+        this.reconnectionInterval = reconnectionInterval;
+        this.maxTransportPoolSize = maxTransportPoolSize;
+        this.maxIdleConnections = maxIdleConnections;
+        this.evictionTimePeriod = evictionTimePeriod;
+        this.minIdleTimeInPool = minIdleTimeInPool;
+        this.secureMaxTransportPoolSize = secureMaxTransportPoolSize;
+        this.secureMaxIdleConnections = secureMaxIdleConnections;
+        this.secureEvictionTimePeriod = secureEvictionTimePeriod;
+        this.secureMinIdleTimeInPool = secureMinIdleTimeInPool;
+        this.sslEnabledProtocols = sslEnabledProtocols;
+        this.ciphers = ciphers;
+    }
 }
+
