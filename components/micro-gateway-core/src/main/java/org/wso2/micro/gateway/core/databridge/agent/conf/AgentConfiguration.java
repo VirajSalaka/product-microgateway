@@ -23,6 +23,7 @@ package org.wso2.micro.gateway.core.databridge.agent.conf;
  */
 public class AgentConfiguration {
 
+    //todo: publishing strategy is hardcoded
     private String publishingStrategy = "async";
     //TODO: change this
     private String trustStorePath = "/Users/viraj/mgw_workspace/webinar-grpc/wso2am-micro-gw-macos-3.1.0/runtime/bre/security/ballerinaTruststore.p12";
@@ -241,14 +242,13 @@ public class AgentConfiguration {
         return InnerAgentConfiguration.instance;
     }
 
-    public void setConfiguration(String publishingStrategy, String trustStorePath, String trustStorePassword,
+    public void setConfiguration(String trustStorePath, String trustStorePassword,
                                  int queueSize, int batchSize, int corePoolSize, int socketTimeoutMS,
                                  int maxPoolSize, int keepAliveTimeInPool, int reconnectionInterval,
                                  int maxTransportPoolSize, int maxIdleConnections, int evictionTimePeriod,
                                  int minIdleTimeInPool, int secureMaxTransportPoolSize, int secureMaxIdleConnections,
                                  int secureEvictionTimePeriod, int secureMinIdleTimeInPool,
                                  String sslEnabledProtocols, String ciphers) {
-        this.publishingStrategy = publishingStrategy;
         this.trustStorePath = trustStorePath;
         this.trustStorePassword = trustStorePassword;
         this.queueSize = queueSize;

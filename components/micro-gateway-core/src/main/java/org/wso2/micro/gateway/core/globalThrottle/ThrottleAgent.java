@@ -1,11 +1,41 @@
 package org.wso2.micro.gateway.core.globalThrottle;
 
 import org.wso2.micro.gateway.core.databridge.agent.AgentHolder;
+import org.wso2.micro.gateway.core.databridge.agent.conf.AgentConfiguration;
+import org.wso2.micro.gateway.core.databridge.throttling.publisher.PublisherConfiguration;
 import org.wso2.micro.gateway.core.databridge.throttling.publisher.ThrottleDataPublisher;
 
 public class ThrottleAgent {
 
     private static ThrottleDataPublisher throttleDataPublisher = null;
+
+    public static void setTMBinaryAgentConfiguration(String trustStorePath, String trustStorePassword,
+                                                     int queueSize, int batchSize, int corePoolSize,
+                                                     int socketTimeoutMS, int maxPoolSize, int keepAliveTimeInPool,
+                                                     int reconnectionInterval,int maxTransportPoolSize,
+                                                     int maxIdleConnections, int evictionTimePeriod,
+                                                     int minIdleTimeInPool, int secureMaxTransportPoolSize,
+                                                     int secureMaxIdleConnections, int secureEvictionTimePeriod,
+                                                     int secureMinIdleTimeInPool, String sslEnabledProtocols,
+                                                     String ciphers) {
+        AgentConfiguration.getInstance().setConfiguration(trustStorePath, trustStorePassword, queueSize, batchSize,
+                corePoolSize, socketTimeoutMS, maxPoolSize, keepAliveTimeInPool, reconnectionInterval,
+                maxTransportPoolSize, maxIdleConnections, evictionTimePeriod, minIdleTimeInPool,
+                secureMaxTransportPoolSize, secureMaxIdleConnections, secureEvictionTimePeriod,
+                secureMinIdleTimeInPool, sslEnabledProtocols, ciphers);
+    }
+
+    public static void setTMBinaryPublisherConfiguration(String receiverURLGroup, String authURLGroup,
+                                                         String userName, String password,
+                                                         int maxIdleDataPublishingAgents,
+                                                         int initIdleObjectDataPublishingAgents,
+                                                         int publisherThreadPoolCoreSize,
+                                                         int publisherThreadPoolMaximumSize,
+                                                         int publisherThreadPoolKeepAliveTime) {
+        PublisherConfiguration.getInstance().setConfiguration(receiverURLGroup, authURLGroup, userName, password,
+                maxIdleDataPublishingAgents, initIdleObjectDataPublishingAgents, publisherThreadPoolCoreSize,
+                publisherThreadPoolMaximumSize, publisherThreadPoolKeepAliveTime);
+    }
 
     public static void startThrottlePublisherPool() {
         //todo:provided hard coded config path

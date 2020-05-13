@@ -66,9 +66,9 @@ public class ThrottleDataPublisher {
 
                 try {
                     executor = new DataPublisherThreadPoolExecutor(
-                            publisherConfiguration.getProcessThreadPoolCoreSize(),
-                            publisherConfiguration.getProcessThreadPoolMaximumSize(),
-                            publisherConfiguration.getProcessThreadPoolKeepAliveTime(),
+                            publisherConfiguration.getPublisherThreadPoolCoreSize(),
+                            publisherConfiguration.getPublisherThreadPoolMaximumSize(),
+                            publisherConfiguration.getPublisherThreadPoolKeepAliveTime(),
                             TimeUnit.SECONDS,
                             new LinkedBlockingDeque<Runnable>() {
                             });

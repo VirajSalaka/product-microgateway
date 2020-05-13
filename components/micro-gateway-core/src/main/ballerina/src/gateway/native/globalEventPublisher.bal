@@ -2,6 +2,8 @@ import ballerinax/java;
 
 public function initGlobalThrottleDataPublisher() {
 
+    loadTMBinaryAgentConfiguration();
+    loadTMBinaryPublisherConfiguration();
     jInitGlobalThrottleDataPublisher();
 }
 public function publishGlobalThrottleEventFromDto(RequestStreamDTO throttleEvent) {
@@ -61,24 +63,25 @@ public function publishGlobalThrottleEvent(string applicationLevelThrottleKey, s
                                                                  java:fromString(apiTenant), java:fromString(appId), java:fromString(apiName), java:fromString(messageId));
 }
 
-private function loadAgentConfiguration() {
-
-}
-
-private function loadTMBinaryPublisherConfiguration() {
+function loadTMBinaryPublisherConfiguration() {
     //todo: input validation from ballerina layer
-    string receiverURLGroup = getConfigStringValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_RECEIVER_URL_GROUP, DEFAULT_TM_RECEIVER_URL_GROUP);
-    string authURLGroup = getConfigStringValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_AUTH_URL_GROUP, DEFAULT_TM_AUTH_URL_GROUP);
-    string username = getConfigStringValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_USERNAME, DEFAULT_TM_USERNAME);
-    string password = getConfigStringValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_PASSWORD, DEFAULT_TM_PASSWORD);
+    string receiverURLGroup = getConfigValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_RECEIVER_URL_GROUP, DEFAULT_TM_RECEIVER_URL_GROUP);
+    string authURLGroup = getConfigValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_AUTH_URL_GROUP, DEFAULT_TM_AUTH_URL_GROUP);
+    string username = getConfigValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_USERNAME, DEFAULT_TM_USERNAME);
+    string password = getConfigValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_PASSWORD, DEFAULT_TM_PASSWORD);
     int publisherPoolMaxIdle = getConfigIntValue(BINARY_PUBLISHER_POOL_THROTTLE_CONF_INSTANCE_ID, TM_PUBLISHER_POOL_MAX_IDLE, DEFAULT_TM_PUBLISHER_POOL_MAX_IDLE);
     int publisherPoolInitIdleCapacity = getConfigIntValue(BINARY_PUBLISHER_POOL_THROTTLE_CONF_INSTANCE_ID, TM_PUBLISHER_POOL_INIT_IDLE_CAPACITY, DEFAULT_TM_PUBLISHER_POOL_INIT_IDLE_CAPACITY);
     int publisherThreadPoolCoreSize = getConfigIntValue(BINARY_PUBLISHER_THREAD_POOL_THROTTLE_CONF_INSTANCE_ID, TM_PUBLISHER_THREAD_POOL_CORE_SIZE, DEFAULT_TM_PUBLISHER_THREAD_POOL_CORE_SIZE);
     int publisherThreadPoolMaximumSize = getConfigIntValue(BINARY_PUBLISHER_THREAD_POOL_THROTTLE_CONF_INSTANCE_ID, TM_PUBLISHER_THREAD_POOL_MAXIMUM_SIZE, DEFAULT_TM_PUBLISHER_THREAD_POOL_MAXIMUM_SIZE);
     int publisherThreadPoolKeepAliveTime = getConfigIntValue(BINARY_PUBLISHER_THREAD_POOL_THROTTLE_CONF_INSTANCE_ID, TM_PUBLISHER_THREAD_POOL_KEEP_ALIVE_TIME, DEFAULT_TM_PUBLISHER_THREAD_POOL_KEEP_ALIVE_TIME);
+
+    jSetTMBinaryPublisherConfiguration(java:fromString(receiverURLGroup), java:fromString(authURLGroup),
+        java:fromString(username), java:fromString(password), publisherPoolMaxIdle, publisherPoolInitIdleCapacity,
+        publisherThreadPoolCoreSize, publisherThreadPoolMaximumSize, publisherThreadPoolKeepAliveTime);
 }
 
-private function loadTMBinaryAgentConfiguration() {
+function loadTMBinaryAgentConfiguration() {
+    //todo: validate if the value is a power of 2
     int queueSize = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_QUEUE_SIZE, DEFAULT_TM_AGENT_QUEUE_SIZE);
     int batchSize = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_BATCH_SIZE, DEFAULT_TM_AGENT_BATCH_SIZE);
     int corePoolSize = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_THREAD_POOL_CORE_SIZE, DEFAULT_TM_AGENT_THREAD_POOL_CORE_SIZE);
@@ -90,22 +93,52 @@ private function loadTMBinaryAgentConfiguration() {
     int maxIdleConnections = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_EVICTION_TIME_PERIOD, DEFAULT_TM_AGENT_MAX_IDLE_CONNECTIONS);
     int evictionTimePeriod = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_EVICTION_TIME_PERIOD, DEFAULT_TM_AGENT_EVICTION_TIME_PERIOD);
     int minIdleTimeInPool = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_MIN_IDLE_TIME_IN_POOL, DEFAULT_TM_AGENT_MIN_IDLE_TIME_IN_POOL);
-    int secureMaxIdleTransportPoolSize = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_SECURE_MAX_TRANSPORT_POOL_SIZE, DEFAULT_TM_AGENT_SECURE_MAX_TRANSPORT_POOL_SIZE);
+    int secureMaxTransportPoolSize = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_SECURE_MAX_TRANSPORT_POOL_SIZE, DEFAULT_TM_AGENT_SECURE_MAX_TRANSPORT_POOL_SIZE);
     int secureMaxIdleConnections = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_SECURE_MAX_IDLE_CONNECTIONS, DEFAULT_TM_AGENT_SECURE_MAX_IDLE_CONNECTIONS);
     int secureEvictionTimePeriod = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_SECURE_EVICTION_TIME_PERIOD, DEFAULT_TM_AGENT_SECURE_EVICTION_TIME_PERIOD);
     int secureMinIdleTimeInPool = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_SECURE_MIN_IDLE_TIME_IN_POOL, DEFAULT_TM_AGENT_SECURE_MIN_IDLE_TIME_IN_POOL);
+
+    //todo: check if additional config is required
+    //todo: check if we need to replace the place holder
+    string trustStorePath = getConfigValue(LISTENER_CONF_INSTANCE_ID, TRUST_STORE_PATH, DEFAULT_TRUST_STORE_PATH);
+    string trustStorePassword = getConfigValue(LISTENER_CONF_INSTANCE_ID, TRUST_STORE_PASSWORD, DEFAULT_TRUST_STORE_PASSWORD);
+    string sslEnabledProtoccols = getConfigValue(MTSL_CONF_INSTANCE_ID, MTSL_CONF_PROTOCOL_VERSIONS, DEFAULT_PROTOCOL_VERSIONS);
+    string ciphers = getConfigValue(MTSL_CONF_INSTANCE_ID, MTSL_CONF_CIPHERS, DEFAULT_CIPHERS);
+
+    jSetTMBinaryAgentConfiguration(java:fromString(trustStorePath), java:fromString(trustStorePassword), queueSize,
+        batchSize, corePoolSize, socketTimeoutMS, maxPoolSize, keepAliveTimeInPool, reconnectionInterval,
+        maxTransportPoolSize, maxIdleConnections, evictionTimePeriod, minIdleTimeInPool, secureMaxTransportPoolSize,
+        secureMaxIdleConnections, secureEvictionTimePeriod, secureMinIdleTimeInPool,
+        java:fromString(sslEnabledProtoccols), java:fromString(ciphers));
 }
 
-public function jInitGlobalThrottleDataPublisher() = @java:Method {
+function jInitGlobalThrottleDataPublisher() = @java:Method {
     name: "startThrottlePublisherPool",
     class: "org.wso2.micro.gateway.core.globalThrottle.ThrottleAgent"
 } external;
 
-public function jPublishGlobalThrottleEvent(handle applicationLevelThrottleKey, handle applicationLevelTier,
+function jPublishGlobalThrottleEvent(handle applicationLevelThrottleKey, handle applicationLevelTier,
         handle apiLevelThrottleKey, handle apiLevelTier, handle subscriptionLevelThrottleKey,
         handle subscriptionLevelTier,handle resourceLevelThrottleKey, handle resourceLevelTier,
         handle authorizedUser, handle apiContext, handle apiVersion, handle appTenant,handle apiTenant, handle appId,
         handle apiName, handle messageId) = @java:Method {
             name: "publishNonThrottledEvent",
             class: "org.wso2.micro.gateway.core.globalThrottle.ThrottleAgent"
-            } external;
+} external;
+
+function jSetTMBinaryAgentConfiguration(handle trustStorePath, handle trustStorePassword, int queueSize,
+    int batchSize, int corePoolSize, int socketTimeoutMS, int maxPoolSize, int keepAliveTimeInPool,
+    int reconnectionInterval,int maxTransportPoolSize, int maxIdleConnections, int evictionTimePeriod,
+    int minIdleTimeInPool, int secureMaxTransportPoolSize, int secureMaxIdleConnections, int secureEvictionTimePeriod,
+    int secureMinIdleTimeInPool, handle sslEnabledProtocols, handle ciphers) = @java:Method {
+        name: "setTMBinaryAgentConfiguration",
+        class: "org.wso2.micro.gateway.core.globalThrottle.ThrottleAgent"
+} external;
+
+function jSetTMBinaryPublisherConfiguration(handle receiverURLGroup, handle authURLGroup,
+    handle userName, handle password, int maxIdleDataPublishingAgents, int initIdleObjectDataPublishingAgents,
+    int publisherThreadPoolCoreSize, int publisherThreadPoolMaximumSize, int publisherThreadPoolKeepAliveTime)
+    = @java:Method {
+        name: "setTMBinaryPublisherConfiguration",
+        class: "org.wso2.micro.gateway.core.globalThrottle.ThrottleAgent"
+} external;

@@ -4,10 +4,9 @@ public class PublisherConfiguration {
     private int maxIdleDataPublishingAgents = 250;
     private int initIdleObjectDataPublishingAgents = 250;
 
-    private int processThreadPoolCoreSize = 200;
-    private int processThreadPoolMaximumSize = 1000;
-    private int processThreadPoolKeepAliveTime = 20;
-    private int throttleFrequency = 3600;
+    private int publisherThreadPoolCoreSize = 200;
+    private int publisherThreadPoolMaximumSize = 1000;
+    private int publisherThreadPoolKeepAliveTime = 20;
 
     private String receiverUrlGroup = "tcp://localhost:9611";
     private String authUrlGroup = "ssl://localhost:9711";
@@ -25,20 +24,16 @@ public class PublisherConfiguration {
         return initIdleObjectDataPublishingAgents;
     }
 
-    public int getProcessThreadPoolCoreSize() {
-        return processThreadPoolCoreSize;
+    public int getPublisherThreadPoolCoreSize() {
+        return publisherThreadPoolCoreSize;
     }
 
-    public int getProcessThreadPoolMaximumSize() {
-        return processThreadPoolMaximumSize;
+    public int getPublisherThreadPoolMaximumSize() {
+        return publisherThreadPoolMaximumSize;
     }
 
-    public int getProcessThreadPoolKeepAliveTime() {
-        return processThreadPoolKeepAliveTime;
-    }
-
-    public int getThrottleFrequency() {
-        return throttleFrequency;
+    public int getPublisherThreadPoolKeepAliveTime() {
+        return publisherThreadPoolKeepAliveTime;
     }
 
     public String getReceiverUrlGroup() {
@@ -65,21 +60,18 @@ public class PublisherConfiguration {
         return InnerPublisherConfiguration.instance;
     }
 
-    public void setConfigValues(int maxIdleDataPublishingAgents, int initIdleObjectDataPublishingAgents,
-                                int processThreadPoolCoreSize, int processThreadPoolMaximumSize,
-                                int processThreadPoolKeepAliveTime, int throttleFrequency, String receiverUrlGroup,
-                                String authUrlGroup, String userName, String password) {
+    public void setConfiguration(String receiverUrlGroup, String authUrlGroup, String userName, String password,
+                                int maxIdleDataPublishingAgents, int initIdleObjectDataPublishingAgents,
+                                int publisherThreadPoolCoreSize, int publisherThreadPoolMaximumSize,
+                                int publisherThreadPoolKeepAliveTime) {
         this.maxIdleDataPublishingAgents = maxIdleDataPublishingAgents;
         this.initIdleObjectDataPublishingAgents = initIdleObjectDataPublishingAgents;
-        this.processThreadPoolCoreSize = processThreadPoolCoreSize;
-        this.processThreadPoolMaximumSize = processThreadPoolMaximumSize;
-        this.processThreadPoolKeepAliveTime = processThreadPoolKeepAliveTime;
-        this.throttleFrequency = throttleFrequency;
+        this.publisherThreadPoolCoreSize = publisherThreadPoolCoreSize;
+        this.publisherThreadPoolMaximumSize = publisherThreadPoolMaximumSize;
+        this.publisherThreadPoolKeepAliveTime = publisherThreadPoolKeepAliveTime;
         this.receiverUrlGroup = receiverUrlGroup;
         this.authUrlGroup = authUrlGroup;
         this.userName = userName;
         this.password = password;
     }
-
-
 }
