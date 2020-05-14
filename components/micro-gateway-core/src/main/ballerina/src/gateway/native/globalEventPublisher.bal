@@ -1,12 +1,11 @@
 import ballerinax/java;
 
-public function initGlobalThrottleDataPublisher() {
-
+public function initBinaryThrottleDataPublisher() {
     loadTMBinaryAgentConfiguration();
     loadTMBinaryPublisherConfiguration();
-    jInitGlobalThrottleDataPublisher();
+    jinitBinaryThrottleDataPublisher();
 }
-public function publishGlobalThrottleEventFromDto(RequestStreamDTO throttleEvent) {
+public function publishBinaryGlobalThrottleEvent(RequestStreamDTO throttleEvent) {
         //            messageID: throttleEvent.messageID,
         //            appKey: throttleEvent.appKey,
         //            appTier: throttleEvent.appTier,
@@ -112,7 +111,7 @@ function loadTMBinaryAgentConfiguration() {
         java:fromString(sslEnabledProtoccols), java:fromString(ciphers));
 }
 
-function jInitGlobalThrottleDataPublisher() = @java:Method {
+function jinitBinaryThrottleDataPublisher() = @java:Method {
     name: "startThrottlePublisherPool",
     class: "org.wso2.micro.gateway.core.globalThrottle.ThrottleAgent"
 } external;

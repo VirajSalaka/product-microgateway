@@ -229,6 +229,15 @@ public function getConfigMapValue(string property) returns map<any> {
     return config:getAsMap(property);
 }
 
+public function containsConfigKey(string instanceId, string property) returns boolean {
+    if (stringutils:equalsIgnoreCase("", instanceId)) {
+        return config:contains(property);
+    } else if (stringutils:equalsIgnoreCase("", property)) {
+            return config:contains(instanceId);
+    }
+    return config:contains(instanceId + "." + property);
+}
+
 function getDefaultStringValue(anydata val, string defaultVal) returns string {
     if (val is string) {
         return <string>val;
