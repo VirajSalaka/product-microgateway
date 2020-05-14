@@ -22,21 +22,33 @@ import org.wso2.micro.gateway.core.databridge.agent.AgentHolder;
 import org.wso2.micro.gateway.core.databridge.agent.client.AbstractSecureClientPoolFactory;
 import org.wso2.micro.gateway.core.databridge.agent.conf.DataEndpointConfiguration;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointException;
-import org.wso2.micro.gateway.core.databridge.agent.util.DataEndpointConstants;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.*;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.security.*;
+import java.security.cert.CertificateException;
 
 /**
  * This is a Binary Transport secure implementation for AbstractSecureClientPoolFactory to be used by BinaryEndpoint.
  */
 public class BinarySecureClientPoolFactory extends AbstractSecureClientPoolFactory {
     private static final Logger log = Logger.getLogger(BinarySecureClientPoolFactory.class);
+    private static SSLSocketFactory sslSocketFactory;
 
     public BinarySecureClientPoolFactory(String trustStore, String trustStorePassword) {
         super(trustStore, trustStorePassword);
+        SSLContext ctx;
+        try {
+             ctx = createSSLContext();
+             sslSocketFactory = ctx.getSocketFactory();
+        } catch (DataEndpointException e) {
+            log.error("Error while initializing the SSL Context with provided parameters" +
+                    e.getErrorMessage(), e);
+            log.warn("Default SSLSocketFactory will be used for the data publishing clients.");
+            sslSocketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+        }
     }
 
     @Override
@@ -49,8 +61,7 @@ public class BinarySecureClientPoolFactory extends AbstractSecureClientPoolFacto
             String ciphers = AgentHolder.getInstance().getDataEndpointAgent().getAgentConfiguration().getCiphers();
 
             try {
-                SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-                SSLSocket sslSocket = (SSLSocket) sslsocketfactory.createSocket(hostName, port);
+                SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(hostName, port);
                 sslSocket.setSoTimeout(timeout);
 
                 if (sslProtocols != null && sslProtocols.length() != 0) {
@@ -90,6 +101,30 @@ public class BinarySecureClientPoolFactory extends AbstractSecureClientPoolFacto
         } catch (IOException e) {
             log.warn("Cannot close the socket successfully from " + socket.getLocalAddress().getHostAddress()
                     + ":" + socket.getPort());
+        }
+    }
+
+    private SSLContext createSSLContext() throws DataEndpointException {
+        FileInputStream fileInputStream;
+        SSLContext ctx;
+        try {
+            //todo: bring constant
+            ctx = SSLContext.getInstance("TLS");
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            fileInputStream = new FileInputStream(this.getTrustStore());
+            keyStore.load(fileInputStream, this.getTrustStorePassword() != null ?
+                    this.getTrustStorePassword().toCharArray() : null);
+            trustManagerFactory.init(keyStore);
+            ctx.init(null, trustManagerFactory.getTrustManagers(), null);
+            return ctx;
+        } catch (NoSuchAlgorithmException | CertificateException | IOException | KeyManagementException |
+                KeyStoreException e) {
+            //todo: change the error messages with constants
+            //todo: if we allow user to have custom truststore path (other than the generic one) FileNotFound
+            // exception needs to separated from here.
+            throw new DataEndpointException("Error while creating the SSLContext with instance type : TLS." +
+                    e.getMessage(), e);
         }
     }
 }
