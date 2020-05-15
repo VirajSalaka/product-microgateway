@@ -1,9 +1,8 @@
 package org.wso2.micro.gateway.core.globalThrottle;
 
-import org.wso2.micro.gateway.core.databridge.agent.AgentHolder;
-import org.wso2.micro.gateway.core.databridge.agent.conf.AgentConfiguration;
-import org.wso2.micro.gateway.core.databridge.throttling.publisher.PublisherConfiguration;
-import org.wso2.micro.gateway.core.databridge.throttling.publisher.ThrottleDataPublisher;
+import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.conf.AgentConfiguration;
+import org.wso2.micro.gateway.core.globalThrottle.databridge.publisher.PublisherConfiguration;
+import org.wso2.micro.gateway.core.globalThrottle.databridge.publisher.ThrottleDataPublisher;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
