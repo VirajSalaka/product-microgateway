@@ -14,7 +14,7 @@ public class ThrottleAgent {
     public static void setTMBinaryAgentConfiguration(String trustStorePath, String trustStorePassword,
                                                      int queueSize, int batchSize, int corePoolSize,
                                                      int socketTimeoutMS, int maxPoolSize, int keepAliveTimeInPool,
-                                                     int reconnectionInterval,int maxTransportPoolSize,
+                                                     int reconnectionInterval, int maxTransportPoolSize,
                                                      int maxIdleConnections, int evictionTimePeriod,
                                                      int minIdleTimeInPool, int secureMaxTransportPoolSize,
                                                      int secureMaxIdleConnections, int secureEvictionTimePeriod,
@@ -79,11 +79,11 @@ public class ThrottleAgent {
             String resourceLevelThrottleKey, String resourceLevelTier,
             String authorizedUser, String apiContext, String apiVersion, String appTenant, String apiTenant,
             String appId, String apiName, String messageId) {
-        throttleDataPublisher.publishNonThrottledEvent( applicationLevelThrottleKey,  applicationLevelTier,
-                 apiLevelThrottleKey,  apiLevelTier,
-                 subscriptionLevelThrottleKey,  subscriptionLevelTier,
-                 resourceLevelThrottleKey,  resourceLevelTier,
-                 authorizedUser,  apiContext,  apiVersion,  appTenant,  apiTenant,
-                 appId,  apiName,  messageId);
+        throttleDataPublisher.publishNonThrottledEvent(applicationLevelThrottleKey, applicationLevelTier,
+                apiLevelThrottleKey, apiLevelTier,
+                subscriptionLevelThrottleKey, subscriptionLevelTier,
+                resourceLevelThrottleKey, resourceLevelTier,
+                authorizedUser, apiContext, apiVersion, appTenant, apiTenant,
+                appId, apiName, messageId);
     }
 }

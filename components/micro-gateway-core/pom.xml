@@ -128,12 +128,12 @@
         <dependency>
             <groupId>org.wso2.carbon.analytics-common</groupId>
             <artifactId>org.wso2.carbon.databridge.commons</artifactId>
-            <version>6.1.45</version>
+            <version>${org.wso2.carbon.analytics-common}</version>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.analytics-common</groupId>
             <artifactId>org.wso2.carbon.databridge.commons.binary</artifactId>
-            <version>6.1.45</version>
+            <version>${org.wso2.carbon.analytics-common}</version>
         </dependency>
 <!--        <dependency>-->
 <!--            <groupId>org.wso2.carbon.analytics-common</groupId>-->
@@ -153,7 +153,7 @@
         <dependency>
             <groupId>org.wso2.orbit.com.lmax</groupId>
             <artifactId>disruptor</artifactId>
-            <version>3.4.2.wso2v1</version>
+            <version>${org.wso2.orbit.com.lmax}</version>
         </dependency>
 <!--        <dependency>-->
 <!--            <groupId>org.wso2.carbon</groupId>-->
