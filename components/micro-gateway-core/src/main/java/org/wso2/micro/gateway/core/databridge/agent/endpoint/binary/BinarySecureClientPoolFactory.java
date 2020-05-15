@@ -1,20 +1,20 @@
 /*
-*  Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.wso2.micro.gateway.core.databridge.agent.endpoint.binary;
 
 import org.apache.log4j.Logger;
@@ -23,11 +23,17 @@ import org.wso2.micro.gateway.core.databridge.agent.client.AbstractSecureClientP
 import org.wso2.micro.gateway.core.databridge.agent.conf.DataEndpointConfiguration;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointException;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.security.*;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 
 /**
@@ -41,8 +47,8 @@ public class BinarySecureClientPoolFactory extends AbstractSecureClientPoolFacto
         super(trustStore, trustStorePassword);
         SSLContext ctx;
         try {
-             ctx = createSSLContext();
-             sslSocketFactory = ctx.getSocketFactory();
+            ctx = createSSLContext();
+            sslSocketFactory = ctx.getSocketFactory();
         } catch (DataEndpointException e) {
             log.error("Error while initializing the SSL Context with provided parameters" +
                     e.getErrorMessage(), e);
@@ -65,12 +71,12 @@ public class BinarySecureClientPoolFactory extends AbstractSecureClientPoolFacto
                 sslSocket.setSoTimeout(timeout);
 
                 if (sslProtocols != null && sslProtocols.length() != 0) {
-                    String [] sslProtocolsArray = sslProtocols.split(",");
+                    String[] sslProtocolsArray = sslProtocols.split(",");
                     sslSocket.setEnabledProtocols(sslProtocolsArray);
                 }
 
                 if (ciphers != null && ciphers.length() != 0) {
-                    String [] ciphersArray = ciphers.split(",");
+                    String[] ciphersArray = ciphers.split(",");
                     sslSocket.setEnabledCipherSuites(ciphersArray);
                 } else {
                     sslSocket.setEnabledCipherSuites(sslSocket.getSupportedCipherSuites());

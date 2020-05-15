@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  *  WSO2 Inc. licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
@@ -29,7 +29,6 @@ import org.wso2.micro.gateway.core.databridge.agent.endpoint.binary.BinaryDataEn
 import org.wso2.micro.gateway.core.databridge.agent.endpoint.binary.BinarySecureClientPoolFactory;
 import org.wso2.micro.gateway.core.databridge.agent.exception.DataEndpointException;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 /**
@@ -53,25 +52,25 @@ public class DataEndpointAgent {
     }
 
     private void initialize() {
-            AbstractClientPoolFactory clientPoolFactory = new BinaryClientPoolFactory();
-            AbstractSecureClientPoolFactory secureClientPoolFactory = new BinarySecureClientPoolFactory(
-                    agentConfiguration.getTrustStorePath(), agentConfiguration.getTrustStorePassword());
-            ClientPool clientPool = new ClientPool();
-            this.transportPool = clientPool.getClientPool(
-                    clientPoolFactory,
-                    agentConfiguration.getMaxTransportPoolSize(),
-                    agentConfiguration.getMaxIdleConnections(),
-                    true,
-                    agentConfiguration.getEvictionTimePeriod(),
-                    agentConfiguration.getMinIdleTimeInPool());
+        AbstractClientPoolFactory clientPoolFactory = new BinaryClientPoolFactory();
+        AbstractSecureClientPoolFactory secureClientPoolFactory = new BinarySecureClientPoolFactory(
+                agentConfiguration.getTrustStorePath(), agentConfiguration.getTrustStorePassword());
+        ClientPool clientPool = new ClientPool();
+        this.transportPool = clientPool.getClientPool(
+                clientPoolFactory,
+                agentConfiguration.getMaxTransportPoolSize(),
+                agentConfiguration.getMaxIdleConnections(),
+                true,
+                agentConfiguration.getEvictionTimePeriod(),
+                agentConfiguration.getMinIdleTimeInPool());
 
-            this.securedTransportPool = clientPool.getClientPool(
-                    secureClientPoolFactory,
-                    agentConfiguration.getSecureMaxTransportPoolSize(),
-                    agentConfiguration.getSecureMaxIdleConnections(),
-                    true,
-                    agentConfiguration.getSecureEvictionTimePeriod(),
-                    agentConfiguration.getSecureMinIdleTimeInPool());
+        this.securedTransportPool = clientPool.getClientPool(
+                secureClientPoolFactory,
+                agentConfiguration.getSecureMaxTransportPoolSize(),
+                agentConfiguration.getSecureMaxIdleConnections(),
+                true,
+                agentConfiguration.getSecureEvictionTimePeriod(),
+                agentConfiguration.getSecureMinIdleTimeInPool());
     }
 
     public void addDataPublisher(DataPublisher dataPublisher) {
@@ -110,4 +109,3 @@ public class DataEndpointAgent {
         }
     }
 }
-

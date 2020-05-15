@@ -1,20 +1,20 @@
 /*
-*  Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.wso2.micro.gateway.core.databridge.agent;
 
 import org.apache.log4j.Logger;
@@ -70,11 +70,11 @@ public class DataPublisher {
      *                       or Failover URL set.
      * @param username       Authorized username at receiver.
      * @param password       The password of the username provided.
-     * @throws DataEndpointException                   Exception to be thrown when communicating with DataEndpoint.
-     * @throws DataEndpointConfigurationException      Exception to be thrown When parsing the Data Endpoint
-     *                                                 configurations when initializing data publisher
-     * @throws DataEndpointAuthenticationException     Exception to be thrown when connecting the Data Endpoint
-     * @throws TransportException                      Transport level exception
+     * @throws DataEndpointException               Exception to be thrown when communicating with DataEndpoint.
+     * @throws DataEndpointConfigurationException  Exception to be thrown When parsing the Data Endpoint
+     *                                             configurations when initializing data publisher
+     * @throws DataEndpointAuthenticationException Exception to be thrown when connecting the Data Endpoint
+     * @throws TransportException                  Transport level exception
      */
     public DataPublisher(String receiverURLSet, String username, String password)
             throws DataEndpointException, DataEndpointConfigurationException,
@@ -96,16 +96,16 @@ public class DataPublisher {
      *                       the authURLs will be offsetted by value of 100.
      * @param username       Authorized username at receiver.
      * @param password       The password of the username provided.
-     * @throws DataEndpointException                   Exception to be thrown when communicating with DataEndpoint.
-     * @throws DataEndpointConfigurationException      Exception to be thrown When parsing the Data Endpoint
-     *                                                 configurations when initializing data publisher
-     * @throws DataEndpointAuthenticationException     Exception to be thrown when connecting the Data Endpoint
-     * @throws TransportException                      Transport level exception
+     * @throws DataEndpointException               Exception to be thrown when communicating with DataEndpoint.
+     * @throws DataEndpointConfigurationException  Exception to be thrown When parsing the Data Endpoint
+     *                                             configurations when initializing data publisher
+     * @throws DataEndpointAuthenticationException Exception to be thrown when connecting the Data Endpoint
+     * @throws TransportException                  Transport level exception
      */
     public DataPublisher(String receiverURLSet, String authURLSet, String username, String password)
             throws DataEndpointException, DataEndpointConfigurationException,
             DataEndpointAuthenticationException, TransportException {
-            dataEndpointAgent = AgentHolder.getInstance().getDataEndpointAgent();
+        dataEndpointAgent = AgentHolder.getInstance().getDataEndpointAgent();
         if (authURLSet == null) {
             authURLSet = DataPublisherUtil.getDefaultAuthURLSet(receiverURLSet);
         }
@@ -126,11 +126,11 @@ public class DataPublisher {
      *                          is null, then default authURLSet will be generated from the receiverURL.
      * @param username          Authorized username at receiver.
      * @param password          The password of the username provided.
-     * @throws DataEndpointConfigurationException      Exception to be thrown When parsing the Data Endpoint
-     *                                                 configurations when initializing data publisher
-     * @throws DataEndpointException                   Exception to be thrown when communicating with DataEndpoint.
-     * @throws DataEndpointAuthenticationException     Exception to be thrown when connecting the Data Endpoint
-     * @throws TransportException                      Transport level exception
+     * @throws DataEndpointConfigurationException  Exception to be thrown When parsing the Data Endpoint
+     *                                             configurations when initializing data publisher
+     * @throws DataEndpointException               Exception to be thrown when communicating with DataEndpoint.
+     * @throws DataEndpointAuthenticationException Exception to be thrown when connecting the Data Endpoint
+     * @throws TransportException                  Transport level exception
      */
     private void processEndpoints(DataEndpointAgent dataEndpointAgent,
                                   String receiverURLSet, String authURLSet, String username, String password)
@@ -537,5 +537,3 @@ public class DataPublisher {
         AgentHolder.shutdown();
     }
 }
-
-

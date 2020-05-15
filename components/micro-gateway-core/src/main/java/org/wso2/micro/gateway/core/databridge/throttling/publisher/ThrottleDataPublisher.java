@@ -1,20 +1,20 @@
 /*
-*  Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package org.wso2.micro.gateway.core.databridge.throttling.publisher;
 
@@ -56,42 +56,35 @@ public class ThrottleDataPublisher {
      * publisher which we used to publish throttle data.
      */
     public ThrottleDataPublisher() {
-//        ThrottleProperties throttleProperties = ServiceReferenceHolder.getInstance().getThrottleProperties();
-//        if (throttleProperties != null) {
-//            ThrottleProperties.DataPublisher dataPublisherConfiguration = ServiceReferenceHolder.getInstance()
-//                    .getThrottleProperties().getDataPublisher();
-//            if (dataPublisherConfiguration != null && dataPublisherConfiguration.isEnabled()) {
-                dataPublisherPool = ThrottleDataPublisherPool.getInstance();
+        dataPublisherPool = ThrottleDataPublisherPool.getInstance();
         PublisherConfiguration publisherConfiguration = PublisherConfiguration.getInstance();
 
-                try {
-                    executor = new DataPublisherThreadPoolExecutor(
-                            publisherConfiguration.getPublisherThreadPoolCoreSize(),
-                            publisherConfiguration.getPublisherThreadPoolMaximumSize(),
-                            publisherConfiguration.getPublisherThreadPoolKeepAliveTime(),
-                            TimeUnit.SECONDS,
-                            new LinkedBlockingDeque<Runnable>() {
-                            });
-                    //todo: change the hardcoded value
-                    dataPublisher = new DataPublisher(publisherConfiguration.getReceiverUrlGroup() ,
-                            publisherConfiguration.getAuthUrlGroup(), publisherConfiguration.getUserName(),
-                            publisherConfiguration.getPassword());
+        try {
+            executor = new DataPublisherThreadPoolExecutor(
+                    publisherConfiguration.getPublisherThreadPoolCoreSize(),
+                    publisherConfiguration.getPublisherThreadPoolMaximumSize(),
+                    publisherConfiguration.getPublisherThreadPoolKeepAliveTime(),
+                    TimeUnit.SECONDS,
+                    new LinkedBlockingDeque<Runnable>() {
+                    });
+            //todo: change the hardcoded value
+            dataPublisher = new DataPublisher(publisherConfiguration.getReceiverUrlGroup(),
+                    publisherConfiguration.getAuthUrlGroup(), publisherConfiguration.getUserName(),
+                    publisherConfiguration.getPassword());
 
-                } catch (DataEndpointException e) {
-                    log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
-                            e.getMessage(), e);
-                } catch (DataEndpointConfigurationException e) {
-                    log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
-                            e.getMessage(), e);
-                } catch (DataEndpointAuthenticationException e) {
-                    log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
-                            e.getMessage(), e);
-                } catch (TransportException e) {
-                    log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
-                            e.getMessage(), e);
-                }
-//            }
-//        }
+        } catch (DataEndpointException e) {
+            log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
+                    e.getMessage(), e);
+        } catch (DataEndpointConfigurationException e) {
+            log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
+                    e.getMessage(), e);
+        } catch (DataEndpointAuthenticationException e) {
+            log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
+                    e.getMessage(), e);
+        } catch (TransportException e) {
+            log.error("Error in initializing binary data-publisher to send requests to global throttling engine " +
+                    e.getMessage(), e);
+        }
     }
 
     /**
@@ -153,7 +146,6 @@ public class ThrottleDataPublisher {
         protected void afterExecute(Runnable r, Throwable t) {
             try {
                 DataProcessAndPublishingAgent agent = (DataProcessAndPublishingAgent) r;
-                //agent.setDataReference(null);
                 ThrottleDataPublisher.dataPublisherPool.release(agent);
             } catch (Exception e) {
                 log.error("Error while returning Throttle data publishing agent back to pool" + e.getMessage());
@@ -161,4 +153,3 @@ public class ThrottleDataPublisher {
         }
     }
 }
-
