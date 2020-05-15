@@ -76,7 +76,7 @@ public class BinarySecureClientPoolFactory extends AbstractSecureClientPoolFacto
                 }
 
                 if (ciphers != null && ciphers.length() != 0) {
-                    String[] ciphersArray = ciphers.split(",");
+                    String[] ciphersArray = ciphers.replaceAll(" ","").split(",");
                     sslSocket.setEnabledCipherSuites(ciphersArray);
                 } else {
                     sslSocket.setEnabledCipherSuites(sslSocket.getSupportedCipherSuites());

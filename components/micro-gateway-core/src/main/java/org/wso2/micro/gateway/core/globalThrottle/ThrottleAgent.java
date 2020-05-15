@@ -22,6 +22,7 @@ public class ThrottleAgent {
                                                      String ciphers) {
         //TrustStore path provided from the microgateway configuration needs to be preprocessed.
         String resolvedTrustStorePath = preProcessTrustStorePath(trustStorePath);
+
         AgentConfiguration.getInstance().setConfiguration(resolvedTrustStorePath, trustStorePassword, queueSize,
                 batchSize, corePoolSize, socketTimeoutMS, maxPoolSize, keepAliveTimeInPool, reconnectionInterval,
                 maxTransportPoolSize, maxIdleConnections, evictionTimePeriod, minIdleTimeInPool,

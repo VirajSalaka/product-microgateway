@@ -23,10 +23,13 @@ package org.wso2.micro.gateway.core.globalThrottle.databridge.agent.conf;
  */
 public class AgentConfiguration {
 
+    private AgentConfiguration() {
+    }
+
     //todo: publishing strategy is hardcoded
     private String publishingStrategy = "async";
     //TODO: change this
-    private String trustStorePath = "<mgw-runtime.home>/runtime/bre/security/ballerinaTruststore.p12";
+    private String trustStorePath = "/Users/viraj/mgw_workspace/webinar-grpc/wso2am-micro-gw-macos-3.1.0/runtime/bre/security/ballerinaTruststore.p12";
     private String trustStorePassword = "ballerina";
     private int queueSize = 32768;
     private int batchSize = 200;

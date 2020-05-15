@@ -30,11 +30,10 @@ public class AgentHolder {
 
     private static final Logger log = Logger.getLogger(AgentHolder.class);
     private static AgentHolder instance;
-    //TODO: manupulate this properly
     private DataEndpointAgent agent;
 
     private AgentHolder() {
-        addAgentConfiguration(generateAgentConfiguration());
+        agent = new DataEndpointAgent(AgentConfiguration.getInstance());
     }
 
     public static synchronized AgentHolder getInstance() {
@@ -51,11 +50,6 @@ public class AgentHolder {
         }
     }
 
-    //TODO: Remove default agent concept
-    private void addAgentConfiguration(AgentConfiguration agentConfiguration) {
-        agent = new DataEndpointAgent(agentConfiguration);
-    }
-
     /**
      * Returns the default agent,and the first element in the data.agent.config.yaml
      * is taken as default data publisher type.
@@ -64,11 +58,5 @@ public class AgentHolder {
      */
     public DataEndpointAgent getDataEndpointAgent() {
         return agent;
-    }
-
-    //todo: under default configuration
-    //TODO: Remove this
-    public AgentConfiguration generateAgentConfiguration() {
-        return new AgentConfiguration();
     }
 }
