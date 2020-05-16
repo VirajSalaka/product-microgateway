@@ -96,5 +96,5 @@ function publishHttpGlobalThrottleEvent(RequestStreamDTO throttleEvent) {
 function isHttpPublisherEnabled() returns boolean {
     return containsConfigKey(THROTTLE_CONF_INSTANCE_ID, THROTTLE_ENDPOINT_URL) &&
                 //todo: fix this properly by providing enabled tag
-                !containsConfigKey(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_RECEIVER_URL_GROUP);
+                !containsConfigKey(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_USERNAME);
 }

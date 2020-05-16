@@ -1,4 +1,5 @@
 import ballerinax/java;
+import ballerina/config;
 
 public function initBinaryThrottleDataPublisher() {
     loadTMBinaryAgentConfiguration();
@@ -63,9 +64,13 @@ public function publishGlobalThrottleEvent(string applicationLevelThrottleKey, s
 }
 
 function loadTMBinaryPublisherConfiguration() {
+    printInfo("xxxxxxxxxx","reached start");
     //todo: input validation from ballerina layer
-    string receiverURLGroup = getConfigValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_RECEIVER_URL_GROUP, DEFAULT_TM_RECEIVER_URL_GROUP);
-    string authURLGroup = getConfigValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_AUTH_URL_GROUP, DEFAULT_TM_AUTH_URL_GROUP);
+    string receiverURLGroup;
+    string authURLGroup;
+    [receiverURLGroup, authURLGroup] = processTMPublisherURLGroup();
+    //string receiverURLGroup = getConfigValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_RECEIVER_URL_GROUP, DEFAULT_TM_RECEIVER_URL_GROUP);
+    //string authURLGroup = getConfigValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_AUTH_URL_GROUP, DEFAULT_TM_AUTH_URL_GROUP);
     string username = getConfigValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_USERNAME, DEFAULT_TM_USERNAME);
     string password = getConfigValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_PASSWORD, DEFAULT_TM_PASSWORD);
     int publisherPoolMaxIdle = getConfigIntValue(BINARY_PUBLISHER_POOL_THROTTLE_CONF_INSTANCE_ID, TM_PUBLISHER_POOL_MAX_IDLE, DEFAULT_TM_PUBLISHER_POOL_MAX_IDLE);
@@ -73,7 +78,7 @@ function loadTMBinaryPublisherConfiguration() {
     int publisherThreadPoolCoreSize = getConfigIntValue(BINARY_PUBLISHER_THREAD_POOL_THROTTLE_CONF_INSTANCE_ID, TM_PUBLISHER_THREAD_POOL_CORE_SIZE, DEFAULT_TM_PUBLISHER_THREAD_POOL_CORE_SIZE);
     int publisherThreadPoolMaximumSize = getConfigIntValue(BINARY_PUBLISHER_THREAD_POOL_THROTTLE_CONF_INSTANCE_ID, TM_PUBLISHER_THREAD_POOL_MAXIMUM_SIZE, DEFAULT_TM_PUBLISHER_THREAD_POOL_MAXIMUM_SIZE);
     int publisherThreadPoolKeepAliveTime = getConfigIntValue(BINARY_PUBLISHER_THREAD_POOL_THROTTLE_CONF_INSTANCE_ID, TM_PUBLISHER_THREAD_POOL_KEEP_ALIVE_TIME, DEFAULT_TM_PUBLISHER_THREAD_POOL_KEEP_ALIVE_TIME);
-
+    printInfo("xxxxxxxxxx",receiverURLGroup + " " +  authURLGroup + " " + username + " " + password);
     jSetTMBinaryPublisherConfiguration(java:fromString(receiverURLGroup), java:fromString(authURLGroup),
         java:fromString(username), java:fromString(password), publisherPoolMaxIdle, publisherPoolInitIdleCapacity,
         publisherThreadPoolCoreSize, publisherThreadPoolMaximumSize, publisherThreadPoolKeepAliveTime);
@@ -109,6 +114,44 @@ function loadTMBinaryAgentConfiguration() {
         maxTransportPoolSize, maxIdleConnections, evictionTimePeriod, minIdleTimeInPool, secureMaxTransportPoolSize,
         secureMaxIdleConnections, secureEvictionTimePeriod, secureMinIdleTimeInPool,
         java:fromString(sslEnabledProtoccols), java:fromString(ciphers));
+}
+
+function processTMPublisherURLGroup () returns [string, string] {
+    string restructuredReceiverURL = "";
+    string restructuredAuthURL = "";
+    map<anydata>[] | error urlGroups = map<anydata>[].constructFrom(config:getAsArray(TM_BINARY_URL_GROUP));
+        if (urlGroups is map<anydata>[] && urlGroups.length() > 0) {
+            if (urlGroups.length() == 1) {
+                map<anydata> urlGroup = urlGroups[0];
+                if ((urlGroup[TM_BINARY_RECEIVER_URL] is string) || (urlGroup[TM_BINARY_AUTH_URL] is string)) {
+                    return [<string>urlGroup[TM_BINARY_RECEIVER_URL], <string>urlGroup[TM_BINARY_AUTH_URL]];
+                }
+                else {
+                    //todo: throw an error
+                }
+            }
+            //todo: decide if we need to do a pattern matching as a validation
+            foreach map<anydata> urlGroup in urlGroups {
+                if (urlGroup[TM_BINARY_RECEIVER_URL] is string) {
+                    restructuredReceiverURL += "{ " + <string>urlGroup[TM_BINARY_RECEIVER_URL] + " },";
+                } else {
+                    //todo: throw an error
+                }
+                if (urlGroup[TM_BINARY_AUTH_URL] is string) {
+                    restructuredAuthURL += "{ " + <string>urlGroup[TM_BINARY_AUTH_URL] + " },";
+                }
+                else {
+                    //todo: throw an error
+                }
+            }
+            //needs to remove the final ',' in the URLs
+            restructuredAuthURL = restructuredAuthURL.substring(0, restructuredAuthURL.length() - 1);
+            restructuredReceiverURL = restructuredReceiverURL.substring(0, restructuredReceiverURL.length() - 1);
+            return [restructuredReceiverURL, restructuredAuthURL];
+        } else {
+        }
+        printWarn();
+        return [DEFAULT_TM_RECEIVER_URL_GROUP,DEFAULT_TM_AUTH_URL_GROUP];
 }
 
 function jinitBinaryThrottleDataPublisher() = @java:Method {

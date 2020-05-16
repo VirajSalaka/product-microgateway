@@ -306,15 +306,17 @@ public const string JMS_CONNECTION_PASSWORD = "jmsConnectionPassword";
 public const string THROTTLE_ENDPOINT_URL = "throttleEndpointUrl";
 public const string THROTTLE_ENDPOINT_BASE64_HEADER = "throttleEndpointbase64Header";
 
-public const string BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID = "throttlingConfig.binary.publisher";
-public const string BINARY_PUBLISHER_POOL_THROTTLE_CONF_INSTANCE_ID = "throttlingConfig.binary.publisher" +
-    ".publisherPool";
-public const string BINARY_PUBLISHER_THREAD_POOL_THROTTLE_CONF_INSTANCE_ID = "throttlingConfig.binary.publisher" +
+public const string BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID = "throttlingConfig.binary";
+public const string BINARY_PUBLISHER_POOL_THROTTLE_CONF_INSTANCE_ID = "throttlingConfig.binary.publisherPool";
+public const string BINARY_PUBLISHER_THREAD_POOL_THROTTLE_CONF_INSTANCE_ID = "throttlingConfig.binary" +
     ".publisherThreadPool";
-public const string TM_RECEIVER_URL_GROUP = "receiverURLGroup";
-public const string TM_AUTH_URL_GROUP = "authURLGroup";
+public const string TM_BINARY_URL_GROUP = "throttlingConfig.binary.URLGroup";
+public const string TM_BINARY_RECEIVER_URL = "receiverURL";
+public const string TM_BINARY_AUTH_URL = "authURL";
 public const string TM_USERNAME = "username";
 public const string TM_PASSWORD = "password";
+public const string TM_RECEIVER_URL_GROUP = "receiverURLGroup";
+public const string TM_AUTH_URL_GROUP = "authURLGroup";
 public const string TM_PUBLISHER_POOL_MAX_IDLE = "maxIdle";
 public const string TM_PUBLISHER_POOL_INIT_IDLE_CAPACITY = "initIdleCapacity";
 public const string TM_PUBLISHER_THREAD_POOL_CORE_SIZE = "corePoolSize";
