@@ -64,7 +64,6 @@ public function publishGlobalThrottleEvent(string applicationLevelThrottleKey, s
 }
 
 function loadTMBinaryPublisherConfiguration() {
-    printInfo("xxxxxxxxxx","reached start");
     //todo: input validation from ballerina layer
     string receiverURLGroup;
     string authURLGroup;
@@ -78,7 +77,6 @@ function loadTMBinaryPublisherConfiguration() {
     int publisherThreadPoolCoreSize = getConfigIntValue(BINARY_PUBLISHER_THREAD_POOL_THROTTLE_CONF_INSTANCE_ID, TM_PUBLISHER_THREAD_POOL_CORE_SIZE, DEFAULT_TM_PUBLISHER_THREAD_POOL_CORE_SIZE);
     int publisherThreadPoolMaximumSize = getConfigIntValue(BINARY_PUBLISHER_THREAD_POOL_THROTTLE_CONF_INSTANCE_ID, TM_PUBLISHER_THREAD_POOL_MAXIMUM_SIZE, DEFAULT_TM_PUBLISHER_THREAD_POOL_MAXIMUM_SIZE);
     int publisherThreadPoolKeepAliveTime = getConfigIntValue(BINARY_PUBLISHER_THREAD_POOL_THROTTLE_CONF_INSTANCE_ID, TM_PUBLISHER_THREAD_POOL_KEEP_ALIVE_TIME, DEFAULT_TM_PUBLISHER_THREAD_POOL_KEEP_ALIVE_TIME);
-    printInfo("xxxxxxxxxx",receiverURLGroup + " " +  authURLGroup + " " + username + " " + password);
     jSetTMBinaryPublisherConfiguration(java:fromString(receiverURLGroup), java:fromString(authURLGroup),
         java:fromString(username), java:fromString(password), publisherPoolMaxIdle, publisherPoolInitIdleCapacity,
         publisherThreadPoolCoreSize, publisherThreadPoolMaximumSize, publisherThreadPoolKeepAliveTime);
@@ -116,6 +114,7 @@ function loadTMBinaryAgentConfiguration() {
         java:fromString(sslEnabledProtoccols), java:fromString(ciphers));
 }
 
+//todo: add proper debug log messages
 function processTMPublisherURLGroup () returns [string, string] {
     string restructuredReceiverURL = "";
     string restructuredAuthURL = "";
@@ -150,7 +149,6 @@ function processTMPublisherURLGroup () returns [string, string] {
             return [restructuredReceiverURL, restructuredAuthURL];
         } else {
         }
-        printWarn();
         return [DEFAULT_TM_RECEIVER_URL_GROUP,DEFAULT_TM_AUTH_URL_GROUP];
 }
 

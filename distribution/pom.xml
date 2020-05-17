@@ -181,7 +181,7 @@
                             </includeGroupIds>
                             <includeArtifactIds>andes-client, org.wso2.securevault, mgw-interceptor,
                                 org.wso2.carbon.databridge.commons, org.wso2.carbon.databridge.commons.binary,
-                                org.wso2.orbit.com.lmax
+                                disruptor
                             </includeArtifactIds>
                         </configuration>
                     </execution>
