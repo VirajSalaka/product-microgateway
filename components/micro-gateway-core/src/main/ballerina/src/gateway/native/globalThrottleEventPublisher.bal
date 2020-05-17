@@ -85,7 +85,7 @@ function loadTMBinaryAgentConfiguration() {
     int secureMinIdleTimeInPool = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_SECURE_MIN_IDLE_TIME_IN_POOL, DEFAULT_TM_AGENT_SECURE_MIN_IDLE_TIME_IN_POOL);
 
     //todo: check if additional config is required
-    //todo: check if we need to replace the place holder
+    //the placeholder replacement is handled via the java implementation
     string trustStorePath = getConfigValue(LISTENER_CONF_INSTANCE_ID, TRUST_STORE_PATH, DEFAULT_TRUST_STORE_PATH);
     string trustStorePassword = getConfigValue(LISTENER_CONF_INSTANCE_ID, TRUST_STORE_PASSWORD, DEFAULT_TRUST_STORE_PASSWORD);
     string sslEnabledProtoccols = getConfigValue(MTSL_CONF_INSTANCE_ID, MTSL_CONF_PROTOCOL_VERSIONS, DEFAULT_PROTOCOL_VERSIONS);
@@ -98,7 +98,6 @@ function loadTMBinaryAgentConfiguration() {
         java:fromString(sslEnabledProtoccols), java:fromString(ciphers));
 }
 
-//todo: add proper debug log messages
 function processTMPublisherURLGroup () returns [string, string] {
     string restructuredReceiverURL = "";
     string restructuredAuthURL = "";
@@ -106,33 +105,51 @@ function processTMPublisherURLGroup () returns [string, string] {
         if (urlGroups is map<anydata>[] && urlGroups.length() > 0) {
             if (urlGroups.length() == 1) {
                 map<anydata> urlGroup = urlGroups[0];
-                if ((urlGroup[TM_BINARY_RECEIVER_URL] is string) || (urlGroup[TM_BINARY_AUTH_URL] is string)) {
+                if ((urlGroup[TM_BINARY_RECEIVER_URL] is string) && (urlGroup[TM_BINARY_AUTH_URL] is string)) {
                     return [<string>urlGroup[TM_BINARY_RECEIVER_URL], <string>urlGroup[TM_BINARY_AUTH_URL]];
                 }
                 else {
-                    //todo: throw an error
+                    printDebug(KEY_GLOBAL_THROTTLE_EVENT_PUBLISHER, "Both/One of " + TM_BINARY_RECEIVER_URL +
+                        "and/or " + TM_BINARY_AUTH_URL + " properties are not provided under " + TM_BINARY_URL_GROUP);
+                }
+            } else {
+                //todo: decide if we need to do a pattern matching as a validation
+                foreach map<anydata> urlGroup in urlGroups {
+                    string receiverUrl = "";
+                    string authUrl = "";
+                    if (urlGroup[TM_BINARY_RECEIVER_URL] is string) {
+                        receiverUrl = <string>urlGroup[TM_BINARY_RECEIVER_URL];
+                    } else {
+                        printError(KEY_GLOBAL_THROTTLE_EVENT_PUBLISHER, TM_BINARY_URL_GROUP + " element is " +
+                            "skipped as " + TM_BINARY_RECEIVER_URL + " property is not provided under "
+                            + TM_BINARY_URL_GROUP);
+                    }
+                    if (urlGroup[TM_BINARY_AUTH_URL] is string) {
+                        authUrl = <string>urlGroup[TM_BINARY_AUTH_URL];
+                    } else {
+                        printError(KEY_GLOBAL_THROTTLE_EVENT_PUBLISHER, TM_BINARY_URL_GROUP + " element is " +
+                            "skipped as " + TM_BINARY_AUTH_URL + " property is not provided under "
+                            + TM_BINARY_URL_GROUP);
+                    }
+                    //the urlGroup is added only if both URLs are provided.
+                    if (receiverUrl != "" && authUrl != "") {
+                        restructuredReceiverURL += "{ " + receiverUrl + " },";
+                        restructuredAuthURL += "{ " + authUrl + " },";
+                    }
                 }
             }
-            //todo: decide if we need to do a pattern matching as a validation
-            foreach map<anydata> urlGroup in urlGroups {
-                if (urlGroup[TM_BINARY_RECEIVER_URL] is string) {
-                    restructuredReceiverURL += "{ " + <string>urlGroup[TM_BINARY_RECEIVER_URL] + " },";
-                } else {
-                    //todo: throw an error
-                }
-                if (urlGroup[TM_BINARY_AUTH_URL] is string) {
-                    restructuredAuthURL += "{ " + <string>urlGroup[TM_BINARY_AUTH_URL] + " },";
-                }
-                else {
-                    //todo: throw an error
-                }
+            //to remove the final ',' in the URLs
+            if(restructuredReceiverURL != "" && restructuredAuthURL != "") {
+                restructuredReceiverURL = restructuredReceiverURL.substring(0, restructuredReceiverURL.length() - 1);
+                restructuredAuthURL = restructuredAuthURL.substring(0, restructuredAuthURL.length() - 1);
+                return [restructuredReceiverURL, restructuredAuthURL];
             }
-            //needs to remove the final ',' in the URLs
-            restructuredAuthURL = restructuredAuthURL.substring(0, restructuredAuthURL.length() - 1);
-            restructuredReceiverURL = restructuredReceiverURL.substring(0, restructuredReceiverURL.length() - 1);
-            return [restructuredReceiverURL, restructuredAuthURL];
         } else {
+            printDebug(KEY_GLOBAL_THROTTLE_EVENT_PUBLISHER, TM_BINARY_AUTH_URL + " property is not identified " +
+            "in the configuration file");
         }
+        printDebug(KEY_GLOBAL_THROTTLE_EVENT_PUBLISHER, "Proceeding with the default parameters for " +
+            TM_BINARY_URL_GROUP);
         return [DEFAULT_TM_RECEIVER_URL_GROUP,DEFAULT_TM_AUTH_URL_GROUP];
 }
 
