@@ -246,18 +246,14 @@
     [[throttlingConfig.binary.URLGroup]]
       receiverURL = "tcp://localhost:9611"
       authURL = "ssl://localhost:9711"
-
-      receiverURLGroup = "tcp://localhost:9611"
-      authURLGroup = "ssl://localhost:9711"
-
-      [throttlingConfig.binary.publisherPool]
-        #todo: max_idle_capacity ?
-        maxIdle = 1000
-        initIdleCapacity = 200
-      [throttlingConfig.binary.publisherThreadPool]
-        corePoolSize = 200
-        maxPoolSize = 1000
-        keepAliveTime = 200
+    [throttlingConfig.binary.publisherPool]
+      #todo: max_idle_capacity ?
+      maxIdle = 1000
+      initIdleCapacity = 200
+    [throttlingConfig.binary.publisherThreadPool]
+      corePoolSize = 200
+      maxPoolSize = 1000
+      keepAliveTime = 200
     [throttlingConfig.binary.agent]
       # The size of the queue event disruptor which handles events before they are published.
       # The value specified should always be the result of an exponent with 2 as the base.
