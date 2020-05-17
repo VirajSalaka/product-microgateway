@@ -73,17 +73,17 @@ public class ThrottleAgent {
     }
 
     public static void publishNonThrottledEvent(
-            String applicationLevelThrottleKey, String applicationLevelTier,
+            String messageId, String applicationLevelThrottleKey, String applicationLevelTier,
             String apiLevelThrottleKey, String apiLevelTier,
             String subscriptionLevelThrottleKey, String subscriptionLevelTier,
             String resourceLevelThrottleKey, String resourceLevelTier,
             String authorizedUser, String apiContext, String apiVersion, String appTenant, String apiTenant,
-            String appId, String apiName, String messageId) {
-        throttleDataPublisher.publishNonThrottledEvent(applicationLevelThrottleKey, applicationLevelTier,
+            String appId, String apiName, String properties) {
+        throttleDataPublisher.publishNonThrottledEvent(messageId, applicationLevelThrottleKey, applicationLevelTier,
                 apiLevelThrottleKey, apiLevelTier,
                 subscriptionLevelThrottleKey, subscriptionLevelTier,
                 resourceLevelThrottleKey, resourceLevelTier,
                 authorizedUser, apiContext, apiVersion, appTenant, apiTenant,
-                appId, apiName, messageId);
+                appId, apiName, properties);
     }
 }

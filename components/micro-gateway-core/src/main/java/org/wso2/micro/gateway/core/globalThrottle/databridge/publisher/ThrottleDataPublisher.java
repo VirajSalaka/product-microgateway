@@ -91,21 +91,21 @@ public class ThrottleDataPublisher {
      * This method used to pass message context and let it run within separate thread.
      */
     public void publishNonThrottledEvent(
-            String applicationLevelThrottleKey, String applicationLevelTier,
+            String messageId, String applicationLevelThrottleKey, String applicationLevelTier,
             String apiLevelThrottleKey, String apiLevelTier,
             String subscriptionLevelThrottleKey, String subscriptionLevelTier,
             String resourceLevelThrottleKey, String resourceLevelTier,
             String authorizedUser, String apiContext, String apiVersion, String appTenant, String apiTenant,
-            String appId, String apiName, String messageId) {
+            String appId, String apiName, String properties) {
         try {
             if (dataPublisherPool != null) {
                 DataProcessAndPublishingAgent agent = dataPublisherPool.get();
-                agent.setDataReference(applicationLevelThrottleKey, applicationLevelTier,
+                agent.setDataReference(messageId, applicationLevelThrottleKey, applicationLevelTier,
                         apiLevelThrottleKey, apiLevelTier,
                         subscriptionLevelThrottleKey, subscriptionLevelTier,
                         resourceLevelThrottleKey, resourceLevelTier,
                         authorizedUser, apiContext, apiVersion, appTenant, apiTenant, appId, apiName,
-                        messageId);
+                        properties);
                 if (log.isDebugEnabled()) {
                     log.debug("Publishing throttle data from gateway to traffic-manager for: " + apiContext
                             + " with ID: " + messageId + " started" + " at "

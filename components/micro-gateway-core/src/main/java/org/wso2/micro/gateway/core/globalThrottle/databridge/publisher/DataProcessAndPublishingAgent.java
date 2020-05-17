@@ -35,6 +35,7 @@ public class DataProcessAndPublishingAgent implements Runnable {
     private static String streamID = "org.wso2.throttle.request.stream:1.0.0";
     private DataPublisher dataPublisher;
 
+    String messageId;
     String applicationLevelThrottleKey;
     String applicationLevelTier;
     String apiLevelThrottleKey;
@@ -50,12 +51,9 @@ public class DataProcessAndPublishingAgent implements Runnable {
     String apiTenant;
     String apiName;
     String appId;
-    String messageId;
-
-    private long messageSizeInBytes;
+    String properties;
 
     public DataProcessAndPublishingAgent() {
-
         dataPublisher = getDataPublisher();
     }
 
@@ -68,7 +66,6 @@ public class DataProcessAndPublishingAgent implements Runnable {
         this.applicationLevelThrottleKey = null;
         this.applicationLevelTier = null;
         this.apiLevelThrottleKey = null;
-        this.applicationLevelTier = null;
         this.subscriptionLevelThrottleKey = null;
         this.subscriptionLevelTier = null;
         this.resourceLevelThrottleKey = null;
@@ -80,7 +77,6 @@ public class DataProcessAndPublishingAgent implements Runnable {
         this.apiTenant = null;
         this.appId = null;
         this.apiName = null;
-        this.messageSizeInBytes = 0;
     }
 
     /**
@@ -88,12 +84,12 @@ public class DataProcessAndPublishingAgent implements Runnable {
      */
     //TODO: Introduce mapvalue
     //TODO: add properties parameter
-    public void setDataReference(String applicationLevelThrottleKey, String applicationLevelTier,
+    public void setDataReference(String messageId, String applicationLevelThrottleKey, String applicationLevelTier,
                                  String apiLevelThrottleKey, String apiLevelTier,
                                  String subscriptionLevelThrottleKey, String subscriptionLevelTier,
                                  String resourceLevelThrottleKey, String resourceLevelTier,
                                  String authorizedUser, String apiContext, String apiVersion, String appTenant,
-                                 String apiTenant, String appId, String apiName, String messageId) {
+                                 String apiTenant, String appId, String apiName, String properties) {
         if (!StringUtils.isEmpty(apiLevelTier)) {
             resourceLevelTier = apiLevelTier;
             resourceLevelThrottleKey = apiLevelThrottleKey;
@@ -113,7 +109,7 @@ public class DataProcessAndPublishingAgent implements Runnable {
         this.apiTenant = apiTenant;
         this.appId = appId;
         this.apiName = apiName;
-        this.messageSizeInBytes = 0;
+        this.properties = properties;
     }
 
     public void run() {
@@ -124,8 +120,7 @@ public class DataProcessAndPublishingAgent implements Runnable {
                 this.subscriptionLevelThrottleKey, this.subscriptionLevelTier,
                 this.resourceLevelThrottleKey, this.resourceLevelTier,
                 this.authorizedUser, this.apiContext, this.apiVersion,
-                //todo: change the hardcoded empty properties value
-                this.appTenant, this.apiTenant, this.appId, this.apiName, "{}"};
+                this.appTenant, this.apiTenant, this.appId, this.apiName, properties};
         org.wso2.carbon.databridge.commons.Event event = new org.wso2.carbon.databridge.commons.Event(streamID,
                 System.currentTimeMillis(), null, null, objects);
         dataPublisher.tryPublish(event);

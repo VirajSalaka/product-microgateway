@@ -7,23 +7,7 @@ public function initBinaryThrottleDataPublisher() {
     jinitBinaryThrottleDataPublisher();
 }
 public function publishBinaryGlobalThrottleEvent(RequestStreamDTO throttleEvent) {
-        //            messageID: throttleEvent.messageID,
-        //            appKey: throttleEvent.appKey,
-        //            appTier: throttleEvent.appTier,
-        //            apiKey: throttleEvent.apiKey,
-        //            apiTier: throttleEvent.apiTier,
-        //            subscriptionKey: throttleEvent.subscriptionKey,
-        //            subscriptionTier: throttleEvent.subscriptionTier,
-        //            resourceKey: throttleEvent.resourceKey,
-        //            resourceTier: throttleEvent.resourceTier,
-        //            userId: throttleEvent.userId,
-        //            apiContext: throttleEvent.apiContext,
-        //            apiVersion: throttleEvent.apiVersion,
-        //            appTenant: throttleEvent.appTenant,
-        //            apiTenant: throttleEvent.apiTenant,
-        //            appId: throttleEvent.appId,
-        //            apiName: throttleEvent.apiName,
-        //            properties: throttleEvent.properties
+    string messageId = throttleEvent.messageID;
         string applicationLevelThrottleKey = throttleEvent.appKey;
         string apiLevelThrottleKey = throttleEvent.apiKey;
         string applicationLevelTier = throttleEvent.appTier;
@@ -39,28 +23,28 @@ public function publishBinaryGlobalThrottleEvent(RequestStreamDTO throttleEvent)
         string apiTenant = throttleEvent.apiTenant;
         string appId = throttleEvent.appId;
         string apiName = throttleEvent.apiName;
-        string messageId = throttleEvent.messageID;
+        string properties = throttleEvent.properties;
 
-        publishGlobalThrottleEvent(applicationLevelThrottleKey, applicationLevelTier,
+        publishGlobalThrottleEvent(messageId, applicationLevelThrottleKey, applicationLevelTier,
                                                                                     apiLevelThrottleKey, apiLevelTier,
                                                                                     subscriptionLevelThrottleKey, subscriptionLevelTier,
                                                                                     resourceLevelThrottleKey, resourceLevelTier,
                                                                                     authorizedUser, apiContext, apiVersion, appTenant,
-                                                                                    apiTenant, appId, apiName, messageId);
+                                                                                    apiTenant, appId, apiName, properties);
 }
 
-public function publishGlobalThrottleEvent(string applicationLevelThrottleKey, string applicationLevelTier,
+public function publishGlobalThrottleEvent(string messageId, string applicationLevelThrottleKey, string applicationLevelTier,
                                                                             string apiLevelThrottleKey, string apiLevelTier,
                                                                             string subscriptionLevelThrottleKey, string subscriptionLevelTier,
                                                                             string resourceLevelThrottleKey, string resourceLevelTier,
                                                                             string authorizedUser, string apiContext, string apiVersion, string appTenant,
-                                                                            string apiTenant, string appId, string apiName, string messageId) {
-    jPublishGlobalThrottleEvent(java:fromString(applicationLevelThrottleKey), java:fromString(applicationLevelTier),
+                                                                            string apiTenant, string appId, string apiName, string properties) {
+    jPublishGlobalThrottleEvent(java:fromString(messageId), java:fromString(applicationLevelThrottleKey), java:fromString(applicationLevelTier),
                                                                  java:fromString(apiLevelThrottleKey), java:fromString(apiLevelTier),
                                                                  java:fromString(subscriptionLevelThrottleKey), java:fromString(subscriptionLevelTier),
                                                                  java:fromString(resourceLevelThrottleKey), java:fromString(resourceLevelTier),
                                                                  java:fromString(authorizedUser), java:fromString(apiContext), java:fromString(apiVersion), java:fromString(appTenant),
-                                                                 java:fromString(apiTenant), java:fromString(appId), java:fromString(apiName), java:fromString(messageId));
+                                                                 java:fromString(apiTenant), java:fromString(appId), java:fromString(apiName), java:fromString(properties));
 }
 
 function loadTMBinaryPublisherConfiguration() {
@@ -157,11 +141,11 @@ function jinitBinaryThrottleDataPublisher() = @java:Method {
     class: "org.wso2.micro.gateway.core.globalThrottle.ThrottleAgent"
 } external;
 
-function jPublishGlobalThrottleEvent(handle applicationLevelThrottleKey, handle applicationLevelTier,
+function jPublishGlobalThrottleEvent(handle messageId, handle applicationLevelThrottleKey, handle applicationLevelTier,
         handle apiLevelThrottleKey, handle apiLevelTier, handle subscriptionLevelThrottleKey,
         handle subscriptionLevelTier,handle resourceLevelThrottleKey, handle resourceLevelTier,
         handle authorizedUser, handle apiContext, handle apiVersion, handle appTenant,handle apiTenant, handle appId,
-        handle apiName, handle messageId) = @java:Method {
+        handle apiName, handle properties) = @java:Method {
             name: "publishNonThrottledEvent",
             class: "org.wso2.micro.gateway.core.globalThrottle.ThrottleAgent"
 } external;
