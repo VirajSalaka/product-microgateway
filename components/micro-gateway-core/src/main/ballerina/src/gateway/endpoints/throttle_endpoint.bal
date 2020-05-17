@@ -15,7 +15,6 @@
 // under the License.
 
 import ballerina/http;
-import ballerina/log;
 
 string throttleEndpointUrl = getConfigValue(THROTTLE_CONF_INSTANCE_ID, THROTTLE_ENDPOINT_URL, DEFAULT_THROTTLE_ENDPOINT_URL);
 string throttleEndpointbase64Header = getConfigValue(THROTTLE_CONF_INSTANCE_ID, THROTTLE_ENDPOINT_BASE64_HEADER,
@@ -33,10 +32,12 @@ http:Client httpThrottleEndpoint = new (throttleEndpointUrl,
     }
 });
 
-//todo: avoid initializing local throttling if the global throttling is enabled
 public function initGlobalThrottleDataPublisher() {
-    if(!isHttpPublisherEnabled()) {
+    if(enabledGlobalTMEventPublishing && !isHttpPublisherEnabled()) {
+        printDebug(KEY_THROTTLE_UTIL, "ThrottleEvents will be published via binary endpoint.");
         initBinaryThrottleDataPublisher();
+    } else {
+        printDebug(KEY_THROTTLE_UTIL, "ThrottleEvents will be published via HTTPS endpoint.");
     }
 }
 
@@ -47,7 +48,6 @@ public function publishThrottleEventToTrafficManager(RequestStreamDTO throttleEv
     if (isHttpPublisherEnabled()) {
         publishHttpGlobalThrottleEvent(throttleEvent);
     } else {
-        //todo: improve debug logs for the process inside the java impl
         publishBinaryGlobalThrottleEvent(throttleEvent);
         printDebug(KEY_THROTTLE_UTIL, "ThrottleMessage is added to the event queue");
     }
@@ -87,9 +87,14 @@ function publishHttpGlobalThrottleEvent(RequestStreamDTO throttleEvent) {
 
     var response = httpThrottleEndpoint->post("/throttleEventReceiver", clientRequest);
     if (response is http:Response) {
-        printDebug(KEY_THROTTLE_UTIL, "\nStatus Code: " + response.statusCode.toString());
+        printDebug(KEY_THROTTLE_UTIL, "Status Code for throttle event publishing: " +
+            response.statusCode.toString());
+        if (response.statusCode != 200) {
+            printError(KEY_THROTTLE_UTIL, "Throttle event publishing is failed with Status Code: " +
+                response.statusCode.toString());
+        }
     } else {
-        log:printError(response.reason(), err = response);
+        printError(KEY_THROTTLE_UTIL, "Throttle event publishing is failed due to: " + response.reason(), response);
     }
 }
 
