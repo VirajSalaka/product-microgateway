@@ -112,41 +112,28 @@ function processTMPublisherURLGroup () returns [string, string] {
     map<anydata>[] | error urlGroups = map<anydata>[].constructFrom(config:getAsArray(TM_BINARY_URL_GROUP));
 
     if (urlGroups is map<anydata>[] && urlGroups.length() > 0) {
-        //todo: remove this as it has no effect
-        if (urlGroups.length() == 1) {
-            map<anydata> urlGroup = urlGroups[0];
-            if ((urlGroup[TM_BINARY_RECEIVER_URL] is string) && (urlGroup[TM_BINARY_AUTH_URL] is string)) {
-                return [<string>urlGroup[TM_BINARY_RECEIVER_URL], <string>urlGroup[TM_BINARY_AUTH_URL]];
+        foreach map<anydata> urlGroup in urlGroups {
+            string receiverUrl = "";
+            string authUrl = "";
+
+            if (urlGroup[TM_BINARY_RECEIVER_URL] is string) {
+                receiverUrl = <string>urlGroup[TM_BINARY_RECEIVER_URL];
             } else {
-                printDebug(KEY_GLOBAL_THROTTLE_EVENT_PUBLISHER, "Both/One of " + TM_BINARY_RECEIVER_URL +
-                    "and/or " + TM_BINARY_AUTH_URL + " properties are not provided under " + TM_BINARY_URL_GROUP);
+                printError(KEY_GLOBAL_THROTTLE_EVENT_PUBLISHER, TM_BINARY_URL_GROUP + " element is skipped as "
+                    + TM_BINARY_RECEIVER_URL + " property is not provided under " + TM_BINARY_URL_GROUP);
             }
-        } else {
-            foreach map<anydata> urlGroup in urlGroups {
-                string receiverUrl = "";
-                string authUrl = "";
 
-                if (urlGroup[TM_BINARY_RECEIVER_URL] is string) {
-                    receiverUrl = <string>urlGroup[TM_BINARY_RECEIVER_URL];
-                } else {
-                    printError(KEY_GLOBAL_THROTTLE_EVENT_PUBLISHER, TM_BINARY_URL_GROUP + " element is " +
-                        "skipped as " + TM_BINARY_RECEIVER_URL + " property is not provided under "
-                        + TM_BINARY_URL_GROUP);
-                }
+            if (urlGroup[TM_BINARY_AUTH_URL] is string) {
+                authUrl = <string>urlGroup[TM_BINARY_AUTH_URL];
+            } else {
+                printError(KEY_GLOBAL_THROTTLE_EVENT_PUBLISHER, TM_BINARY_URL_GROUP + " element is " +
+                    "skipped as " + TM_BINARY_AUTH_URL + " property is not provided under "  + TM_BINARY_URL_GROUP);
+            }
 
-                if (urlGroup[TM_BINARY_AUTH_URL] is string) {
-                    authUrl = <string>urlGroup[TM_BINARY_AUTH_URL];
-                } else {
-                    printError(KEY_GLOBAL_THROTTLE_EVENT_PUBLISHER, TM_BINARY_URL_GROUP + " element is " +
-                        "skipped as " + TM_BINARY_AUTH_URL + " property is not provided under "
-                        + TM_BINARY_URL_GROUP);
-                }
-
-                //the urlGroup is added only if both URLs are provided.
-                if (receiverUrl != "" && authUrl != "") {
-                    restructuredReceiverURL += "{ " + receiverUrl + " },";
-                    restructuredAuthURL += "{ " + authUrl + " },";
-                }
+            //the urlGroup is added only if both URLs are provided.
+            if (receiverUrl != "" && authUrl != "") {
+                restructuredReceiverURL += "{ " + receiverUrl + " },";
+                restructuredAuthURL += "{ " + authUrl + " },";
             }
         }
         //to remove the final ',' in the URLs

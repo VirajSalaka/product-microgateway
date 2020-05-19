@@ -33,7 +33,7 @@ http:Client httpThrottleEndpoint = new (throttleEndpointUrl,
 });
 
 public function initGlobalThrottleDataPublisher() {
-    if(enabledGlobalTMEventPublishing && !isHttpPublisherEnabled()) {
+    if(enabledGlobalTMEventPublishing && isBinaryPublisherEnabled()) {
         printDebug(KEY_THROTTLE_UTIL, "ThrottleEvents will be published via binary endpoint.");
         initBinaryThrottleDataPublisher();
     } else {
@@ -45,11 +45,11 @@ public function publishThrottleEventToTrafficManager(RequestStreamDTO throttleEv
 
     //Event will be published via http, if and only if the throttle_endpoint_url is available and binary_endpoint
     //configurations are not provided.
-    if (isHttpPublisherEnabled()) {
-        publishHttpGlobalThrottleEvent(throttleEvent);
-    } else {
+    if (isBinaryPublisherEnabled()) {
         publishBinaryGlobalThrottleEvent(throttleEvent);
         printDebug(KEY_THROTTLE_UTIL, "ThrottleMessage is added to the event queue");
+    } else {
+        publishHttpGlobalThrottleEvent(throttleEvent);
     }
 }
 
@@ -98,8 +98,7 @@ function publishHttpGlobalThrottleEvent(RequestStreamDTO throttleEvent) {
     }
 }
 
-function isHttpPublisherEnabled() returns boolean {
-    return containsConfigKey(THROTTLE_CONF_INSTANCE_ID, THROTTLE_ENDPOINT_URL) &&
-                //todo: fix this properly by providing enabled tag
-                !containsConfigKey(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_USERNAME);
+function isBinaryPublisherEnabled() returns boolean {
+    return  getConfigBooleanValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, ENABLED,
+    DEFAULT_TM_BINARY_PUBLISHER_ENABLED);
 }

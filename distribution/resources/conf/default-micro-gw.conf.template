@@ -241,13 +241,13 @@
 
   # Throttling configurations related to event publishing using a binary connection
   [throttlingConfig.binary]
+    enabled = "false";
     username = "admin"
     password = "admin"
     [[throttlingConfig.binary.URLGroup]]
       receiverURL = "tcp://localhost:9611"
       authURL = "ssl://localhost:9711"
     [throttlingConfig.binary.publisherPool]
-      #todo: max_idle_capacity ?
       maxIdle = 1000
       initIdleCapacity = 200
     [throttlingConfig.binary.publisherThreadPool]
