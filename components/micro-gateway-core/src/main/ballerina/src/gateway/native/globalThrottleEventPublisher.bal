@@ -27,24 +27,6 @@ public function initBinaryThrottleDataPublisher() {
 # Publish the throttleEvent
 # +throttleEvent - throttle Event
 public function publishBinaryGlobalThrottleEvent(RequestStreamDTO throttleEvent) {
-    string messageId = throttleEvent.messageID;
-    string applicationLevelThrottleKey = throttleEvent.appKey;
-    string apiLevelThrottleKey = throttleEvent.apiKey;
-    string applicationLevelTier = throttleEvent.appTier;
-    string apiLevelTier = throttleEvent.apiTier;
-    string subscriptionLevelThrottleKey = throttleEvent.subscriptionKey;
-    string subscriptionLevelTier = throttleEvent.subscriptionTier;
-    string resourceLevelThrottleKey = throttleEvent.resourceKey;
-    string resourceLevelTier = throttleEvent.resourceTier;
-    string authorizedUser = throttleEvent.userId;
-    string apiContext = throttleEvent.apiContext;
-    string apiVersion = throttleEvent.apiVersion;
-    string appTenant = throttleEvent.appTenant;
-    string apiTenant = throttleEvent.apiTenant;
-    string appId = throttleEvent.appId;
-    string apiName = throttleEvent.apiName;
-    string properties = throttleEvent.properties;
-
     jPublishGlobalThrottleEvent(throttleEvent);
 }
 
@@ -75,7 +57,6 @@ function loadTMBinaryPublisherConfiguration() {
 # set configurations related to binary agent
 function loadTMBinaryAgentConfiguration() {
     //todo: add debug logs to see the configurations passed
-    //todo: validate if the value is a power of 2
     int queueSize = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_QUEUE_SIZE,
         DEFAULT_TM_AGENT_QUEUE_SIZE);
     int batchSize = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_BATCH_SIZE,
