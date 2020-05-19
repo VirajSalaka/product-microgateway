@@ -1,5 +1,6 @@
 package org.wso2.micro.gateway.core.globalThrottle;
 
+import org.ballerinalang.jvm.values.api.BMap;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.conf.AgentConfiguration;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.publisher.PublisherConfiguration;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.publisher.ThrottleDataPublisher;
@@ -7,6 +8,10 @@ import org.wso2.micro.gateway.core.globalThrottle.databridge.publisher.ThrottleD
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * This class is used for ballerina interop invocations related to Global Throttle Event Publishing
+ * via binary communication.
+ */
 public class ThrottleAgent {
 
     private static ThrottleDataPublisher throttleDataPublisher = null;
@@ -43,11 +48,6 @@ public class ThrottleAgent {
     }
 
     public static void startThrottlePublisherPool() {
-        //todo:provided hard coded config path
-        //AgentHolder.setConfigPath("/Users/viraj/Desktop/data-agent-config.yaml");
-//        System.setProperty("javax.net.ssl.trustStore", "/Users/viraj/mgw_workspace/webinar-grpc/wso2am-micro-gw-macos-3.1.0/runtime/bre/security/ballerinaTruststore.p12");
-//        System.setProperty("javax.net.ssl.trustStorePassword", "ballerina");
-
         throttleDataPublisher = new ThrottleDataPublisher();
     }
 
@@ -72,18 +72,7 @@ public class ThrottleAgent {
         return mgwTrustStorePath;
     }
 
-    public static void publishNonThrottledEvent(
-            String messageId, String applicationLevelThrottleKey, String applicationLevelTier,
-            String apiLevelThrottleKey, String apiLevelTier,
-            String subscriptionLevelThrottleKey, String subscriptionLevelTier,
-            String resourceLevelThrottleKey, String resourceLevelTier,
-            String authorizedUser, String apiContext, String apiVersion, String appTenant, String apiTenant,
-            String appId, String apiName, String properties) {
-        throttleDataPublisher.publishNonThrottledEvent(messageId, applicationLevelThrottleKey, applicationLevelTier,
-                apiLevelThrottleKey, apiLevelTier,
-                subscriptionLevelThrottleKey, subscriptionLevelTier,
-                resourceLevelThrottleKey, resourceLevelTier,
-                authorizedUser, apiContext, apiVersion, appTenant, apiTenant,
-                appId, apiName, properties);
+    public static void publishNonThrottledEvent(BMap<String, String> throttleEvent) {
+        throttleDataPublisher.publishNonThrottledEvent(throttleEvent);
     }
 }

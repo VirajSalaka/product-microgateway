@@ -45,24 +45,7 @@ public function publishBinaryGlobalThrottleEvent(RequestStreamDTO throttleEvent)
     string apiName = throttleEvent.apiName;
     string properties = throttleEvent.properties;
 
-    publishGlobalThrottleEvent(messageId, applicationLevelThrottleKey, applicationLevelTier, apiLevelThrottleKey,
-        apiLevelTier, subscriptionLevelThrottleKey, subscriptionLevelTier, resourceLevelThrottleKey,
-        resourceLevelTier, authorizedUser, apiContext, apiVersion, appTenant, apiTenant, appId, apiName, properties);
-}
-
-function publishGlobalThrottleEvent(string messageId, string applicationLevelThrottleKey, string applicationLevelTier,
-    string apiLevelThrottleKey, string apiLevelTier, string subscriptionLevelThrottleKey,
-    string subscriptionLevelTier, string resourceLevelThrottleKey, string resourceLevelTier, string authorizedUser,
-    string apiContext, string apiVersion, string appTenant, string apiTenant, string appId, string apiName,
-    string properties) {
-
-    jPublishGlobalThrottleEvent(java:fromString(messageId), java:fromString(applicationLevelThrottleKey),
-        java:fromString(applicationLevelTier), java:fromString(apiLevelThrottleKey), java:fromString(apiLevelTier),
-        java:fromString(subscriptionLevelThrottleKey), java:fromString(subscriptionLevelTier),
-        java:fromString(resourceLevelThrottleKey), java:fromString(resourceLevelTier),
-        java:fromString(authorizedUser), java:fromString(apiContext), java:fromString(apiVersion),
-        java:fromString(appTenant), java:fromString(apiTenant), java:fromString(appId), java:fromString(apiName),
-        java:fromString(properties));
+    jPublishGlobalThrottleEvent(throttleEvent);
 }
 
 # set configurations related to binary publisher
@@ -158,7 +141,6 @@ function processTMPublisherURLGroup () returns [string, string] {
                     "and/or " + TM_BINARY_AUTH_URL + " properties are not provided under " + TM_BINARY_URL_GROUP);
             }
         } else {
-            //todo: decide if we need to do a pattern matching as a validation
             foreach map<anydata> urlGroup in urlGroups {
                 string receiverUrl = "";
                 string authUrl = "";
@@ -207,11 +189,7 @@ function jinitBinaryThrottleDataPublisher() = @java:Method {
     class: "org.wso2.micro.gateway.core.globalThrottle.ThrottleAgent"
 } external;
 
-function jPublishGlobalThrottleEvent(handle messageId, handle applicationLevelThrottleKey, handle applicationLevelTier,
-    handle apiLevelThrottleKey, handle apiLevelTier, handle subscriptionLevelThrottleKey,
-    handle subscriptionLevelTier,handle resourceLevelThrottleKey, handle resourceLevelTier,
-    handle authorizedUser, handle apiContext, handle apiVersion, handle appTenant,handle apiTenant, handle appId,
-    handle apiName, handle properties) = @java:Method {
+function jPublishGlobalThrottleEvent(RequestStreamDTO throttleEvent) = @java:Method {
         name: "publishNonThrottledEvent",
         class: "org.wso2.micro.gateway.core.globalThrottle.ThrottleAgent"
 } external;

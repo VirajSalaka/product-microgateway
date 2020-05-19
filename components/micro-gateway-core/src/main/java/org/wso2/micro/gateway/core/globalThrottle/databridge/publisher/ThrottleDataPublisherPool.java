@@ -18,8 +18,7 @@
 
 package org.wso2.micro.gateway.core.globalThrottle.databridge.publisher;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.StackObjectPool;
@@ -31,7 +30,7 @@ import org.apache.commons.pool.impl.StackObjectPool;
  */
 public class ThrottleDataPublisherPool {
 
-    private static final Log log = LogFactory.getLog(ThrottleDataPublisherPool.class);
+    private static final Logger log = Logger.getLogger(ThrottleDataPublisherPool.class);
 
     private ObjectPool clientPool;
 
@@ -43,7 +42,6 @@ public class ThrottleDataPublisherPool {
         // active" instance created by the pool, but is quite useful for re-using Objects without introducing
         // artificial limits.
         //Proper tuning is mandatory for good performance according to system load.
-        //todo: fetch these items from a config
         PublisherConfiguration configuration = PublisherConfiguration.getInstance();
         clientPool = new StackObjectPool(new BasePoolableObjectFactory() {
             @Override

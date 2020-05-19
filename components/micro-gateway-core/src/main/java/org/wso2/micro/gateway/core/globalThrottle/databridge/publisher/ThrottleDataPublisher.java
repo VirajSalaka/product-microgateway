@@ -18,13 +18,14 @@
 
 package org.wso2.micro.gateway.core.globalThrottle.databridge.publisher;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
+import org.ballerinalang.jvm.values.api.BMap;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.DataPublisher;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.DataEndpointAuthenticationException;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.DataEndpointConfigurationException;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.DataEndpointException;
 import org.wso2.carbon.databridge.commons.exception.TransportException;
+import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.util.ThrottleEventConstants;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -41,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 public class ThrottleDataPublisher {
     public static ThrottleDataPublisherPool dataPublisherPool;
 
-    public static final Log log = LogFactory.getLog(ThrottleDataPublisher.class);
+    public static final Logger log = Logger.getLogger(ThrottleDataPublisher.class);
 
     public static DataPublisher getDataPublisher() {
         return dataPublisher;
@@ -67,7 +68,6 @@ public class ThrottleDataPublisher {
                     TimeUnit.SECONDS,
                     new LinkedBlockingDeque<Runnable>() {
                     });
-            //todo: change the hardcoded value
             dataPublisher = new DataPublisher(publisherConfiguration.getReceiverUrlGroup(),
                     publisherConfiguration.getAuthUrlGroup(), publisherConfiguration.getUserName(),
                     publisherConfiguration.getPassword());
@@ -90,29 +90,26 @@ public class ThrottleDataPublisher {
     /**
      * This method used to pass message context and let it run within separate thread.
      */
-    public void publishNonThrottledEvent(
-            String messageId, String applicationLevelThrottleKey, String applicationLevelTier,
-            String apiLevelThrottleKey, String apiLevelTier,
-            String subscriptionLevelThrottleKey, String subscriptionLevelTier,
-            String resourceLevelThrottleKey, String resourceLevelTier,
-            String authorizedUser, String apiContext, String apiVersion, String appTenant, String apiTenant,
-            String appId, String apiName, String properties) {
+    public void publishNonThrottledEvent(BMap<String, String> throttleEvent) {
         try {
             if (dataPublisherPool != null) {
                 DataProcessAndPublishingAgent agent = dataPublisherPool.get();
-                agent.setDataReference(messageId, applicationLevelThrottleKey, applicationLevelTier,
-                        apiLevelThrottleKey, apiLevelTier,
-                        subscriptionLevelThrottleKey, subscriptionLevelTier,
-                        resourceLevelThrottleKey, resourceLevelTier,
-                        authorizedUser, apiContext, apiVersion, appTenant, apiTenant, appId, apiName,
-                        properties);
+                agent.setDataReference(throttleEvent);
                 if (log.isDebugEnabled()) {
+                    String messageId = throttleEvent.containsKey(ThrottleEventConstants.messageID) ?
+                            throttleEvent.get(ThrottleEventConstants.messageID) : "null";
+                    String apiContext = throttleEvent.containsKey(ThrottleEventConstants.apiContext) ?
+                            throttleEvent.get(ThrottleEventConstants.apiContext) : "null";
                     log.debug("Publishing throttle data from gateway to traffic-manager for: " + apiContext
                             + " with ID: " + messageId + " started" + " at "
                             + new SimpleDateFormat("[yyyy.MM.dd HH:mm:ss,SSS zzz]").format(new Date()));
                 }
                 executor.execute(agent);
                 if (log.isDebugEnabled()) {
+                    String messageId = throttleEvent.containsKey(ThrottleEventConstants.messageID) ?
+                            throttleEvent.get(ThrottleEventConstants.messageID) : "null";
+                    String apiContext = throttleEvent.containsKey(ThrottleEventConstants.apiContext) ?
+                            throttleEvent.get(ThrottleEventConstants.apiContext) : "null";
                     log.debug("Publishing throttle data from gateway to traffic-manager for: " + apiContext
                             + " with ID: " + messageId + " ended" + " at "
                             + new SimpleDateFormat("[yyyy.MM.dd HH:mm:ss,SSS zzz]").format(new Date()));

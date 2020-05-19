@@ -27,9 +27,6 @@ public class DataEndpointConstants {
     private DataEndpointConstants() {
     }
 
-    public static final String DATA_AGENT_CONF_FILE_NAME = "data.agent.config.yaml";
-    public static final String DATA_AGENT_CONF_FILE_PATH = File.separator
-            + "data-bridge" + File.separator + DATA_AGENT_CONF_FILE_NAME;
     public static final int DEFAULT_DATA_AGENT_BATCH_SIZE = 100;
     public static final String LB_URL_GROUP_SEPARATOR = ",";
     public static final String FAILOVER_URL_GROUP_SEPARATOR = "|";
@@ -37,15 +34,7 @@ public class DataEndpointConstants {
     public static final int DEFAULT_AUTH_PORT_OFFSET = 100;
     public static final String SEPARATOR = "##";
 
-    public static final String THRIFT_DATA_AGENT_TYPE = "THRIFT";
-    public static final String BINARY_DATA_AGENT_TYPE = "BINARY";
-
     public static final String SYNC_STRATEGY = "sync";
     public static final String ASYNC_STRATEGY = "async";
-
-    public static final String DATA_AGENT_CONFIG_NAMESPACE = "data.agent.config";
-    public static final String TRANSPORTS_NAMESPACE = "transports";
-    public static final String DATABRIDGE_CONFIG_NAMESPACE = "databridge";
-    public static final String DATABRIDGE_SENDER_CONFIG_NAMESPACE = "senderConfigurations";
 
 }

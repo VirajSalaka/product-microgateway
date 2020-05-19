@@ -18,10 +18,10 @@
 
 package org.wso2.micro.gateway.core.globalThrottle.databridge.publisher;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Logger;
+import org.ballerinalang.jvm.values.api.BMap;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.DataPublisher;
+import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.util.ThrottleEventConstants;
 
 /**
  * This class is responsible for executing data publishing logic. This class implements runnable interface and
@@ -30,7 +30,7 @@ import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.DataPublisher
  * transformation logic in this class will help to reduce overhead added to main message flow.
  */
 public class DataProcessAndPublishingAgent implements Runnable {
-    private static final Log log = LogFactory.getLog(DataProcessAndPublishingAgent.class);
+    private static final Logger log = Logger.getLogger(DataProcessAndPublishingAgent.class);
 
     private static String streamID = "org.wso2.throttle.request.stream:1.0.0";
     private DataPublisher dataPublisher;
@@ -66,6 +66,7 @@ public class DataProcessAndPublishingAgent implements Runnable {
         this.applicationLevelThrottleKey = null;
         this.applicationLevelTier = null;
         this.apiLevelThrottleKey = null;
+        this.apiLevelTier = null;
         this.subscriptionLevelThrottleKey = null;
         this.subscriptionLevelTier = null;
         this.resourceLevelThrottleKey = null;
@@ -82,34 +83,24 @@ public class DataProcessAndPublishingAgent implements Runnable {
     /**
      * This method will use to set message context.
      */
-    //TODO: Introduce mapvalue
-    //TODO: add properties parameter
-    public void setDataReference(String messageId, String applicationLevelThrottleKey, String applicationLevelTier,
-                                 String apiLevelThrottleKey, String apiLevelTier,
-                                 String subscriptionLevelThrottleKey, String subscriptionLevelTier,
-                                 String resourceLevelThrottleKey, String resourceLevelTier,
-                                 String authorizedUser, String apiContext, String apiVersion, String appTenant,
-                                 String apiTenant, String appId, String apiName, String properties) {
-        if (!StringUtils.isEmpty(apiLevelTier)) {
-            resourceLevelTier = apiLevelTier;
-            resourceLevelThrottleKey = apiLevelThrottleKey;
-        }
-        this.messageId = messageId;
-        this.applicationLevelThrottleKey = applicationLevelThrottleKey;
-        this.applicationLevelTier = applicationLevelTier;
-        this.apiLevelThrottleKey = apiLevelThrottleKey;
-        this.subscriptionLevelThrottleKey = subscriptionLevelThrottleKey;
-        this.subscriptionLevelTier = subscriptionLevelTier;
-        this.resourceLevelThrottleKey = resourceLevelThrottleKey;
-        this.resourceLevelTier = resourceLevelTier;
-        this.authorizedUser = authorizedUser;
-        this.apiContext = apiContext;
-        this.apiVersion = apiVersion;
-        this.appTenant = appTenant;
-        this.apiTenant = apiTenant;
-        this.appId = appId;
-        this.apiName = apiName;
-        this.properties = properties;
+    public void setDataReference(BMap<String, String> throttleEvent) {
+        this.messageId = throttleEvent.get(ThrottleEventConstants.messageID);
+        this.applicationLevelThrottleKey = throttleEvent.get(ThrottleEventConstants.appKey);
+        this.applicationLevelTier = throttleEvent.get(ThrottleEventConstants.appTier);
+        this.apiLevelThrottleKey = throttleEvent.get(ThrottleEventConstants.apiKey);
+        this.apiLevelTier = throttleEvent.get(ThrottleEventConstants.apiTier);
+        this.subscriptionLevelThrottleKey = throttleEvent.get(ThrottleEventConstants.subscriptionKey);
+        this.subscriptionLevelTier = throttleEvent.get(ThrottleEventConstants.subscriptionTier);
+        this.resourceLevelThrottleKey = throttleEvent.get(ThrottleEventConstants.resourceKey);
+        this.resourceLevelTier = throttleEvent.get(ThrottleEventConstants.resourceTier);
+        this.authorizedUser = throttleEvent.get(ThrottleEventConstants.userId);
+        this.apiContext = throttleEvent.get(ThrottleEventConstants.apiContext);
+        this.apiVersion = throttleEvent.get(ThrottleEventConstants.apiVersion);
+        this.appTenant = throttleEvent.get(ThrottleEventConstants.appTenant);
+        this.apiTenant = throttleEvent.get(ThrottleEventConstants.apiTenant);
+        this.appId = throttleEvent.get(ThrottleEventConstants.appId);
+        this.apiName = throttleEvent.get(ThrottleEventConstants.apiName);
+        this.properties = throttleEvent.get(ThrottleEventConstants.properties);
     }
 
     public void run() {

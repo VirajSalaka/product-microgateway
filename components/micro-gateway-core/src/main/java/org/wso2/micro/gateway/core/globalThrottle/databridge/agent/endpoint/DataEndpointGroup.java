@@ -74,7 +74,6 @@ public class DataEndpointGroup implements DataEndpointFailureCallback {
     /**
      * HA Type.
      */
-    //TODO: check the behavior here
     public enum HAType {
         FAILOVER, LOADBALANCE
     }
