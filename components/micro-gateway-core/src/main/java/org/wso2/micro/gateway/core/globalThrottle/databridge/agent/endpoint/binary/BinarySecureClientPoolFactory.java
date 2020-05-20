@@ -22,6 +22,7 @@ import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.AgentHolder;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.client.AbstractSecureClientPoolFactory;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.conf.DataEndpointConfiguration;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.DataEndpointException;
+import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.util.SecurityConstants;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
@@ -114,10 +115,9 @@ public class BinarySecureClientPoolFactory extends AbstractSecureClientPoolFacto
         FileInputStream fileInputStream;
         SSLContext ctx;
         try {
-            //todo: bring constant
-            ctx = SSLContext.getInstance("TLS");
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            ctx = SSLContext.getInstance(SecurityConstants.SSLCONTEXT_ALGORITHM);
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(SecurityConstants.TMF_ALGORITHM);
+            KeyStore keyStore = KeyStore.getInstance(SecurityConstants.KEYSTORE_TYPE);
             fileInputStream = new FileInputStream(this.getTrustStore());
             keyStore.load(fileInputStream, this.getTrustStorePassword() != null ?
                     this.getTrustStorePassword().toCharArray() : null);
