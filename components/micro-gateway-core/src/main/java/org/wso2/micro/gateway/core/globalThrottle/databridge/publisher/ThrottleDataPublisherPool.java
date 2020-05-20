@@ -18,7 +18,8 @@
 
 package org.wso2.micro.gateway.core.globalThrottle.databridge.publisher;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.StackObjectPool;
@@ -30,7 +31,7 @@ import org.apache.commons.pool.impl.StackObjectPool;
  */
 public class ThrottleDataPublisherPool {
 
-    private static final Logger log = Logger.getLogger(ThrottleDataPublisherPool.class);
+    private static final Logger log = LoggerFactory.getLogger("ballerina");
 
     private ObjectPool clientPool;
 

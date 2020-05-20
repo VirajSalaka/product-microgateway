@@ -17,7 +17,8 @@
  */
 package org.wso2.micro.gateway.core.globalThrottle.databridge.agent.endpoint.binary;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.AgentHolder;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.client.AbstractClientPoolFactory;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.conf.DataEndpointConfiguration;
@@ -30,7 +31,8 @@ import java.net.Socket;
  * This class implements AbstractClientPoolFactory to handle the Binary transport related connections.
  */
 public class BinaryClientPoolFactory extends AbstractClientPoolFactory {
-    private static final Logger log = Logger.getLogger(BinaryClientPoolFactory.class);
+
+    private static final Logger log = LoggerFactory.getLogger("ballerina");
 
     @Override
     public Object createClient(String protocol, String hostName, int port) throws DataEndpointException {
