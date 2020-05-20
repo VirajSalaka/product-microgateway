@@ -14,13 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/config;
-
-# Holds the properties related to global throttling binary publisher
 public type TMBinaryPublisherConfigDto record {
-    //these properties needs to be added after some preprocessing
-    string receiverURLGroup;
-    string authURLGroup;
+    string receiverURLGroup = "";
+    string authURLGroup = "";
     string username = getConfigValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_USERNAME, DEFAULT_TM_USERNAME);
     string password = getConfigValue(BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID, TM_PASSWORD, DEFAULT_TM_PASSWORD);
     int maxIdle = getConfigIntValue(BINARY_PUBLISHER_POOL_THROTTLE_CONF_INSTANCE_ID,
@@ -35,7 +31,6 @@ public type TMBinaryPublisherConfigDto record {
         TM_PUBLISHER_THREAD_POOL_KEEP_ALIVE_TIME, DEFAULT_TM_PUBLISHER_THREAD_POOL_KEEP_ALIVE_TIME);
 };
 
-# Holds the properties related to global throttling binary agent
 public type TMBinaryAgentConfigDto record {
     int queueSize = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID, TM_AGENT_QUEUE_SIZE,
         DEFAULT_TM_AGENT_QUEUE_SIZE);
@@ -67,7 +62,6 @@ public type TMBinaryAgentConfigDto record {
         TM_AGENT_SECURE_EVICTION_TIME_PERIOD, DEFAULT_TM_AGENT_SECURE_EVICTION_TIME_PERIOD);
     int secureMinIdleTimeInPool = getConfigIntValue(BINARY_AGENT_THROTTLE_CONF_INSTANCE_ID,
         TM_AGENT_SECURE_MIN_IDLE_TIME_IN_POOL, DEFAULT_TM_AGENT_SECURE_MIN_IDLE_TIME_IN_POOL);
-
     //the placeholder replacement is handled via the java implementation
     string trustStorePath = getConfigValue(LISTENER_CONF_INSTANCE_ID, TRUST_STORE_PATH, DEFAULT_TRUST_STORE_PATH);
     string trustStorePassword = getConfigValue(LISTENER_CONF_INSTANCE_ID, TRUST_STORE_PASSWORD,

@@ -15,6 +15,7 @@
 // under the License.
 
 import ballerinax/java;
+import ballerina/config;
 
 # Initialize the Binary Throttle Data Publisher
 public function initBinaryThrottleDataPublisher() {
@@ -31,10 +32,12 @@ public function publishBinaryGlobalThrottleEvent(RequestStreamDTO throttleEvent)
 
 # set configurations related to binary publisher
 function loadTMBinaryPublisherConfiguration() {
+    string receiverURLGroup;
+    string authURLGroup;
     TMBinaryPublisherConfigDto dto = {};
-    String receiverURLGroup;
-    String authURLGroup;
     [receiverURLGroup, authURLGroup] = processTMPublisherURLGroup();
+    dto.receiverURLGroup = receiverURLGroup;
+    dto.authURLGroup = authURLGroup;
     jSetTMBinaryPublisherConfiguration(dto);
 }
 
