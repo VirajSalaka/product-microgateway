@@ -19,7 +19,8 @@
 package org.wso2.micro.gateway.core.globalThrottle.databridge.agent.endpoint;
 
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.conf.DataEndpointConfiguration;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.DataEndpointAuthenticationException;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.DataEndpointException;
@@ -42,10 +43,10 @@ import java.util.concurrent.TimeUnit;
  * for supporting different transports to DataPublisher. This abstraction provides the additional
  * functionality to handle failover, asynchronous connection to the endpoint, etc.
  */
-
 public abstract class DataEndpoint {
 
-    private static final Logger log = Logger.getLogger(DataEndpoint.class);
+    //todo: remove ballerina
+    private static final Logger log = LoggerFactory.getLogger("ballerina");
 
     private DataEndpointConnectionWorker connectionWorker;
 
