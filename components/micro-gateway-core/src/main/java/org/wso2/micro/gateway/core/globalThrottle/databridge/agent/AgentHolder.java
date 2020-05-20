@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.wso2.micro.gateway.core.globalThrottle.databridge.agent;
 
 import org.apache.log4j.Logger;
@@ -24,7 +25,6 @@ import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.Dat
 /**
  * The holder the created agent and this is singleton class.
  */
-
 public class AgentHolder {
 
     private static final Logger log = Logger.getLogger(AgentHolder.class);

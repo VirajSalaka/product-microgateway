@@ -113,7 +113,6 @@ public class DataPublisher {
         dataEndpointAgent.addDataPublisher(this);
     }
 
-
     /**
      * This validates the input that are passed in the DataPublisher creation,
      * and initiates the endpoints connection.

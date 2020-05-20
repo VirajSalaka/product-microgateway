@@ -25,7 +25,6 @@ import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.Dat
 /**
  * DataEndpoint Connection worker class implementation.
  */
-
 public class DataEndpointConnectionWorker implements Runnable {
 
     private static final Logger log = Logger.getLogger(DataEndpointConnectionWorker.class);
@@ -86,7 +85,6 @@ public class DataEndpointConnectionWorker implements Runnable {
             throw new DataEndpointException("Already data endpoint is configured for the connection worker");
         }
     }
-
 
     private void connect() throws DataEndpointAuthenticationException {
         Object client = null;

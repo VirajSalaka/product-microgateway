@@ -135,31 +135,11 @@
             <artifactId>org.wso2.carbon.databridge.commons.binary</artifactId>
             <version>${org.wso2.carbon.analytics-common}</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.wso2.carbon.analytics-common</groupId>-->
-<!--            <artifactId>org.wso2.carbon.databridge.core</artifactId>-->
-<!--            <scope>test</scope>-->
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.ops4j.pax.logging</groupId>-->
-<!--                    <artifactId>pax-logging-api</artifactId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.ops4j.pax.logging</groupId>-->
-<!--                    <artifactId>pax-logging-log4j2</artifactId>-->
-<!--                </exclusion>-->
-<!--            </exclusions>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.wso2.orbit.com.lmax</groupId>
             <artifactId>disruptor</artifactId>
             <version>${org.wso2.orbit.com.lmax}</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.wso2.carbon</groupId>-->
-<!--            <artifactId>org.wso2.carbon.core</artifactId>-->
-<!--            <version>5.2.12</version>-->
-<!--        </dependency>-->
     </dependencies>
 
     <profiles>
@@ -262,12 +242,8 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/lib/dependencies/</outputDirectory>
-<!--                            <includeGroupIds>org.wso2.orbit.org.everit.json, org.json.wso2, org.wso2.orbit.com.lmax,-->
-<!--                                org.wso2.carbon.analytics-common, org.wso2.carbon</includeGroupIds>-->
-<!--                            <includeArtifactIds>org.everit.json.schema, json,-->
-<!--                                org.wso2.carbon.core, disruptor, org.wso2.carbon.databridge.commons.binary,-->
-<!--                                org.wso2.carbon.databridge.commons-->
-<!--                            </includeArtifactIds>-->
+                            <includeGroupIds>org.wso2.orbit.org.everit.json, org.json.wso2</includeGroupIds>
+                            <includeArtifactIds>org.everit.json.schema, json</includeArtifactIds>
                         </configuration>
                     </execution>
                 </executions>
