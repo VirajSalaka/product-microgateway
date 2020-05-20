@@ -16,60 +16,16 @@ public class ThrottleAgent {
 
     private static ThrottleDataPublisher throttleDataPublisher = null;
 
-    public static void setTMBinaryAgentConfiguration(String trustStorePath, String trustStorePassword,
-                                                     int queueSize, int batchSize, int corePoolSize,
-                                                     int socketTimeoutMS, int maxPoolSize, int keepAliveTimeInPool,
-                                                     int reconnectionInterval, int maxTransportPoolSize,
-                                                     int maxIdleConnections, int evictionTimePeriod,
-                                                     int minIdleTimeInPool, int secureMaxTransportPoolSize,
-                                                     int secureMaxIdleConnections, int secureEvictionTimePeriod,
-                                                     int secureMinIdleTimeInPool, String sslEnabledProtocols,
-                                                     String ciphers) {
-        //TrustStore path provided from the microgateway configuration needs to be preprocessed.
-        String resolvedTrustStorePath = preProcessTrustStorePath(trustStorePath);
-
-        AgentConfiguration.getInstance().setConfiguration(resolvedTrustStorePath, trustStorePassword, queueSize,
-                batchSize, corePoolSize, socketTimeoutMS, maxPoolSize, keepAliveTimeInPool, reconnectionInterval,
-                maxTransportPoolSize, maxIdleConnections, evictionTimePeriod, minIdleTimeInPool,
-                secureMaxTransportPoolSize, secureMaxIdleConnections, secureEvictionTimePeriod,
-                secureMinIdleTimeInPool, sslEnabledProtocols, ciphers);
+    public static void setTMBinaryAgentConfiguration(BMap<String, Object> publisherConfiguration) {
+        AgentConfiguration.getInstance().setConfiguration(publisherConfiguration);
     }
 
-    public static void setTMBinaryPublisherConfiguration(String receiverURLGroup, String authURLGroup,
-                                                         String userName, String password,
-                                                         int maxIdleDataPublishingAgents,
-                                                         int initIdleObjectDataPublishingAgents,
-                                                         int publisherThreadPoolCoreSize,
-                                                         int publisherThreadPoolMaximumSize,
-                                                         int publisherThreadPoolKeepAliveTime) {
-        PublisherConfiguration.getInstance().setConfiguration(receiverURLGroup, authURLGroup, userName, password,
-                maxIdleDataPublishingAgents, initIdleObjectDataPublishingAgents, publisherThreadPoolCoreSize,
-                publisherThreadPoolMaximumSize, publisherThreadPoolKeepAliveTime);
+    public static void setTMBinaryPublisherConfiguration(BMap<String, Object> publisherConfiguration) {
+        PublisherConfiguration.getInstance().setConfiguration(publisherConfiguration);
     }
 
     public static void startThrottlePublisherPool() {
         throttleDataPublisher = new ThrottleDataPublisher();
-    }
-
-    /**
-     * The Truststore path provided from the ballerina implementation could be associated with a system property.
-     * It needs to substituted with relevant system property.
-     * e.g. ${mgw-runtime.home}/runtime/bre/security/ballerinaTruststore.p12
-     *
-     * @param mgwTrustStorePath trustStorePath as provided by the microgateway configuration
-     * @return resolved trustStorePath
-     */
-    private static String preProcessTrustStorePath(String mgwTrustStorePath) {
-        String placeHolderRegex = "\\$\\{.*\\}";
-        Pattern placeHolderPattern = Pattern.compile(placeHolderRegex);
-        Matcher placeHolderMatcher = placeHolderPattern.matcher(mgwTrustStorePath);
-        if (placeHolderMatcher.find()) {
-            String placeHolder = placeHolderMatcher.group(0);
-            //to remove additional symbols
-            String systemPropertyKey = placeHolder.substring(2, placeHolder.length() - 1);
-            return placeHolderMatcher.replaceFirst(System.getProperty(systemPropertyKey));
-        }
-        return mgwTrustStorePath;
     }
 
     public static void publishNonThrottledEvent(BMap<String, String> throttleEvent) {

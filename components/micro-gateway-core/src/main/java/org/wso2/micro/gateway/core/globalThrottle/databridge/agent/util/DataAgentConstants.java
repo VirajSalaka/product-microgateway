@@ -19,18 +19,13 @@
 package org.wso2.micro.gateway.core.globalThrottle.databridge.agent.util;
 
 /**
- * Class to define the constants for Data Agent Constants.
+ * Class to define the constants for Data Agent.
  */
-
 public class DataAgentConstants {
 
     private DataAgentConstants() {
     }
 
-    //todo:remove unnecessary constants if it is finalized not to use maps
-    public static final String NAME = "name";
-    public static final String DATA_ENDPOINT_CLASS = "dataEndpointClass";
-    public static final String PUBLISHING_STRATEGY = "publishingStrategy";
     public static final String TRUST_STORE_PATH = "trustStorePath";
     public static final String TRUST_STORE_PASSWORD = "trustStorePassword";
     public static final String QUEUE_SIZE = "queueSize";
@@ -39,7 +34,7 @@ public class DataAgentConstants {
     public static final String SOCKET_TIMEOUT_MS = "socketTimeoutMS";
     public static final String MAX_POOL_SIZE = "maxPoolSize";
     public static final String KEEP_ALIVE_TIME_INTERVAL_IN_POOL = "keepAliveTimeInPool";
-    public static final String RECONNETION_INTERVAL = "reconnectionInterval";
+    public static final String RECONNECTION_INTERVAL = "reconnectionInterval";
     public static final String MAX_TRANSPORT_POOL_SIZE = "maxTransportPoolSize";
     public static final String MAX_IDLE_CONNECTIONS = "maxIdleConnections";
     public static final String EVICTION_TIME_PERIOD = "evictionTimePeriod";

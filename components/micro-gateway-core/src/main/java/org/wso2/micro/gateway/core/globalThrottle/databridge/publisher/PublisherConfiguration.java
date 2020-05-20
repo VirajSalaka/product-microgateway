@@ -18,6 +18,8 @@
 
 package org.wso2.micro.gateway.core.globalThrottle.databridge.publisher;
 
+import org.ballerinalang.jvm.values.api.BMap;
+
 public class PublisherConfiguration {
     private int maxIdleDataPublishingAgents = 250;
     private int initIdleObjectDataPublishingAgents = 250;
@@ -78,18 +80,24 @@ public class PublisherConfiguration {
         return InnerPublisherConfiguration.instance;
     }
 
-    public void setConfiguration(String receiverUrlGroup, String authUrlGroup, String userName, String password,
-                                 int maxIdleDataPublishingAgents, int initIdleObjectDataPublishingAgents,
-                                 int publisherThreadPoolCoreSize, int publisherThreadPoolMaximumSize,
-                                 int publisherThreadPoolKeepAliveTime) {
-        this.maxIdleDataPublishingAgents = maxIdleDataPublishingAgents;
-        this.initIdleObjectDataPublishingAgents = initIdleObjectDataPublishingAgents;
-        this.publisherThreadPoolCoreSize = publisherThreadPoolCoreSize;
-        this.publisherThreadPoolMaximumSize = publisherThreadPoolMaximumSize;
-        this.publisherThreadPoolKeepAliveTime = publisherThreadPoolKeepAliveTime;
-        this.receiverUrlGroup = receiverUrlGroup;
-        this.authUrlGroup = authUrlGroup;
-        this.userName = userName;
-        this.password = password;
+    public void setConfiguration(BMap<String, Object> publisherConfiguration) {
+        this.receiverUrlGroup = String.valueOf(publisherConfiguration.get(DataPublisherConstants.RECEIVER_URL_GROUP));
+        this.authUrlGroup = String.valueOf(publisherConfiguration.get(DataPublisherConstants.AUTH_URL_GROUP));
+        this.userName = String.valueOf(publisherConfiguration.get(DataPublisherConstants.USERNAME));
+        this.password = String.valueOf(publisherConfiguration.get(DataPublisherConstants.PASSWORD));
+        try {
+            this.maxIdleDataPublishingAgents =
+                    Math.toIntExact((long) publisherConfiguration.get(DataPublisherConstants.MAX_IDLE));
+            this.initIdleObjectDataPublishingAgents =
+                    Math.toIntExact((long) publisherConfiguration.get(DataPublisherConstants.INIT_IDLE_CAPACITY));
+            this.publisherThreadPoolCoreSize =
+                    Math.toIntExact((long) publisherConfiguration.get(DataPublisherConstants.CORE_POOL_SIZE));
+            this.publisherThreadPoolMaximumSize =
+                    (Math.toIntExact((long) publisherConfiguration.get(DataPublisherConstants.MAX_POOL_SIZE)));
+            this.publisherThreadPoolKeepAliveTime = Math.toIntExact((long) publisherConfiguration
+                    .get(DataPublisherConstants.KEEP_ALIVE_TIME));
+        } catch (ArithmeticException e) {
+            //todo: log the error
+        }
     }
 }

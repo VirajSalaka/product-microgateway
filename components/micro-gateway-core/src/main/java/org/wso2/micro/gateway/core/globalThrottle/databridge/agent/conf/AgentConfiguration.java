@@ -18,7 +18,12 @@
 
 package org.wso2.micro.gateway.core.globalThrottle.databridge.agent.conf;
 
+import org.ballerinalang.jvm.values.api.BMap;
+import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.util.DataAgentConstants;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.util.DataEndpointConstants;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Data agent configuration.
@@ -29,8 +34,9 @@ public class AgentConfiguration {
     }
 
     private String publishingStrategy = DataEndpointConstants.ASYNC_STRATEGY;
-    private String trustStorePath = "";
-    private String trustStorePassword = "";
+    private String trustStorePath =
+            preProcessTrustStorePath("${mgw-runtime.home}/runtime/bre/security/ballerinaTruststore.p12");
+    private String trustStorePassword = "ballerina";
     private int queueSize = 32768;
     private int batchSize = 200;
     private int corePoolSize = 1;
@@ -245,31 +251,65 @@ public class AgentConfiguration {
         return InnerAgentConfiguration.instance;
     }
 
-    public void setConfiguration(String trustStorePath, String trustStorePassword,
-                                 int queueSize, int batchSize, int corePoolSize, int socketTimeoutMS,
-                                 int maxPoolSize, int keepAliveTimeInPool, int reconnectionInterval,
-                                 int maxTransportPoolSize, int maxIdleConnections, int evictionTimePeriod,
-                                 int minIdleTimeInPool, int secureMaxTransportPoolSize, int secureMaxIdleConnections,
-                                 int secureEvictionTimePeriod, int secureMinIdleTimeInPool,
-                                 String sslEnabledProtocols, String ciphers) {
-        this.trustStorePath = trustStorePath;
-        this.trustStorePassword = trustStorePassword;
-        this.queueSize = queueSize;
-        this.batchSize = batchSize;
-        this.corePoolSize = corePoolSize;
-        this.socketTimeoutMS = socketTimeoutMS;
-        this.maxPoolSize = maxPoolSize;
-        this.keepAliveTimeInPool = keepAliveTimeInPool;
-        this.reconnectionInterval = reconnectionInterval;
-        this.maxTransportPoolSize = maxTransportPoolSize;
-        this.maxIdleConnections = maxIdleConnections;
-        this.evictionTimePeriod = evictionTimePeriod;
-        this.minIdleTimeInPool = minIdleTimeInPool;
-        this.secureMaxTransportPoolSize = secureMaxTransportPoolSize;
-        this.secureMaxIdleConnections = secureMaxIdleConnections;
-        this.secureEvictionTimePeriod = secureEvictionTimePeriod;
-        this.secureMinIdleTimeInPool = secureMinIdleTimeInPool;
-        this.sslEnabledProtocols = sslEnabledProtocols;
-        this.ciphers = ciphers;
+    public void setConfiguration(BMap<String, Object> configuration) {
+        String trustStorePath = String.valueOf(configuration.get(DataAgentConstants.TRUST_STORE_PATH));
+        //TrustStore path provided from the microgateway configuration needs to be preprocessed.
+        String resolvedTrustStorePath = preProcessTrustStorePath(trustStorePath);
+
+        this.trustStorePath = resolvedTrustStorePath;
+        this.trustStorePassword = String.valueOf(configuration.get(DataAgentConstants.TRUST_STORE_PASSWORD));
+        this.sslEnabledProtocols = String.valueOf(configuration.get(DataAgentConstants.SSL_ENABLED_PROTOCOLS));
+        this.ciphers = String.valueOf(configuration.get(DataAgentConstants.CIPHERS));
+
+        try {
+            this.queueSize = Math.toIntExact((long) configuration.get(DataAgentConstants.QUEUE_SIZE));
+            this.batchSize = Math.toIntExact((long) configuration.get(DataAgentConstants.BATCH_SIZE));
+            this.corePoolSize = Math.toIntExact((long) configuration.get(DataAgentConstants.CORE_POOL_SIZE));
+            this.socketTimeoutMS = Math.toIntExact((long) configuration.get(DataAgentConstants.SOCKET_TIMEOUT_MS));
+            this.maxPoolSize = Math.toIntExact((long) configuration.get(DataAgentConstants.MAX_POOL_SIZE));
+            this.keepAliveTimeInPool = Math.toIntExact((long) configuration
+                    .get(DataAgentConstants.KEEP_ALIVE_TIME_INTERVAL_IN_POOL));
+            this.reconnectionInterval = Math.toIntExact((long) configuration
+                    .get(DataAgentConstants.RECONNECTION_INTERVAL));
+            this.maxTransportPoolSize = Math.toIntExact((long) configuration.get(DataAgentConstants.MAX_TRANSPORT_POOL_SIZE));
+            this.maxIdleConnections = Math.toIntExact((long) configuration
+                    .get(DataAgentConstants.MAX_IDLE_CONNECTIONS));
+            this.evictionTimePeriod = Math.toIntExact((long) configuration
+                    .get(DataAgentConstants.EVICTION_TIME_PERIOD));
+            this.minIdleTimeInPool = Math.toIntExact((long) configuration
+                    .get(DataAgentConstants.MIN_IDLE_TIME_IN_POOL));
+            this.secureMaxTransportPoolSize = Math.toIntExact((long) configuration
+                    .get(DataAgentConstants.SECURE_MAX_TRANSPORT_POOL_SIZE));
+            this.secureMaxIdleConnections = Math.toIntExact((long) configuration
+                    .get(DataAgentConstants.SECURE_MAX_IDLE_CONNECTIONS));
+            this.secureEvictionTimePeriod = Math.toIntExact((long) configuration
+                    .get(DataAgentConstants.SECURE_EVICTION_TIME_PERIOD));
+            this.secureMinIdleTimeInPool = Math.toIntExact((long) configuration
+                    .get(DataAgentConstants.SECURE_MIN_IDLE_TIME_IN_POOL));
+        } catch (ArithmeticException e) {
+            //todo: handle the error
+        }
+
+    }
+
+    /**
+     * The Truststore path provided from the ballerina implementation could be associated with a system property.
+     * It needs to substituted with relevant system property.
+     * e.g. ${mgw-runtime.home}/runtime/bre/security/ballerinaTruststore.p12
+     *
+     * @param mgwTrustStorePath trustStorePath as provided by the microgateway configuration
+     * @return resolved trustStorePath
+     */
+    private static String preProcessTrustStorePath(String mgwTrustStorePath) {
+        String placeHolderRegex = "\\$\\{.*\\}";
+        Pattern placeHolderPattern = Pattern.compile(placeHolderRegex);
+        Matcher placeHolderMatcher = placeHolderPattern.matcher(mgwTrustStorePath);
+        if (placeHolderMatcher.find()) {
+            String placeHolder = placeHolderMatcher.group(0);
+            //to remove additional symbols
+            String systemPropertyKey = placeHolder.substring(2, placeHolder.length() - 1);
+            return placeHolderMatcher.replaceFirst(System.getProperty(systemPropertyKey));
+        }
+        return mgwTrustStorePath;
     }
 }
