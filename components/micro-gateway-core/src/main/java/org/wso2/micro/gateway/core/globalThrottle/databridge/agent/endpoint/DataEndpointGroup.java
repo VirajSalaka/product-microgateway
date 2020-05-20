@@ -107,14 +107,6 @@ public class DataEndpointGroup implements DataEndpointFailureCallback {
         }
     }
 
-    public void tryPublish(Event event, long timeoutMS) throws EventQueueFullException {
-        if (eventQueue != null) {
-            eventQueue.tryPut(event, timeoutMS);
-        } else if (!isShutdown) {
-            trySyncPublish(event, timeoutMS);
-        }
-    }
-
     public void publish(Event event) {
         if (eventQueue != null) {
             eventQueue.put(event);
@@ -135,28 +127,6 @@ public class DataEndpointGroup implements DataEndpointFailureCallback {
             }
         } catch (Throwable t) {
             log.error("Unexpected error: " + t.getMessage(), t);
-        }
-    }
-
-    private void trySyncPublish(Event event, long timeoutMS) {
-        long stopTime = System.currentTimeMillis() + timeoutMS;
-        while (true) {
-            DataEndpoint endpoint = getDataEndpoint(false);
-            if (endpoint != null) {
-                endpoint.syncSend(event);
-                break;
-            }
-            if (stopTime <= System.currentTimeMillis()) {
-                if (log.isDebugEnabled()) {
-                    log.debug("DataEndpoint not available for  last " + timeoutMS + " ms, dropping event : " +
-                            event);
-                }
-                break;
-            }
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException ignored) {
-            }
         }
     }
 
@@ -203,28 +173,6 @@ public class DataEndpointGroup implements DataEndpointFailureCallback {
                 this.ringBuffer.publish(sequence);
             } catch (InsufficientCapacityException e) {
                 throw new EventQueueFullException("Cannot send events because the event queue is full", e);
-            }
-        }
-
-        private void tryPut(Event event, long timeoutMS) throws EventQueueFullException {
-            long sequence;
-            long stopTime = System.currentTimeMillis() + timeoutMS;
-            while (true) {
-                try {
-                    sequence = this.ringBuffer.tryNext(1);
-                    WrappedEventFactory.WrappedEvent bufferedEvent = this.ringBuffer.get(sequence);
-                    bufferedEvent.setEvent(event);
-                    this.ringBuffer.publish(sequence);
-                    break;
-                } catch (InsufficientCapacityException ex) {
-                    if (stopTime <= System.currentTimeMillis()) {
-                        throw new EventQueueFullException("Cannot send events because the event queue is full", ex);
-                    }
-                    try {
-                        Thread.sleep(1);
-                    } catch (InterruptedException ignored) {
-                    }
-                }
             }
         }
 

@@ -126,9 +126,6 @@ public class BinarySecureClientPoolFactory extends AbstractSecureClientPoolFacto
             return ctx;
         } catch (NoSuchAlgorithmException | CertificateException | IOException | KeyManagementException |
                 KeyStoreException e) {
-            //todo: change the error messages with constants
-            //todo: if we allow user to have custom truststore path (other than the generic one) FileNotFound
-            // exception needs to separated from here.
             throw new DataEndpointException("Error while creating the SSLContext with instance type : TLS." +
                     e.getMessage(), e);
         }

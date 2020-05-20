@@ -21,7 +21,10 @@ import org.apache.log4j.Logger;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.conf.DataEndpointConfiguration;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.endpoint.DataEndpoint;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.endpoint.DataEndpointGroup;
-import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.*;
+import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.DataEndpointAuthenticationException;
+import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.DataEndpointConfigurationException;
+import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.DataEndpointException;
+import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.EventQueueFullException;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.util.DataPublisherUtil;
 import org.wso2.carbon.databridge.commons.Event;
 import org.wso2.carbon.databridge.commons.exception.TransportException;
@@ -61,29 +64,6 @@ public class DataPublisher {
      * than an AtomicLong, since this is not a critical stat.
      */
     private long failedEventCount;
-
-    /**
-     * Creates the DataPublisher instance for a specific user, and the it creates
-     * connection asynchronously to receiver endpoint.
-     *
-     * @param receiverURLSet The receiving endpoint URL Set. This can be either load balancing URL set,
-     *                       or Failover URL set.
-     * @param username       Authorized username at receiver.
-     * @param password       The password of the username provided.
-     * @throws DataEndpointException               Exception to be thrown when communicating with DataEndpoint.
-     * @throws DataEndpointConfigurationException  Exception to be thrown When parsing the Data Endpoint
-     *                                             configurations when initializing data publisher
-     * @throws DataEndpointAuthenticationException Exception to be thrown when connecting the Data Endpoint
-     * @throws TransportException                  Transport level exception
-     */
-    public DataPublisher(String receiverURLSet, String username, String password)
-            throws DataEndpointException, DataEndpointConfigurationException,
-            DataEndpointAuthenticationException, TransportException {
-        dataEndpointAgent = AgentHolder.getInstance().getDataEndpointAgent();
-        processEndpoints(dataEndpointAgent, receiverURLSet, DataPublisherUtil.
-                getDefaultAuthURLSet(receiverURLSet), username, password);
-        dataEndpointAgent.addDataPublisher(this);
-    }
 
     /**
      * Creates the DataPublisher instance for a specific user, and the it creates
@@ -313,200 +293,6 @@ public class DataPublisher {
     }
 
     /**
-     * Publish an event based on the event properties that are passed
-     * for all receiver groups which has been specified in the DataPublisher.
-     * This is a non-blocking invocation and if the queue if full
-     * then it will wait until timeoutMS value, and try to insert into the queue.
-     * If the publisher still can't insert into the queue then it will
-     * return back with success/failure to the client.
-     *
-     * @param event     The event which needs to be published to the receiver groups
-     * @param timeoutMS The timeout value to insert publish the event
-     * @return the success/failure of the event that has been published/dropped.
-     */
-    public boolean tryPublish(Event event, long timeoutMS) {
-        boolean sent = true;
-        for (DataEndpointGroup endpointGroup : endpointGroups) {
-            try {
-                endpointGroup.tryPublish(event, timeoutMS);
-            } catch (EventQueueFullException e) {
-                this.onEventQueueFull(endpointGroup, event);
-                sent = false;
-            }
-        }
-        return sent;
-    }
-
-    /**
-     * Publish an event based on the event properties that are passed
-     * for all receiver groups which has been specified in the DataPublisher.
-     * This is a non-blocking invocation and if the queue if full
-     * then it will wait until timeoutMS value, and try to insert into the queue.
-     * If the publisher still can't insert into the queue then it will
-     * return back with success/failure to the client.
-     *
-     * @param streamId             StreamId for which the event belongs to.
-     * @param metaDataArray        Meta data element of the event.
-     * @param correlationDataArray Correlation data element of the event.
-     * @param payloadDataArray     Payload data element of the event.
-     * @param timeoutMS            The timeout value to insert publish the event
-     * @return the success/failure of the event that has been published/dropped.
-     */
-    public boolean tryPublish(String streamId, Object[] metaDataArray, Object[] correlationDataArray,
-                              Object[] payloadDataArray, long timeoutMS) {
-        return tryPublish(new Event(streamId, System.currentTimeMillis(), metaDataArray,
-                correlationDataArray, payloadDataArray), timeoutMS);
-    }
-
-    /**
-     * Publish an event based on the event properties that are passed
-     * for all receiver groups which has been specified in the DataPublisher.
-     * This is a non-blocking invocation and if the queue if full
-     * then it will wait until timeoutMS value, and try to insert into the queue.
-     * If the publisher still can't insert into the queue then it will
-     * return back with success/failure to the client.
-     *
-     * @param streamId             StreamId for which the event belongs to.
-     * @param metaDataArray        Meta data element of the event.
-     * @param correlationDataArray Correlation data element of the event.
-     * @param payloadDataArray     Payload data element of the event.
-     * @param arbitraryDataMap     Arbitrary data element of the event, which was not included in the stream
-     *                             definition of the event, and intermittent data.
-     * @param timeoutMS            The timeout value to insert publish the event
-     * @return the success/failure of the event that has been published/dropped.
-     */
-    public boolean tryPublish(String streamId, Object[] metaDataArray, Object[] correlationDataArray,
-                              Object[] payloadDataArray, Map<String, String> arbitraryDataMap, long timeoutMS) {
-        return tryPublish(new Event(streamId, System.currentTimeMillis(), metaDataArray,
-                correlationDataArray, payloadDataArray, arbitraryDataMap), timeoutMS);
-    }
-
-    /**
-     * Publish an event based on the event properties that are passed
-     * for all receiver groups which has been specified in the DataPublisher.
-     * This is a non-blocking invocation and if the queue if full
-     * then it will wait until timeoutMS value, and try to insert into the queue.
-     * If the publisher still can't insert into the queue then it will
-     * return back with success/failure to the client.
-     *
-     * @param streamId             StreamId for which the event belongs to.
-     * @param metaDataArray        Meta data element of the event.
-     * @param correlationDataArray Correlation data element of the event.
-     * @param payloadDataArray     Payload data element of the event.
-     * @param timeStamp            Time stamp of the event.
-     * @param timeoutMS            The timeout value to insert publish the event
-     * @return the success/failure of the event that has been published/dropped.
-     */
-    public boolean tryPublish(String streamId, long timeStamp, Object[] metaDataArray,
-                              Object[] correlationDataArray, Object[] payloadDataArray, long timeoutMS) {
-        return tryPublish(new Event(streamId, timeStamp, metaDataArray, correlationDataArray, payloadDataArray),
-                timeoutMS);
-    }
-
-    /**
-     * Publish an event based on the event properties that are passed
-     * for all receiver groups which has been specified in the DataPublisher.
-     * This is a non-blocking invocation and if the queue if full
-     * then it will wait until timeoutMS value, and try to insert into the queue.
-     * If the publisher still can't insert into the queue then it will
-     * return back with success/failure to the client.
-     *
-     * @param streamId             StreamId for which the event belongs to.
-     * @param metaDataArray        Meta data element of the event.
-     * @param correlationDataArray Correlation data element of the event.
-     * @param payloadDataArray     Payload data element of the event.
-     * @param arbitraryDataMap     Arbitrary data element of the event, which was not included in the stream
-     *                             definition of the event, and intermittent data.
-     * @param timeStamp            Time stamp of the event.
-     * @param timeoutMS            The timeout value to insert publish the event
-     * @return the success/failure of the event that has been published/dropped.
-     */
-    public boolean tryPublish(String streamId, long timeStamp, Object[] metaDataArray,
-                              Object[] correlationDataArray, Object[] payloadDataArray,
-                              Map<String, String> arbitraryDataMap, long timeoutMS) {
-        return tryPublish(new Event(streamId, timeStamp, metaDataArray, correlationDataArray,
-                payloadDataArray, arbitraryDataMap), timeoutMS);
-    }
-
-    /**
-     * * Publish an event based on the event properties that are passed
-     * for all receiver groups which has been specified in the DataPublisher.
-     * This is a non-blocking invocation and if the queue if full
-     * then it will simply drop the event.
-     *
-     * @param streamId             StreamId for which the event belongs to.
-     * @param metaDataArray        Meta data element of the event.
-     * @param correlationDataArray Correlation data element of the event.
-     * @param payloadDataArray     Payload data element of the event.
-     * @return the success/failure of the event that has been published/dropped.
-     */
-    public boolean tryPublish(String streamId, Object[] metaDataArray, Object[] correlationDataArray,
-                              Object[] payloadDataArray) {
-        return tryPublish(new Event(streamId, System.currentTimeMillis(), metaDataArray,
-                correlationDataArray, payloadDataArray));
-    }
-
-    /**
-     * * Publish an event based on the event properties that are passed
-     * for all receiver groups which has been specified in the DataPublisher.
-     * This is a non-blocking invocation and if the queue if full
-     * then it will simply drop the event.
-     *
-     * @param streamId             StreamId for which the event belongs to.
-     * @param metaDataArray        Meta data element of the event.
-     * @param correlationDataArray Correlation data element of the event.
-     * @param payloadDataArray     Payload data element of the event.
-     * @param arbitraryDataMap     Arbitrary data element of the event, which was not included in the stream
-     *                             definition of the event, and intermittent data.
-     * @return the success/failure of the event that has been published/dropped.
-     */
-    public boolean tryPublish(String streamId, Object[] metaDataArray, Object[] correlationDataArray,
-                              Object[] payloadDataArray, Map<String, String> arbitraryDataMap) {
-        return tryPublish(new Event(streamId, System.currentTimeMillis(), metaDataArray,
-                correlationDataArray, payloadDataArray, arbitraryDataMap));
-    }
-
-    /**
-     * * Publish an event based on the event properties that are passed
-     * for all receiver groups which has been specified in the DataPublisher.
-     * This is a non-blocking invocation and if the queue if full
-     * then it will simply drop the event.
-     *
-     * @param streamId             StreamId for which the event belongs to.
-     * @param metaDataArray        Meta data element of the event.
-     * @param correlationDataArray Correlation data element of the event.
-     * @param payloadDataArray     Payload data element of the event.
-     * @param timeStamp            TimeStamp of the event.
-     * @return the success/failure of the event that has been published/dropped.
-     */
-    public boolean tryPublish(String streamId, long timeStamp, Object[] metaDataArray,
-                              Object[] correlationDataArray, Object[] payloadDataArray) {
-        return tryPublish(new Event(streamId, timeStamp, metaDataArray, correlationDataArray, payloadDataArray));
-    }
-
-    /**
-     * * Publish an event based on the event properties that are passed
-     * for all receiver groups which has been specified in the DataPublisher.
-     * This is a non-blocking invocation and if the queue if full
-     * then it will simply drop the event.
-     *
-     * @param streamId             StreamId for which the event belongs to.
-     * @param metaDataArray        Meta data element of the event.
-     * @param correlationDataArray Correlation data element of the event.
-     * @param payloadDataArray     Payload data element of the event.
-     * @param arbitraryDataMap     Arbitrary data element of the event, which was not included in the stream
-     *                             definition of the event, and intermittent data.
-     * @param timeStamp            Timestamp of the event.
-     * @return the success/failure of the event that has been published/dropped.
-     */
-    public boolean tryPublish(String streamId, long timeStamp, Object[] metaDataArray,
-                              Object[] correlationDataArray, Object[] payloadDataArray,
-                              Map<String, String> arbitraryDataMap) {
-        return tryPublish(new Event(streamId, timeStamp, metaDataArray, correlationDataArray,
-                payloadDataArray, arbitraryDataMap));
-    }
-
-    /**
      * Graceful shutdown of all the operations of the data publisher.
      * It will flush all the events to the relevant endpoint, and closes all the
      * resources and thread pools used for its operation. Once the shutdown operation
@@ -521,18 +307,4 @@ public class DataPublisher {
         dataEndpointAgent.shutDown(this);
     }
 
-    /**
-     * Graceful shutdown of all the operations of the data publisher, and also
-     * if there is no other data publishers registered with the associated then
-     * it will shutdown the agent as well. Also during the data publisher shutdown
-     * it will flush all the events to the relevant endpoint, and closes all the
-     * resources and thread pools used for its operation. Once the shutdown operation
-     * is called you can't publish events using the data publisher.
-     *
-     * @throws DataEndpointException Exception to be thrown when communicating with DataEndpoint.
-     */
-    public void shutdownWithAgent() throws DataEndpointException {
-        shutdown();
-        AgentHolder.shutdown();
-    }
 }

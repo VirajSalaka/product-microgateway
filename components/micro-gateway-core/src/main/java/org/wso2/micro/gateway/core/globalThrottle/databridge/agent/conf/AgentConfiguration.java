@@ -254,9 +254,7 @@ public class AgentConfiguration {
     public void setConfiguration(BMap<String, Object> configuration) {
         String trustStorePath = String.valueOf(configuration.get(DataAgentConstants.TRUST_STORE_PATH));
         //TrustStore path provided from the microgateway configuration needs to be preprocessed.
-        String resolvedTrustStorePath = preProcessTrustStorePath(trustStorePath);
-
-        this.trustStorePath = resolvedTrustStorePath;
+        this.trustStorePath = preProcessTrustStorePath(trustStorePath);
         this.trustStorePassword = String.valueOf(configuration.get(DataAgentConstants.TRUST_STORE_PASSWORD));
         this.sslEnabledProtocols = String.valueOf(configuration.get(DataAgentConstants.SSL_ENABLED_PROTOCOLS));
         this.ciphers = String.valueOf(configuration.get(DataAgentConstants.CIPHERS));
