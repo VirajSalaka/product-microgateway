@@ -19,8 +19,12 @@
 package org.wso2.micro.gateway.core.globalThrottle.databridge.publisher;
 
 import org.ballerinalang.jvm.values.api.BMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PublisherConfiguration {
+    private static final Logger log = LoggerFactory.getLogger(PublisherConfiguration.class);
+
     private int maxIdleDataPublishingAgents = 250;
     private int initIdleObjectDataPublishingAgents = 250;
 
@@ -97,7 +101,7 @@ public class PublisherConfiguration {
             this.publisherThreadPoolKeepAliveTime = Math.toIntExact((long) publisherConfiguration
                     .get(DataPublisherConstants.KEEP_ALIVE_TIME));
         } catch (ArithmeticException e) {
-            //todo: log the error
+            log.error("Error while processing the publisher configuration.", e);
         }
     }
 }

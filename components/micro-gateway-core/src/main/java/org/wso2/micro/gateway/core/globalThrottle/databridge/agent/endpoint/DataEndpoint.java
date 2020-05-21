@@ -354,7 +354,7 @@ public abstract class DataEndpoint {
 
     public String toString() {
         if (getDataEndpointConfiguration() == null) {
-            return "DataConfiguration is null as the connection worker is null. xxxx";
+            return "null";
         }
         return "( Receiver URL : " + getDataEndpointConfiguration().getReceiverURL() + ", Authentication URL : " +
                 getDataEndpointConfiguration().getAuthURL() + ")";

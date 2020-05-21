@@ -361,6 +361,7 @@ public class DataEndpointGroup implements DataEndpointFailureCallback {
     }
 
     private class ReconnectionTask implements Runnable {
+        String failedDataEndpoints = "";
         public void run() {
             boolean isOneReceiverConnected = false;
             for (int i = startIndex; i < maximumDataPublisherIndex.get(); i++) {
@@ -386,11 +387,14 @@ public class DataEndpointGroup implements DataEndpointFailureCallback {
                 }
                 if (dataEndpoint.isConnected()) {
                     isOneReceiverConnected = true;
+                } else {
+                    failedDataEndpoints = failedDataEndpoints + (dataEndpoint.getDataEndpointConfiguration() != null
+                            ? dataEndpoint.getDataEndpointConfiguration().getReceiverURL() : "Null") + ",";
                 }
             }
             if (!isOneReceiverConnected) {
-                log.warn("No receiver is reachable at reconnection, will try to reconnect every " +
-                        reconnectionInterval + " sec");
+                log.warn("Receiver is not reachable at reconnection for the endpoints: " + failedDataEndpoints +
+                        ", will try to reconnect every " + reconnectionInterval + " sec");
             }
         }
 

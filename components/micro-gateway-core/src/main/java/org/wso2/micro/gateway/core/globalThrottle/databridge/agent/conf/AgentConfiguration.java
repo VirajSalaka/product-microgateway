@@ -19,6 +19,8 @@
 package org.wso2.micro.gateway.core.globalThrottle.databridge.agent.conf;
 
 import org.ballerinalang.jvm.values.api.BMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.util.DataAgentConstants;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.util.DataEndpointConstants;
 
@@ -29,11 +31,12 @@ import java.util.regex.Pattern;
  * Data agent configuration.
  */
 public class AgentConfiguration {
+    private static final Logger log = LoggerFactory.getLogger(AgentConfiguration.class);
 
     private AgentConfiguration() {
     }
 
-    private String publishingStrategy = DataEndpointConstants.ASYNC_STRATEGY;
+    private final String publishingStrategy = DataEndpointConstants.ASYNC_STRATEGY;
     private String trustStorePath =
             preProcessTrustStorePath("${mgw-runtime.home}/runtime/bre/security/ballerinaTruststore.p12");
     private String trustStorePassword = "ballerina";
@@ -139,86 +142,6 @@ public class AgentConfiguration {
         return publishingStrategy;
     }
 
-    public void setTrustStorePath(String trustStorePath) {
-        this.trustStorePath = trustStorePath;
-    }
-
-    public void setTrustStorePassword(String trustStorePassword) {
-        this.trustStorePassword = trustStorePassword;
-    }
-
-    public void setPublishingStrategy(String publishingStrategy) {
-        this.publishingStrategy = publishingStrategy;
-    }
-
-    public void setQueueSize(int queueSize) {
-        this.queueSize = queueSize;
-    }
-
-    public void setBatchSize(int batchSize) {
-        this.batchSize = batchSize;
-    }
-
-    public void setCorePoolSize(int corePoolSize) {
-        this.corePoolSize = corePoolSize;
-    }
-
-    public void setSocketTimeoutMS(int socketTimeoutMS) {
-        this.socketTimeoutMS = socketTimeoutMS;
-    }
-
-    public void setMaxPoolSize(int maxPoolSize) {
-        this.maxPoolSize = maxPoolSize;
-    }
-
-    public void setKeepAliveTimeInPool(int keepAliveTimeInPool) {
-        this.keepAliveTimeInPool = keepAliveTimeInPool;
-    }
-
-    public void setReconnectionInterval(int reconnectionInterval) {
-        this.reconnectionInterval = reconnectionInterval;
-    }
-
-    public void setMaxTransportPoolSize(int maxTransportPoolSize) {
-        this.maxTransportPoolSize = maxTransportPoolSize;
-    }
-
-    public void setMaxIdleConnections(int maxIdleConnections) {
-        this.maxIdleConnections = maxIdleConnections;
-    }
-
-    public void setEvictionTimePeriod(int evictionTimePeriod) {
-        this.evictionTimePeriod = evictionTimePeriod;
-    }
-
-    public void setMinIdleTimeInPool(int minIdleTimeInPool) {
-        this.minIdleTimeInPool = minIdleTimeInPool;
-    }
-
-    public void setSecureMaxTransportPoolSize(int secureMaxTransportPoolSize) {
-        this.secureMaxTransportPoolSize = secureMaxTransportPoolSize;
-    }
-
-    public void setSecureMaxIdleConnections(int secureMaxIdleConnections) {
-        this.secureMaxIdleConnections = secureMaxIdleConnections;
-    }
-
-    public void setSecureEvictionTimePeriod(int secureEvictionTimePeriod) {
-        this.secureEvictionTimePeriod = secureEvictionTimePeriod;
-    }
-
-    public void setSecureMinIdleTimeInPool(int secureMinIdleTimeInPool) {
-        this.secureMinIdleTimeInPool = secureMinIdleTimeInPool;
-    }
-
-    public void setSslEnabledProtocols(String sslEnabledProtocols) {
-        this.sslEnabledProtocols = sslEnabledProtocols;
-    }
-
-    public void setCiphers(String ciphers) {
-        this.ciphers = ciphers;
-    }
-
     @Override
     public String toString() {
         return ", PublishingStrategy : " + publishingStrategy +
@@ -285,9 +208,8 @@ public class AgentConfiguration {
             this.secureMinIdleTimeInPool = Math.toIntExact((long) configuration
                     .get(DataAgentConstants.SECURE_MIN_IDLE_TIME_IN_POOL));
         } catch (ArithmeticException e) {
-            //todo: handle the error
+            log.error("Error while processing the publisher configuration.", e);
         }
-
     }
 
     /**
