@@ -18,8 +18,7 @@
 
 package org.wso2.micro.gateway.core.globalThrottle.databridge.agent;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.conf.AgentConfiguration;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.DataEndpointException;
 
@@ -28,7 +27,7 @@ import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.Dat
  */
 public class AgentHolder {
 
-    private static final Logger log = LoggerFactory.getLogger("ballerina");
+    private static final Logger log = Logger.getLogger(AgentHolder.class);
     private static AgentHolder instance;
     private DataEndpointAgent agent;
 

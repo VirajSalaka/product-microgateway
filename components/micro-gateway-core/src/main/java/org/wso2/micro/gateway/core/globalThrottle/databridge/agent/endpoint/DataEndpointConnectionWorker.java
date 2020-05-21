@@ -17,8 +17,7 @@
  */
 package org.wso2.micro.gateway.core.globalThrottle.databridge.agent.endpoint;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.conf.DataEndpointConfiguration;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.DataEndpointAuthenticationException;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.DataEndpointException;
@@ -28,7 +27,7 @@ import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.exception.Dat
  */
 public class DataEndpointConnectionWorker implements Runnable {
 
-    private static final Logger log = LoggerFactory.getLogger("ballerina");
+    private static final Logger log = Logger.getLogger(DataEndpointConnectionWorker.class);
 
     private DataEndpointConfiguration dataEndpointConfiguration;
 

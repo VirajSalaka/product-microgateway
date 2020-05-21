@@ -17,8 +17,7 @@
  */
 package org.wso2.micro.gateway.core.globalThrottle.databridge.agent.endpoint.binary;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.AgentHolder;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.client.AbstractSecureClientPoolFactory;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.conf.DataEndpointConfiguration;
@@ -42,9 +41,7 @@ import java.security.cert.CertificateException;
  * This is a Binary Transport secure implementation for AbstractSecureClientPoolFactory to be used by BinaryEndpoint.
  */
 public class BinarySecureClientPoolFactory extends AbstractSecureClientPoolFactory {
-
-    private static final Logger log = LoggerFactory.getLogger("ballerina");
-
+    private static final Logger log = Logger.getLogger(BinarySecureClientPoolFactory.class);
     private static SSLSocketFactory sslSocketFactory;
 
     public BinarySecureClientPoolFactory(String trustStore, String trustStorePassword) {
