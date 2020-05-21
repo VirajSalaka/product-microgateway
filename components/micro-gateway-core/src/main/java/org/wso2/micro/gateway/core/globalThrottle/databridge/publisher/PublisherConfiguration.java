@@ -19,11 +19,11 @@
 package org.wso2.micro.gateway.core.globalThrottle.databridge.publisher;
 
 import org.ballerinalang.jvm.values.api.BMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 public class PublisherConfiguration {
-    private static final Logger log = LoggerFactory.getLogger(PublisherConfiguration.class);
+    private static final Logger log = LogManager.getLogger(PublisherConfiguration.class);
 
     private int maxIdleDataPublishingAgents = 250;
     private int initIdleObjectDataPublishingAgents = 250;

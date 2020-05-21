@@ -18,7 +18,8 @@
 
 package org.wso2.micro.gateway.core.globalThrottle.databridge.publisher;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.ballerinalang.jvm.values.api.BMap;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.DataPublisher;
 import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.util.ThrottleEventConstants;
@@ -30,7 +31,7 @@ import org.wso2.micro.gateway.core.globalThrottle.databridge.agent.util.Throttle
  * transformation logic in this class will help to reduce overhead added to main message flow.
  */
 public class DataProcessAndPublishingAgent implements Runnable {
-    private static final Logger log = Logger.getLogger(DataProcessAndPublishingAgent.class);
+    private static final Logger log = LogManager.getLogger(DataProcessAndPublishingAgent.class);
 
     private static String streamID = "org.wso2.throttle.request.stream:1.0.0";
     private DataPublisher dataPublisher;
