@@ -58,6 +58,9 @@ public const string SUPER_TENANT_DOMAIN_NAME = "carbon.super";
 public const int SUPER_TENANT_ID = -1234;
 public const string THROTTLE_KEY = "throttleKey";
 public const string POLICY_KEY = "policyKey";
+public const string KEY_TEMPLATE_VALUE = "keyTemplateValue";
+public const string KEY_TEMPLATE_STATE = "keyTemplateState";
+public const string KEY_TEMPLATE_ADD = "add";
 public const string RESOURCE_TIER_ANN_PACKAGE = "ballerina.gateway";
 public const string RESOURCE_TIER_ANN_NAME = "RateLimit";
 public const string RESOURCE_SECURITY_ANN_NAME = "Security";
@@ -234,6 +237,14 @@ public const string ENABLE_HOSTNAME_VERIFICATION = "verifyHostname";
 public const string BLOCKING_CONDITION_STATE = "state";
 public const string BLOCKING_CONDITION_KEY = "blockingCondition";
 public const string BLOCKING_CONDITION_VALUE = "conditionValue";
+public const string BLOCKING_CONDITION_IP = "IP";
+public const string BLOCKING_CONDITION_IP_RANGE = "IPRANGE";
+public const string BLOCKING_CONDITION_ID = "id";
+public const string BLOCKING_CONDITION_TENANAT_DOMAIN = "tenantDomain";
+public const string BLOCKING_CONDITION_TYPE = "type";
+public const string BLOCKING_CONDITION_FIXED_IP = "fixedIp";
+public const string BLOCKING_CONDITION_START_IP = "startingIp";
+public const string BLOCKING_CONDITION_END_IP = "endingIp";
 
 public const string LISTENER_CONF_INSTANCE_ID = "listenerConfig";
 public const string LISTENER_CONF_HOST = "host";
@@ -305,6 +316,7 @@ public const string JMS_CONNECTION_USERNAME = "jmsConnectionUsername";
 public const string JMS_CONNECTION_PASSWORD = "jmsConnectionPassword";
 public const string THROTTLE_ENDPOINT_URL = "throttleEndpointUrl";
 public const string THROTTLE_ENDPOINT_BASE64_HEADER = "throttleEndpointbase64Header";
+public const string THROTTLE_CONF_KEY_TEMPLATE_INSTANCE_ID = "throttlingConfig.dataRetriever";
 
 public const string BINARY_PUBLISHER_THROTTLE_CONF_INSTANCE_ID = "throttlingConfig.binary";
 public const string BINARY_PUBLISHER_POOL_THROTTLE_CONF_INSTANCE_ID = "throttlingConfig.binary.publisherPool";
@@ -379,6 +391,8 @@ public const int UNPROCESSABLE_ENTITY = 422;
 
 // end of http codes
 const string PATH_SEPERATOR = "/";
+const string TENANT_DOMAIN_PREFIX = "/t/";
+const string TENANT_DOMAIN_SEPERATOR = "@";
 
 //http2 constants
 public const string HTTP2_INSTANCE_ID = "http2";
@@ -398,6 +412,9 @@ const string KEY_VALIDATION_FILTER = "ValidationFilter";
 const string KEY_BASIC_AUTH_FILTER = "BasicAuthFilter";
 public const string KEY_THROTTLE_UTIL = "ThrottleUtil";
 public const string KEY_GLOBAL_THROTTLE_EVENT_PUBLISHER = "GlobalThrottleEventPublisher";
+const string KEY_THROTTLE_EVENT_LISTENER = "ThrottleEventListener";
+const string KEY_TEMPLATE_RETIEVAL_TASK = "KeyTemplateRetrievalTask";
+const string KEY_BLOCKING_CONDITION_RETRIEVAL_TASK = "BlockingConditionRetrievalTask";
 const string KEY_GW_CACHE = "GatewayCache";
 const string KEY_UTILS = "Utils";
 const string KEY_OAUTH_PROVIDER = "OAuthAuthProvider";
@@ -459,3 +476,5 @@ public const string API_PUBLISHER = "api_publisher";
 public const string API_NAME = "api_name";
 public const string MATCHING_RESOURCE = "matching_resource";
 
+
+public const int DEFAULT_AUTH_FILTER_POSITION = 2;

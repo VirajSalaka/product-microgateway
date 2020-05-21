@@ -97,20 +97,20 @@ function loadTMBinaryAgentConfiguration() {
 
 function jinitBinaryThrottleDataPublisher() = @java:Method {
     name: "startThrottlePublisherPool",
-    class: "org.wso2.micro.gateway.core.globalThrottle.ThrottleAgent"
+    class: "org.wso2.micro.gateway.core.globalthrottle.ThrottleAgent"
 } external;
 
 function jPublishGlobalThrottleEvent(RequestStreamDTO throttleEvent) = @java:Method {
         name: "publishNonThrottledEvent",
-        class: "org.wso2.micro.gateway.core.globalThrottle.ThrottleAgent"
+        class: "org.wso2.micro.gateway.core.globalthrottle.ThrottleAgent"
 } external;
 
 function jSetTMBinaryAgentConfiguration(TMBinaryAgentConfigDto dto) = @java:Method {
         name: "setTMBinaryAgentConfiguration",
-        class: "org.wso2.micro.gateway.core.globalThrottle.ThrottleAgent"
+        class: "org.wso2.micro.gateway.core.globalthrottle.ThrottleAgent"
 } external;
 
 function jSetTMBinaryPublisherConfiguration(TMBinaryPublisherConfigDto dto) = @java:Method {
         name: "setTMBinaryPublisherConfiguration",
-        class: "org.wso2.micro.gateway.core.globalThrottle.ThrottleAgent"
+        class: "org.wso2.micro.gateway.core.globalthrottle.ThrottleAgent"
 } external;
