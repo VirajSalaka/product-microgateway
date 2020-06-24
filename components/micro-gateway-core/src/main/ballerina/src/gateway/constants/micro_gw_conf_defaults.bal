@@ -157,6 +157,11 @@ public const boolean DEFAULT_PERSISTENT_USE_DEFAULT = true;
 public const string DEFAULT_PERSISTENT_MESSAGE_HOSTNAME = "https://127.0.0.1:2379/v2/keys/jti/";
 public const string DEFAULT_PERSISTENT_MESSAGE_USERNAME = "root";
 public const string DEFAULT_PERSISTENT_MESSAGE_PASSWORD = "root";
+public const boolean DEFAULT_PERSISTENT_MESSAGE_PILOT_ENABLED = true;
+public const string DEFAULT_PERSISTENT_MESSAGE_PILOT_REVOKED_TOKEN_RETRIEVE_ENDPOINT =
+    "https://localhost:9443/throttle/data/v1/revokedjwt";
+public const string DEFAULT_PERSISTENT_MESSAGE_PILOT_USERNAME = "admin";
+public const string DEFAULT_PERSISTENT_MESSAGE_PILOT_PASSWORD = "admin";
 
 public const boolean DEFAULT_HOSTNAME_VERIFICATION_ENABLED = true;
 public const int DEFAULT_HTTP_CLIENTS_MAX_ACTIVE_CONNECTIONS = -1;

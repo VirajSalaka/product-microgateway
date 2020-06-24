@@ -158,6 +158,12 @@
     username = "root"
     # The password of your persistent storage server
     password = "root"
+    # todo: add description
+    [tokenRevocationConfig.persistent.pilot]
+    enablePersistentStorageRetrieval = true
+    revokedTokenRetrievalEndpoint = "https://localhost:9443/throttle/data/v1/revokedjwt"
+    username = "admin"
+    password = "admin"
 
 # token cache configurations
 [caching]
