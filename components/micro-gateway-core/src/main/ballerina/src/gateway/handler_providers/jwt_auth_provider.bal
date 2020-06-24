@@ -67,7 +67,7 @@ public type JwtAuthProvider object {
                 setErrorMessageToInvocationContext(API_AUTH_INVALID_CREDENTIALS);
                 return handleVar;
             }
-            boolean isBlacklisted = false;
+            boolean isBlocked = false;
             string? jti = "";
             runtime:InvocationContext invocationContext = runtime:getInvocationContext();
             runtime:AuthenticationContext? authContext = invocationContext?.authenticationContext;
@@ -91,17 +91,17 @@ public type JwtAuthProvider object {
                             if (status is boolean) {
                                 if (status) {
                                     printDebug(KEY_JWT_AUTH_PROVIDER, "JTI token found in the invalid token map.");
-                                    isBlacklisted = true;
+                                    isBlocked = true;
                                 } else {
                                     printDebug(KEY_JWT_AUTH_PROVIDER, "JTI token not found in the invalid token map.");
-                                    isBlacklisted = false;
+                                    isBlocked = false;
                                 }
                             } else {
                                 printDebug(KEY_JWT_AUTH_PROVIDER, "JTI token not found in the invalid token map.");
-                                isBlacklisted = false;
+                                isBlocked = false;
                             }
-                            if (isBlacklisted) {
-                                printDebug(KEY_JWT_AUTH_PROVIDER, "JWT Authentication Handler value for, is token black listed: " + isBlacklisted.toString());
+                            if (isBlocked) {
+                                printDebug(KEY_JWT_AUTH_PROVIDER, "JWT Authentication Handler value for, is token blocked: " + isBlocked.toString());
                                 printDebug(KEY_JWT_AUTH_PROVIDER, "JWT Token is revoked");
                                 setErrorMessageToInvocationContext(API_AUTH_INVALID_CREDENTIALS);
                                 return false;
