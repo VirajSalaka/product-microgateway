@@ -185,6 +185,36 @@ service apiKeyService on apiSecureListener {
 }
 
 @http:ServiceConfig {
+    basePath:"/notify",
+    auth: {
+        enabled: true,
+        authHandlers: gateway:getAuthHandlers([gateway:AUTHN_SCHEME_BASIC])
+    } {{#corsConfiguration.corsConfigurationEnabled}},
+    cors: {
+         allowOrigins: [{{#corsConfiguration.accessControlAllowOrigins}}"{{.}}"{{#unless @last}},{{/unless}}{{/corsConfiguration.accessControlAllowOrigins}}],
+         allowCredentials: {{corsConfiguration.accessControlAllowCredentials}},
+         allowHeaders: [{{#corsConfiguration.accessControlAllowHeaders}}"{{.}}"{{#unless @last}},{{/unless}}{{/corsConfiguration.accessControlAllowHeaders}}],
+         allowMethods: [{{#corsConfiguration.accessControlAllowMethods}}"{{.}}"{{#unless @last}},{{/unless}}{{/corsConfiguration.accessControlAllowMethods}}]
+    }
+    {{/corsConfiguration.corsConfigurationEnabled}}
+}
+@gateway:Filters {
+    skipAll: true
+}
+service revokedTokenNotifyService on apiSecureListener {
+    @http:ResourceConfig {
+        path: "/*",
+        auth: {
+            enabled: true,
+            authHandlers: gateway:getAuthHandlers([gateway:AUTHN_SCHEME_BASIC])
+        }
+    }
+    resource function apiKeyResource(http:Caller caller, http:Request req) {
+        //todo: implement the body such that do the event hub call and then send a 200OK
+    }
+}
+
+@http:ServiceConfig {
     basePath:"/userinfo",
     auth: {
         enabled: false
