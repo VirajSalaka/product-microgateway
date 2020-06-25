@@ -68,7 +68,6 @@ public type JwtAuthProvider object {
                 return handleVar;
             }
             boolean isBlocked = false;
-            string? jti = "";
             runtime:InvocationContext invocationContext = runtime:getInvocationContext();
             runtime:AuthenticationContext? authContext = invocationContext?.authenticationContext;
             if (authContext is runtime:AuthenticationContext) {
@@ -83,31 +82,10 @@ public type JwtAuthProvider object {
                     if (cachedJwt is jwt:InboundJwtCacheEntry) {
                         printDebug(KEY_JWT_AUTH_PROVIDER, "jwt found from the jwt cache");
                         jwt:JwtPayload jwtPayloadFromCache = cachedJwt.jwtPayload;
-                        jti = jwtPayloadFromCache["jti"];
-                        if (jti is string) {
-                            printDebug(KEY_JWT_AUTH_PROVIDER, "jti claim found in the jwt");
-                            printDebug(KEY_JWT_AUTH_PROVIDER, "Checking for the JTI in the gateway invalid revoked token map.");
-                            var status = retrieveFromRevokedTokenMap(jti);
-                            if (status is boolean) {
-                                if (status) {
-                                    printDebug(KEY_JWT_AUTH_PROVIDER, "JTI token found in the invalid token map.");
-                                    isBlocked = true;
-                                } else {
-                                    printDebug(KEY_JWT_AUTH_PROVIDER, "JTI token not found in the invalid token map.");
-                                    isBlocked = false;
-                                }
-                            } else {
-                                printDebug(KEY_JWT_AUTH_PROVIDER, "JTI token not found in the invalid token map.");
-                                isBlocked = false;
-                            }
-                            if (isBlocked) {
-                                printDebug(KEY_JWT_AUTH_PROVIDER, "JWT Authentication Handler value for, is token blocked: " + isBlocked.toString());
-                                printDebug(KEY_JWT_AUTH_PROVIDER, "JWT Token is revoked");
-                                setErrorMessageToInvocationContext(API_AUTH_INVALID_CREDENTIALS);
-                                return false;
-                            }
-                        } else {
-                            printDebug(KEY_JWT_AUTH_PROVIDER, "jti claim not found in the jwt");
+                        isBlocked = isRevokedToken(jwtPayloadFromCache);
+                        if (isBlocked) {
+                            setErrorMessageToInvocationContext(API_AUTH_INVALID_CREDENTIALS);
+                            return false;
                         }
                         if(self.className != "" || (claimsSet is map<anydata>[] && claimsSet.length() > 0)) {
                             var jwtTokenClaimCached = self.gatewayCache.retrieveClaimMappingCache(jwtToken);
@@ -130,6 +108,11 @@ public type JwtAuthProvider object {
                     printDebug(KEY_JWT_AUTH_PROVIDER, "jwt not found in the jwt cache");
                     (jwt:JwtPayload | error) payload = getDecodedJWTPayload(jwtToken);
                     if (payload is jwt:JwtPayload) {
+                        isBlocked = isRevokedToken(payload);
+                        if (isBlocked) {
+                            setErrorMessageToInvocationContext(API_AUTH_INVALID_CREDENTIALS);
+                            return false;
+                        }
                         if(self.className != "" || (claimsSet is map<anydata>[] && claimsSet.length() > 0)) {
                             var jwtTokenClaimCached = self.gatewayCache.retrieveClaimMappingCache(jwtToken);
                             if (jwtTokenClaimCached is runtime:Principal) {
@@ -229,5 +212,38 @@ public function putScopeValue(any scope, runtime:InvocationContext invocationCon
         }
     } else {
         return prepareError("Scope is not a string format.");
+    }
+}
+
+# To check if a token is revoked, using the jti claim.
+# + jwtPayload - JWT token
+# + return - Returns `true` if the token is found in revokedTokenMap. Else, returns `false`.
+function isRevokedToken(jwt:JwtPayload jwtPayload) returns boolean{
+    string? jti = jwtPayload["jti"];
+    boolean isBlocked = false;
+    if (jti is string) {
+        printDebug(KEY_JWT_AUTH_PROVIDER, "jti claim found in the jwt");
+        printDebug(KEY_JWT_AUTH_PROVIDER, "Checking for the JTI in the gateway invalid revoked token map.");
+        var status = retrieveFromRevokedTokenMap(jti);
+        if (status is boolean) {
+            if (status) {
+                printDebug(KEY_JWT_AUTH_PROVIDER, "JTI token found in the invalid token map.");
+                isBlocked = true;
+            } else {
+                printDebug(KEY_JWT_AUTH_PROVIDER, "JTI token not found in the invalid token map.");
+            }
+        } else {
+            printDebug(KEY_JWT_AUTH_PROVIDER, "JTI token not found in the invalid token map.");
+        }
+        if (isBlocked) {
+            printDebug(KEY_JWT_AUTH_PROVIDER, "JWT Authentication Handler value for, is token blocked: "
+                + isBlocked.toString());
+            printDebug(KEY_JWT_AUTH_PROVIDER, "JWT Token is revoked");
+            return true;
+        }
+        return false;
+    } else {
+        printDebug(KEY_JWT_AUTH_PROVIDER, "jti claim not found in the jwt");
+        return false;
     }
 }
