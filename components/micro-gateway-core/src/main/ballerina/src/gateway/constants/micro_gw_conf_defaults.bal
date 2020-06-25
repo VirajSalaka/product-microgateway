@@ -159,7 +159,7 @@ public const string DEFAULT_PERSISTENT_MESSAGE_USERNAME = "root";
 public const string DEFAULT_PERSISTENT_MESSAGE_PASSWORD = "root";
 public const boolean DEFAULT_PERSISTENT_MESSAGE_PILOT_ENABLED = true;
 public const string DEFAULT_PERSISTENT_MESSAGE_PILOT_REVOKED_TOKEN_RETRIEVE_ENDPOINT =
-    "https://localhost:9443/throttle/data/v1/revokedjwt";
+    "https://localhost:9443/internal/data/v1/revokedjwt";
 public const string DEFAULT_PERSISTENT_MESSAGE_PILOT_USERNAME = "admin";
 public const string DEFAULT_PERSISTENT_MESSAGE_PILOT_PASSWORD = "admin";
 

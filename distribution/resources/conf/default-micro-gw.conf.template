@@ -161,7 +161,7 @@
     # todo: add description
     [tokenRevocationConfig.persistent.pilot]
     enablePersistentStorageRetrieval = true
-    revokedTokenRetrievalEndpoint = "https://localhost:9443/throttle/data/v1/revokedjwt"
+    revokedTokenRetrievalEndpoint = "https://localhost:9443/internal/data/v1/revokedjwt"
     username = "admin"
     password = "admin"
 
