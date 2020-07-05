@@ -348,22 +348,110 @@ public function setJWTHeader(jwt:JwtPayload payload,
                                 boolean enabledCaching,
                                 map<string> apiDetails)
                                 returns @tainted boolean {
-        (handle|error) generatedToken = generateJWTToken(payload, apiDetails);
-        if (generatedToken is error) {
-            printError(KEY_JWT_AUTH_PROVIDER, "Token not generated due to error", generatedToken);
-            return false;
-        }
-        printDebug(KEY_JWT_AUTH_PROVIDER, "Generated jwt token");
-        printDebug(KEY_JWT_AUTH_PROVIDER, "Token: " + generatedToken.toString());
+    (handle|error) generatedToken = generateBackendTokenForJWT(payload, apiDetails);
+    return setGeneratedTokenAsHeader(req, cacheKey, enabledCaching, generatedToken);
+}
 
-        // add to cache if cache enabled
-        if (enabledCaching) {
-            error? err = jwtGeneratorCache.put(<@untainted>cacheKey, <@untainted>generatedToken.toString());
-            if (err is error) {
-                printError(KEY_JWT_AUTH_PROVIDER, "Error while adding entry to jwt generator cache", err);
-            }
-            printDebug(KEY_JWT_AUTH_PROVIDER, "Added to jwt generator token cache.");
+# Setting backend JWT header when there is no JWT Token is present.
+#
+# + req - The `Request` instance.
+# + cacheKey - key for the jwt generator cache
+# + enabledCaching - jwt generator caching enabled
+# + apiDetails - extracted api details for the current api
+# + return - Returns `true` if the token generation and setting the header completed successfully
+# or the `AuthenticationError` in case of an error.
+public function setJWTHeaderForOauth2(http:Request req,
+                                string cacheKey,
+                                boolean enabledCaching,
+                                map<string> apiDetails)
+                                returns @tainted boolean {
+    (handle|error) generatedToken = generateBackendJWTTokenForOauth(apiDetails);
+    return setGeneratedTokenAsHeader(req, cacheKey, enabledCaching, generatedToken);
+}
+
+# Setting backend JWT header when there is no JWT Token is present.
+#
+# + payload - The payload of the authentication token
+# + apiDetails - extracted api details for the current api
+# + return - JWT Token
+# or the `AuthenticationError` in case of an error.
+function generateBackendTokenForJWT(jwt:JwtPayload payload, map<string> apiDetails)  returns handle | error {
+    (handle|error) generatedToken;
+    runtime:InvocationContext invocationContext = runtime:getInvocationContext();
+    AuthenticationContext authContext = <AuthenticationContext>invocationContext.attributes[AUTHENTICATION_CONTEXT];
+        printError("Authcontext Username", " username is " + authContext.username);
+    if (isSelfContainedToken(payload)) {
+        generatedToken = generateJWTToken(payload, apiDetails);
+    } else {
+        ClaimsMapDTO claimsMapDTO = createMapFromClaimsListDTO();
+        generatedToken = generateJWTTokenFromUserClaimsMap(claimsMapDTO, apiDetails);
+    }
+    return generatedToken;
+}
+
+# Setting backend JWT header when there is no JWT Token is present.
+#
+# + apiDetails - extracted api details for the current api
+# + return - JWT Token
+# or the `AuthenticationError` in case of an error.
+function generateBackendJWTTokenForOauth(map<string> apiDetails) returns handle | error {
+    (handle|error) generatedToken;
+    ClaimsMapDTO claimsMapDTO = createMapFromClaimsListDTO();
+    generatedToken = generateJWTTokenFromUserClaimsMap(claimsMapDTO, apiDetails);
+    return generatedToken;
+}
+
+# Setting backend JWT header when there is no JWT Token is present.
+#
+# + req - The `Request` instance.
+# + cacheKey - key for the jwt generator cache
+# + enabledCaching - jwt generator caching enabled
+# + generatedToken - generated Backend JWT
+# + return - Returns `true` if the token generation and setting the header completed successfully
+function setGeneratedTokenAsHeader(http:Request req,
+                                string cacheKey,
+                                boolean enabledCaching,
+                                handle | error generatedToken)
+                                returns @tainted boolean {
+
+    if (generatedToken is error) {
+        printError(KEY_JWT_AUTH_PROVIDER, "Token not generated due to error", generatedToken);
+        return false;
+    }
+    printDebug(KEY_JWT_AUTH_PROVIDER, "Generated jwt token");
+    printDebug(KEY_JWT_AUTH_PROVIDER, "Token: " + generatedToken.toString());
+
+    //todo: add to cache if cache enabled
+    if (enabledCaching) {
+        error? err = jwtGeneratorCache.put(<@untainted>cacheKey, <@untainted>generatedToken.toString());
+        if (err is error) {
+            printError(KEY_JWT_AUTH_PROVIDER, "Error while adding entry to jwt generator cache", err);
         }
-        req.setHeader(jwtheaderName, generatedToken.toString());
+        printDebug(KEY_JWT_AUTH_PROVIDER, "Added to jwt generator token cache.");
+    }
+    req.setHeader(jwtheaderName, generatedToken.toString());
+    return true;
+}
+
+function isSelfContainedToken(jwt:JwtPayload payload) returns boolean {
+    if (payload.hasKey(APPLICATION)) {
         return true;
+    }
+    return false;
+}
+
+function createMapFromClaimsListDTO() returns @tainted ClaimsMapDTO {
+    map<string> claimsMap = {};
+    //todo: populate username from authContext
+    //todo: pick username, password from configuration
+    ClaimsListDTO ? claimsListDTO = retrieveClaims("YWRtaW46YWRtaW4=");
+    if (claimsListDTO is ClaimsListDTO) {
+       ClaimDTO[] claimList = claimsListDTO.list;
+       foreach ClaimDTO claim in claimList {
+           claimsMap[claim.uri] = claim.value;
+       }
+    }
+    ClaimsMapDTO claimsMapDTO = {};
+    claimsMapDTO.customClaims = claimsMap;
+    return claimsMapDTO;
 }

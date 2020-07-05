@@ -50,6 +50,23 @@ getConfigValue(FILE_UPLOAD_ANALYTICS, UPLOADING_EP, DEFAULT_UPLOADING_EP),
     }
 });
 
+//todo: read the value from configuration
+http:Client userInfoClaimsEndpoint = new (
+"https://localhost:9443",
+{
+    cache: {enabled: false},
+    secureSocket: {
+        trustStore: {
+            path: getConfigValue(LISTENER_CONF_INSTANCE_ID, TRUST_STORE_PATH, DEFAULT_TRUST_STORE_PATH),
+            password: getConfigValue(LISTENER_CONF_INSTANCE_ID, TRUST_STORE_PASSWORD, DEFAULT_TRUST_STORE_PASSWORD)
+        },
+        verifyHostname: getConfigBooleanValue(HTTP_CLIENTS_INSTANCE_ID, ENABLE_HOSTNAME_VERIFICATION, true)
+
+    },
+    http1Settings : {
+        proxy: getClientProxyForInternalServices()
+    }
+});
 
 public function getTokenEndpoint() returns http:Client {
     return tokenEndpoint;

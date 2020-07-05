@@ -153,7 +153,5 @@ function validateSubscriptionFromDataStores(string token, string consumerKey, st
         gatewayCacheObject.addToInvalidSubcriptionCache(subscriptionKey, authenticationContext);
         printError(KEY_PILOT_UTIL, "Key mapping not found for consumer key : " + consumerKey);
     }
-
-
     return [authenticationContext,isAllowed];
 }

@@ -87,6 +87,15 @@ public function generateJWTToken(jwt:JwtPayload jwtInfo, map<string> apiDetails)
     return jGenerateJWTToken(jwtInfo, apiDetails);
 }
 
+# Invoke the interop function to generate JWT token
+#
+# + jwtInfo - payload of the authentication token
+# + apiDetails - details of the subscribed APIS
+# + return - Returns the generated JWT token.
+public function generateJWTTokenFromUserClaimsMap(ClaimsMapDTO jwtInfo, map<string> apiDetails) returns (handle | error) {
+    return jGenerateJWTTokenFromUserClaimsMap(jwtInfo, apiDetails);
+}
+
 # Interop function to create instance of JWTGenerator
 #
 # + className - className for the jwtgenerator implementation
@@ -138,3 +147,15 @@ public function jGenerateJWTToken(jwt:JwtPayload jwtInfo, map<string> apiDetails
     name: "invokeGenerateToken",
     class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
 } external;
+
+# Interop function to generate JWT token
+#
+# + jwtInfo - payload of the authentication token
+# + apiDetails - details of the subscribed APIS
+# + return - Returns the generated JWT token.
+public function jGenerateJWTTokenFromUserClaimsMap(ClaimsMapDTO jwtInfo, map<string> apiDetails) returns (handle | error) = @java:Method {
+    //todo: change the function to idenitfy the two types separately
+    name: "invokeGenerateToken",
+    class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
+} external;
+

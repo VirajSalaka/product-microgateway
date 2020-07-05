@@ -84,6 +84,28 @@ public type KeyValidationHandler object {
                 }
                 invocationContext.attributes[AUTHENTICATION_CONTEXT] = authenticationContext;
                 invocationContext.attributes[KEY_TYPE_ATTR] = authenticationContext.keyType;
+                //todo: populate the properties properly
+                boolean status = false;
+                string apiName = "";
+                string apiVersion = "";
+                APIConfiguration? apiConfig = apiConfigAnnotationMap[runtime:getInvocationContext().attributes[http:SERVICE_NAME].toString()];
+                if (apiConfig is APIConfiguration) {
+                    apiName = apiConfig.name;
+                    apiVersion = apiConfig.apiVersion;
+                }
+                map<string> apiDetails = {
+                        apiName: apiName,
+                        apiContext: "",
+                        apiVersion: apiVersion,
+                        apiTier: "",
+                        apiPublisher: "",
+                        subscriberTenantDomain: ""
+                };
+                string cacheKey = credential + apiName + apiVersion;
+                boolean enabledJWTGenerator = getConfigBooleanValue(JWT_GENERATOR_ID,
+                                                                      JWT_GENERATOR_ENABLED,
+                                                                      DEFAULT_JWT_GENERATOR_ENABLED);
+                boolean tokenGenStatus = setJWTHeaderForOauth2(req, cacheKey, enabledJWTGenerator, apiDetails);
                 return authenticationResult;
             }
         } else {
