@@ -30,12 +30,12 @@ public type KeyValidationHandler object {
 
     public OAuth2KeyValidationProvider oauth2KeyValidationProvider;
     public oauth2:InboundOAuth2Provider introspectProvider;
-    public boolean externalKM;
+    private boolean validateSubscriptions;
 
     public function __init(OAuth2KeyValidationProvider oauth2KeyValidationProvider, oauth2:InboundOAuth2Provider introspectProvider) {
         self.oauth2KeyValidationProvider = oauth2KeyValidationProvider;
         self.introspectProvider = introspectProvider;
-        self.externalKM = getConfigBooleanValue(KM_CONF_INSTANCE_ID, EXTERNAL, DEFAULT_EXTERNAL);
+        self.validateSubscriptions = getConfigBooleanValue(SECURITY_INSTANCE_ID, SECURITY_VALIDATE_SUBSCRIPTIONS, DEFAULT_VALIDATE_SUBSCRIPTIONS);
     }
 
     # Checks if the request can be authenticated with the Bearer Auth header.
@@ -69,65 +69,70 @@ public type KeyValidationHandler object {
         string headerValue = req.getHeader(authHeader);
         string credential = <@untainted>headerValue.substring(6, headerValue.length()).trim();
         string authHeaderName = getAuthorizationHeader(invocationContext);
+        APIConfiguration? apiConfig = apiConfigAnnotationMap[<string>invocationContext.attributes[http:SERVICE_NAME]];
         boolean|auth:Error authenticationResult = false;
-        if (self.externalKM) {
-            authenticationResult = self.introspectProvider.authenticate(credential);
-            if (authenticationResult is auth:Error) {
-                return prepareAuthenticationError("Failed to authenticate with introspect auth provider.", authenticationResult);
-            } else {
+        authenticationResult = self.introspectProvider.authenticate(credential);
+        if (authenticationResult is auth:Error) {
+            return prepareAuthenticationError("Failed to authenticate with introspect auth provider.", authenticationResult);
+        } else if (!authenticationResult) {
+            setErrorMessageToInvocationContext(API_AUTH_INVALID_CREDENTIALS);
+            return authenticationResult;
+        } else {
+            runtime:Principal? principal = invocationContext?.principal;
+            if (principal is runtime:Principal) {
                 AuthenticationContext authenticationContext = {};
-                authenticationContext.authenticated = authenticationResult;
-                authenticationContext.keyType = PRODUCTION_KEY_TYPE;
-                runtime:Principal? principal = invocationContext?.principal;
-                if (principal is runtime:Principal) {
-                    authenticationContext.username = principal?.username ?: USER_NAME_UNKNOWN;
-                }
-                invocationContext.attributes[AUTHENTICATION_CONTEXT] = authenticationContext;
-                invocationContext.attributes[KEY_TYPE_ATTR] = authenticationContext.keyType;
-                //todo: populate the properties properly
-                boolean status = false;
+                authenticationContext.username = principal?.username ?: USER_NAME_UNKNOWN;
                 string apiName = "";
                 string apiVersion = "";
-                APIConfiguration? apiConfig = apiConfigAnnotationMap[runtime:getInvocationContext().attributes[http:SERVICE_NAME].toString()];
                 if (apiConfig is APIConfiguration) {
                     apiName = apiConfig.name;
                     apiVersion = apiConfig.apiVersion;
                 }
-                map<string> apiDetails = {
-                        apiName: apiName,
-                        apiContext: "",
-                        apiVersion: apiVersion,
-                        apiTier: "",
-                        apiPublisher: "",
-                        subscriberTenantDomain: ""
-                };
-                string cacheKey = credential + apiName + apiVersion;
-                boolean enabledJWTGenerator = getConfigBooleanValue(JWT_GENERATOR_ID,
-                                                                      JWT_GENERATOR_ENABLED,
-                                                                      DEFAULT_JWT_GENERATOR_ENABLED);
-                boolean tokenGenStatus = setJWTHeaderForOauth2(req, cacheKey, enabledJWTGenerator, apiDetails);
-                return authenticationResult;
-            }
-        } else {
-            authenticationResult = self.oauth2KeyValidationProvider.authenticate(credential);
-            if (authenticationResult is boolean) {
-                if (authenticationResult) {
-                    AuthenticationContext authenticationContext = {};
-                    authenticationContext = <AuthenticationContext>invocationContext.attributes[
-                    AUTHENTICATION_CONTEXT];
-
-                    if (authenticationContext?.callerToken is string && authenticationContext?.callerToken != () 
-                            && authenticationContext?.callerToken != "") {
-                        printDebug(KEY_AUTHN_FILTER, "Caller token: " + <string>authenticationContext?.
-                        callerToken);
-                        req.setHeader(jwtheaderName, <string>authenticationContext?.callerToken);
-                    }
+                map<any>? claims = principal?.claims;
+                any clientId = claims[CLIENT_ID];
+                boolean isAllowed = false;
+                // If validateSubscription is true and clientID is present, do the subscription validation.
+                if (clientId != () && clientId is string && self.validateSubscriptions) {
+                   [authenticationContext, isAllowed] =
+                     validateSubscriptionFromDataStores(credential, clientId, apiName, apiVersion,
+                     self.validateSubscriptions);
+                   invocationContext.attributes[AUTHENTICATION_CONTEXT] = authenticationContext;
+                   invocationContext.attributes[KEY_TYPE_ATTR] = authenticationContext.keyType;
+                   if (isAllowed) {
+                       //todo: populate the properties properly
+                       boolean status = false;
+                       string apiName = "";
+                       string apiVersion = "";
+                       APIConfiguration? apiConfig = apiConfigAnnotationMap[runtime:getInvocationContext().attributes[http:SERVICE_NAME].toString()];
+                       if (apiConfig is APIConfiguration) {
+                           apiName = apiConfig.name;
+                           apiVersion = apiConfig.apiVersion;
+                       }
+                       map<string> apiDetails = {
+                               apiName: apiName,
+                               apiContext: "",
+                               apiVersion: apiVersion,
+                               apiTier: "",
+                               apiPublisher: "",
+                               subscriberTenantDomain: ""
+                       };
+                       string cacheKey = credential + apiName + apiVersion;
+                       boolean enabledJWTGenerator = getConfigBooleanValue(JWT_GENERATOR_ID,
+                                                                             JWT_GENERATOR_ENABLED,
+                                                                             DEFAULT_JWT_GENERATOR_ENABLED);
+                       boolean tokenGenStatus = setJWTHeaderForOauth2(req, cacheKey, enabledJWTGenerator, apiDetails);
+                   }
+                   return isAllowed;    
+                } else { // Otherwise return the introspection response.
+                    invocationContext.attributes[AUTHENTICATION_CONTEXT] = authenticationContext;
+                    invocationContext.attributes[KEY_TYPE_ATTR] = authenticationContext.keyType;
+                    return authenticationResult;
                 }
-                return authenticationResult;
-            } else {
-                return prepareAuthenticationError("Failed to authenticate with key validation auth handler.", authenticationResult);
             }
         }
+        // Default return Invalid Credentials.
+        setErrorMessageToInvocationContext(API_AUTH_INVALID_CREDENTIALS);
+        return false;
     }
 
 };
