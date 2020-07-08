@@ -499,6 +499,7 @@ public const string HEALTH_CHECK_SERVICE = "HealthCheckService";
 public const string MAIN = "Main function";
 public const string OBSERVABILITY_UTIL = "ObservabilityUtil";
 public const string OBSERVABILITY_METRIC_LISTENER = "ObservabilityMetricListener";
+public const string CLAIM_RETRIEVER = "ClaimRetriever";
 
 public const int DEFAULT_LISTENER_TIMEOUT = 120000;//2 mins
 public const int DEFAULT_ETCD_TRIGGER_TIME = 10000;//10 seconds
@@ -560,6 +561,9 @@ public const string JWT_GENERATOR_RESTRICTED_CLAIMS = "restrictedClaims";
 public const string JWT_GENERATOR_TOKEN_ISSUER = "issuer";
 public const string JWT_GENERATOR_TOKEN_AUDIENCE = "audience";
 public const string JWT_GENERATOR_IMPLEMENTATION = "generatorImpl";
+public const string JWT_GENERATOR_USERNAME = "admin";
+public const string JWT_GENERATOR_PASSWORD = "password";
+public const string JWT_GENERATOR_USER_INFO_ENDPOINT = "userInfoEndpoint";
 
 // jwt generator caching mechanism
 public const string JWT_GENERATOR_CACHING_ID = "jwtGeneratorConfig.jwtGeneratorCaching";

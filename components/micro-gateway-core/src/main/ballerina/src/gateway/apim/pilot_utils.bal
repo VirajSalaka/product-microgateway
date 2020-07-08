@@ -62,8 +62,9 @@ function convertApiEventToApiDTO(json apiEvent) returns Api {
     return api;
 }
 
+//todo: fix the bug properly where authcontext get entirely replaced
 function validateSubscriptionFromDataStores(string token, string consumerKey, string apiName, string apiVersion,
-                    boolean isValidateSubscription) returns ([AuthenticationContext, boolean]) {
+                    boolean isValidateSubscription, string username) returns ([AuthenticationContext, boolean]) {
     boolean isAllowed = !isValidateSubscription;
     runtime:InvocationContext invocationContext = runtime:getInvocationContext();
     string subscriptionKey = consumerKey + ":" + apiName + ":"  + apiVersion;
@@ -73,7 +74,8 @@ function validateSubscriptionFromDataStores(string token, string consumerKey, st
     var api = pilotDataProvider.getApi(apiName, apiVersion);
     AuthenticationContext authenticationContext = {
         apiKey: token,
-        authenticated: !isValidateSubscription
+        authenticated: !isValidateSubscription,
+        username: username
     };
     authenticationContext.consumerKey = consumerKey;
     invocationContext.attributes[KEY_TYPE_ATTR] = PRODUCTION_KEY_TYPE;

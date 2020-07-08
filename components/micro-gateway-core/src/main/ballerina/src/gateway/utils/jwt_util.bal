@@ -67,7 +67,7 @@ public function isAllowedKey(string token, jwt:JwtPayload payload, boolean isVal
         string apiVersion = apiConfig.apiVersion;
         string apiProvider = apiConfig.publisher;
         [authenticationContext, isAllowed] = validateSubscriptionFromDataStores(token, consumerKey,
-                                                apiName, apiVersion, isValidationEnabled);
+                                                apiName, apiVersion, isValidationEnabled, authenticationContext.username);
     }
 
     // TODO: substore: if possible print authenticationContext object as a json
@@ -104,7 +104,7 @@ public function handleSubscribedAPIs(string apiKeyToken, jwt:JwtPayload payload,
     // Then if validateAllowedAPIs is true only set authenticated true after validating APIs.
     authenticationContext.authenticated = !validateAllowedAPIs;
 
-    string? username = payload?.sub;
+    string? username = payload["sub"];
     if (username is string) {
         authenticationContext.username = username;
     }

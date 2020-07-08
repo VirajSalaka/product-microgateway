@@ -50,9 +50,8 @@ getConfigValue(FILE_UPLOAD_ANALYTICS, UPLOADING_EP, DEFAULT_UPLOADING_EP),
     }
 });
 
-//todo: read the value from configuration
 http:Client userInfoClaimsEndpoint = new (
-"https://localhost:9443",
+getConfigValue(JWT_GENERATOR_ID, JWT_GENERATOR_USER_INFO_ENDPOINT, DEFAULT_JWT_GENERATOR_USER_INFO_ENDPOINT),
 {
     cache: {enabled: false},
     secureSocket: {

@@ -63,8 +63,9 @@ returns (mime:ContentDisposition) {
     return contentDisposition;
 }
 
+//todo: move the method to a util class
 public function getBasicAuthHeaderValue(string username, string password) returns string {
     string credentials = username + ":" + password;
     string encodedVal = encodeValueToBase64(credentials);
-    return "Basic " + encodedVal;
+    return BASIC_PREFIX_WITH_SPACE + encodedVal;
 }

@@ -81,6 +81,7 @@ public type KeyValidationHandler object {
         } else {
             runtime:Principal? principal = invocationContext["principal"];
             if (principal is runtime:Principal) {
+                printError("temp xxxxxxxx", principal.toString());
                 AuthenticationContext authenticationContext = {};
                 authenticationContext.username = principal?.username ?: USER_NAME_UNKNOWN;
                 string apiName = "";
@@ -99,24 +100,18 @@ public type KeyValidationHandler object {
                 if (clientId != () && clientId is string && self.validateSubscriptions) {
                    [authenticationContext, isAllowed] =
                      validateSubscriptionFromDataStores(credential, clientId, apiName, apiVersion,
-                     self.validateSubscriptions);
+                     self.validateSubscriptions, authenticationContext.username);
                    invocationContext.attributes[AUTHENTICATION_CONTEXT] = authenticationContext;
                    invocationContext.attributes[KEY_TYPE_ATTR] = authenticationContext.keyType;
                    if (isAllowed) {
                        //todo: populate the properties properly
-                       map<string> apiDetails = {
-                       apiName: apiName,
-                       apiContext: "",
-                       apiVersion: apiVersion,
-                       apiTier: "",
-                       apiPublisher: "",
-                       subscriberTenantDomain: ""
-              };
+                       map<string> apiDetails = createAPIDetailsMap(invocationContext);
               string cacheKey = credential + apiName + apiVersion;
               boolean enabledJWTGenerator = getConfigBooleanValue(JWT_GENERATOR_ID,
                                                                     JWT_GENERATOR_ENABLED,
                                                                     DEFAULT_JWT_GENERATOR_ENABLED);
-                       boolean tokenGenStatus = setJWTHeaderForOauth2(req, cacheKey, enabledJWTGenerator, apiDetails);
+                       printError("token_introspect_xxxxx", authenticationContext.toString());
+                       boolean tokenGenStatus = setJWTHeaderForOauth2(req, authenticationContext, cacheKey, enabledJWTGenerator, apiDetails);
                    }
                    return isAllowed;    
                 } else {
@@ -132,19 +127,13 @@ public type KeyValidationHandler object {
 
                     if (authenticationResult) {
                         printError("TOKEN_INTROSPECT", "inside if statement");
-                        map<string> apiDetails = {
-                           apiName: apiName,
-                           apiContext: apiVersion,
-                           apiVersion: apiVersion,
-                           apiTier: apiTier,
-                           apiPublisher: apiPublisher,
-                           subscriberTenantDomain: subscriberTenantDomain
-                        };
+                        map<string> apiDetails = createAPIDetailsMap(invocationContext);
                         string cacheKey = credential + apiName + apiVersion;
                         boolean enabledJWTGenerator = getConfigBooleanValue(JWT_GENERATOR_ID,
                                                                              JWT_GENERATOR_ENABLED,
                                                                              DEFAULT_JWT_GENERATOR_ENABLED);
-                        boolean tokenGenStatus = setJWTHeaderForOauth2(req, cacheKey, enabledJWTGenerator, apiDetails);
+                        printError("token_introspect_yyyyyyy", authenticationContext.toString());
+                        boolean tokenGenStatus = setJWTHeaderForOauth2(req, authenticationContext, cacheKey, enabledJWTGenerator, apiDetails);
                     }
                     printError("TOKEN_INTROSPECT", "outside if statement");
                     return authenticationResult;

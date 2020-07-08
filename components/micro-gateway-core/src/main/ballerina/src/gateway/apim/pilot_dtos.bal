@@ -53,28 +53,3 @@ public type Api record {|
     string policyId = "";
     any urlMaping?;
 |};
-
-public type UserInfoDTO record {
-    string username = "";
-};
-
-public type ClaimDTO record {|
-    string uri;
-    string value;
-|};
-
-public type ClaimsListDTO record {|
-    int count;
-    ClaimDTO[] list;
-|};
-
-//todo: move this DTO to some other class
-public type ClaimsMapDTO record {|
-    map<string> customClaims = {};
-    // string application = "";
-    // string sub = "";
-    // string applicationid = "";
-    // string subscriber = "";
-    // string applicationname = "";
-    // string applicationtier = "";
-|};
