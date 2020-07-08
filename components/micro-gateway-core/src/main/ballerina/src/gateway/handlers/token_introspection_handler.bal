@@ -72,21 +72,25 @@ public type KeyValidationHandler object {
         APIConfiguration? apiConfig = apiConfigAnnotationMap[<string>invocationContext.attributes[http:SERVICE_NAME]];
         boolean|auth:Error authenticationResult = false;
         authenticationResult = self.introspectProvider.authenticate(credential);
+        printError("TOKEN_INTROSPECT", "inside token introspect.");
         if (authenticationResult is auth:Error) {
             return prepareAuthenticationError("Failed to authenticate with introspect auth provider.", authenticationResult);
         } else if (!authenticationResult) {
             setErrorMessageToInvocationContext(API_AUTH_INVALID_CREDENTIALS);
             return authenticationResult;
         } else {
-            runtime:Principal? principal = invocationContext?.principal;
+            runtime:Principal? principal = invocationContext["principal"];
             if (principal is runtime:Principal) {
                 AuthenticationContext authenticationContext = {};
                 authenticationContext.username = principal?.username ?: USER_NAME_UNKNOWN;
                 string apiName = "";
                 string apiVersion = "";
+                string apiPublisher = "";
+
                 if (apiConfig is APIConfiguration) {
                     apiName = apiConfig.name;
                     apiVersion = apiConfig.apiVersion;
+                    apiPublisher = apiConfig.publisher;
                 }
                 map<any>? claims = principal?.claims;
                 any clientId = claims[CLIENT_ID];
@@ -100,32 +104,49 @@ public type KeyValidationHandler object {
                    invocationContext.attributes[KEY_TYPE_ATTR] = authenticationContext.keyType;
                    if (isAllowed) {
                        //todo: populate the properties properly
-                       boolean status = false;
-                       string apiName = "";
-                       string apiVersion = "";
-                       APIConfiguration? apiConfig = apiConfigAnnotationMap[runtime:getInvocationContext().attributes[http:SERVICE_NAME].toString()];
-                       if (apiConfig is APIConfiguration) {
-                           apiName = apiConfig.name;
-                           apiVersion = apiConfig.apiVersion;
-                       }
                        map<string> apiDetails = {
-                               apiName: apiName,
-                               apiContext: "",
-                               apiVersion: apiVersion,
-                               apiTier: "",
-                               apiPublisher: "",
-                               subscriberTenantDomain: ""
-                       };
-                       string cacheKey = credential + apiName + apiVersion;
-                       boolean enabledJWTGenerator = getConfigBooleanValue(JWT_GENERATOR_ID,
-                                                                             JWT_GENERATOR_ENABLED,
-                                                                             DEFAULT_JWT_GENERATOR_ENABLED);
+                       apiName: apiName,
+                       apiContext: "",
+                       apiVersion: apiVersion,
+                       apiTier: "",
+                       apiPublisher: "",
+                       subscriberTenantDomain: ""
+              };
+              string cacheKey = credential + apiName + apiVersion;
+              boolean enabledJWTGenerator = getConfigBooleanValue(JWT_GENERATOR_ID,
+                                                                    JWT_GENERATOR_ENABLED,
+                                                                    DEFAULT_JWT_GENERATOR_ENABLED);
                        boolean tokenGenStatus = setJWTHeaderForOauth2(req, cacheKey, enabledJWTGenerator, apiDetails);
                    }
                    return isAllowed;    
-                } else { // Otherwise return the introspection response.
+                } else {
+                    printError("TOKEN_INTROSPECT", "inside non principal mode");
+                    // Otherwise return the introspection response.
                     invocationContext.attributes[AUTHENTICATION_CONTEXT] = authenticationContext;
                     invocationContext.attributes[KEY_TYPE_ATTR] = authenticationContext.keyType;
+
+                    AuthenticationContext authContext = <AuthenticationContext>invocationContext.attributes[AUTHENTICATION_CONTEXT];
+
+                    string apiTier = authContext.apiTier;
+                    string subscriberTenantDomain = authContext.subscriberTenantDomain;
+
+                    if (authenticationResult) {
+                        printError("TOKEN_INTROSPECT", "inside if statement");
+                        map<string> apiDetails = {
+                           apiName: apiName,
+                           apiContext: apiVersion,
+                           apiVersion: apiVersion,
+                           apiTier: apiTier,
+                           apiPublisher: apiPublisher,
+                           subscriberTenantDomain: subscriberTenantDomain
+                        };
+                        string cacheKey = credential + apiName + apiVersion;
+                        boolean enabledJWTGenerator = getConfigBooleanValue(JWT_GENERATOR_ID,
+                                                                             JWT_GENERATOR_ENABLED,
+                                                                             DEFAULT_JWT_GENERATOR_ENABLED);
+                        boolean tokenGenStatus = setJWTHeaderForOauth2(req, cacheKey, enabledJWTGenerator, apiDetails);
+                    }
+                    printError("TOKEN_INTROSPECT", "outside if statement");
                     return authenticationResult;
                 }
             }
@@ -134,5 +155,4 @@ public type KeyValidationHandler object {
         setErrorMessageToInvocationContext(API_AUTH_INVALID_CREDENTIALS);
         return false;
     }
-
 };

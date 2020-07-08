@@ -16,12 +16,19 @@
 
 import ballerina/http;
 
-function retrieveClaims (string accessToken) returns @tainted ClaimsListDTO ? {
+string DIALECT_URI = getConfigValue(JWT_GENERATOR_ID,
+                                    JWT_GENERATOR_DIALECT,
+                                    DEFAULT_JWT_GENERATOR_DIALECT);
+
+function retrieveClaims (string accessToken, AuthenticationContext authContext) returns @tainted ClaimsListDTO ? {
     http:Request claimRetrieveRequest = new;
     //todo: set request payload
+    //todo: populate userInfoDTO properly
     claimRetrieveRequest.setHeader(AUTHORIZATION_HEADER, BASIC_PREFIX_WITH_SPACE + accessToken);
     UserInfoDTO userInfoDTO = {};
-    //todo: populate userInfoDTO properly
+    userInfoDTO.username =  "admin"; //authContext.username; 
+    userInfoDTO["dialect"] = DIALECT_URI;
+    // userInfoDTO["accesstoken"] = "";
     json | error userInfoDTOJson = json.constructFrom(userInfoDTO);
     if (userInfoDTOJson is json) {
         claimRetrieveRequest.setJsonPayload(userInfoDTOJson);

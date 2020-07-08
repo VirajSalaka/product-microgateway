@@ -112,7 +112,7 @@ public class MGWJWTGeneratorImpl extends AbstractMGWJWTGenerator {
                 Map<String, Object> customClaims = (Map<String, Object>) jwtInfo.get(key);
                 for (String subKey: customClaims.keySet()) {
                     if (!restrictedClaims.contains(subKey)) {
-                        claims.put(subKey, customClaims.get(subKey));
+                        claims.put(getDialectURI() + subKey, customClaims.get(subKey));
                     }
                 }
             } else {

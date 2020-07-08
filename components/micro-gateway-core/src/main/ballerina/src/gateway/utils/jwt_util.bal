@@ -47,7 +47,7 @@ public function isAllowedKey(string token, jwt:JwtPayload payload, boolean isVal
         callerToken: token,
         authenticated: !isValidationEnabled
     };
-    string? username = payload?.sub;
+    string? username = payload["sub"];
     if (username is string) {
         authenticationContext.username = username;
     }

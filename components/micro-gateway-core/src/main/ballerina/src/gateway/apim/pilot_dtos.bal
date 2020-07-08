@@ -54,12 +54,9 @@ public type Api record {|
     any urlMaping?;
 |};
 
-public type UserInfoDTO record {|
-    string username = "admin";
-    //string domain = "carbon.super";
-    string dialect = "http://wso2.org/claims";
-    //string accessToken = "";
-|};
+public type UserInfoDTO record {
+    string username = "";
+};
 
 public type ClaimDTO record {|
     string uri;
@@ -74,4 +71,10 @@ public type ClaimsListDTO record {|
 //todo: move this DTO to some other class
 public type ClaimsMapDTO record {|
     map<string> customClaims = {};
+    // string application = "";
+    // string sub = "";
+    // string applicationid = "";
+    // string subscriber = "";
+    // string applicationname = "";
+    // string applicationtier = "";
 |};

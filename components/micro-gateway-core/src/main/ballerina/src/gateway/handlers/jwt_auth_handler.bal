@@ -365,7 +365,13 @@ public function setJWTHeaderForOauth2(http:Request req,
                                 boolean enabledCaching,
                                 map<string> apiDetails)
                                 returns @tainted boolean {
+
     (handle|error) generatedToken = generateBackendJWTTokenForOauth(apiDetails);
+    if (generatedToken is error) {
+        printError("JWT_BACKEND_HEADER", "error generation", generatedToken);
+    } else {
+        printError("JWT_BACKEND_HEADER", "successfully generated");
+    }
     return setGeneratedTokenAsHeader(req, cacheKey, enabledCaching, generatedToken);
 }
 
@@ -383,7 +389,7 @@ function generateBackendTokenForJWT(jwt:JwtPayload payload, map<string> apiDetai
     if (isSelfContainedToken(payload)) {
         generatedToken = generateJWTToken(payload, apiDetails);
     } else {
-        ClaimsMapDTO claimsMapDTO = createMapFromClaimsListDTO();
+        ClaimsMapDTO claimsMapDTO = createMapFromClaimsListDTO(payload);
         generatedToken = generateJWTTokenFromUserClaimsMap(claimsMapDTO, apiDetails);
     }
     return generatedToken;
@@ -440,18 +446,58 @@ function isSelfContainedToken(jwt:JwtPayload payload) returns boolean {
     return false;
 }
 
-function createMapFromClaimsListDTO() returns @tainted ClaimsMapDTO {
+function createMapFromClaimsListDTO(jwt:JwtPayload? payload = ()) returns @tainted ClaimsMapDTO {
     map<string> claimsMap = {};
     //todo: populate username from authContext
     //todo: pick username, password from configuration
-    ClaimsListDTO ? claimsListDTO = retrieveClaims("YWRtaW46YWRtaW4=");
+    runtime:InvocationContext invocationContext = runtime:getInvocationContext();
+    AuthenticationContext authContext = <AuthenticationContext>invocationContext.attributes[AUTHENTICATION_CONTEXT];
+    ClaimsListDTO ? claimsListDTO = retrieveClaims("YWRtaW46YWRtaW4=", authContext);
     if (claimsListDTO is ClaimsListDTO) {
        ClaimDTO[] claimList = claimsListDTO.list;
+       //todo: pick what to include
        foreach ClaimDTO claim in claimList {
            claimsMap[claim.uri] = claim.value;
        }
+    }
+    claimsMap[DIALECT_URI + "applicationid"] = authContext.applicationId;
+    claimsMap[DIALECT_URI + "applicationname"] = authContext.applicationName;
+    claimsMap[DIALECT_URI + "applicationtier"] = authContext.applicationTier;
+    claimsMap[DIALECT_URI + "subscriber"] = authContext.subscriber;
+    
+    if (!(payload is ())) {
+        string? sub = payload["sub"];
+        if (sub is string) {
+            claimsMap[DIALECT_URI + "enduser"] = sub;
+        } else {
+            claimsMap[DIALECT_URI + "enduser"] = authContext.username;
+        }
+        map<json>? scopesMap = payload["customClaims"];
+        if (scopesMap is map<json>) {
+            if (scopesMap.hasKey("scope")) {
+                claimsMap["scope"] = scopesMap.get("scope").toString();
+            }
+        }
     }
     ClaimsMapDTO claimsMapDTO = {};
     claimsMapDTO.customClaims = claimsMap;
     return claimsMapDTO;
 }
+
+function createAPIDetailsMap () returns map<string> {
+    map<string> apiDetails = {};
+    runtime:InvocationContext invocationContext = runtime:getInvocationContext();
+    AuthenticationContext authenticationContext = <AuthenticationContext>invocationContext.attributes[AUTHENTICATION_CONTEXT];
+    APIConfiguration? apiConfig = apiConfigAnnotationMap[<string>invocationContext.attributes[http:SERVICE_NAME]];
+    if (apiConfig is APIConfiguration) {
+        apiDetails["apiName"] = apiConfig.name;
+        apiDetails["apiVersion"] = apiConfig.apiVersion;
+        apiDetails["apiTier"] = apiConfig.apiTier;
+        apiDetails["apiContext"] = <string> invocationContext.attributes[API_CONTEXT];
+        apiDetails["apiPublisher"] = apiConfig.publisher;
+        apiDetails["subscriberTenantDomain"] = authenticationContext.subscriberTenantDomain;
+        printError("API DETAILS MAP ", apiDetails.toJsonString());
+    }   
+    return apiDetails;
+}
+
