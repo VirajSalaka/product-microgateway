@@ -100,6 +100,7 @@ public abstract class AbstractMGWJWTGenerator {
                                    String tokenIssuer,
                                    String[] tokenAudience,
                                    BMap<String, String> claimMapping) {
+
         this.keyStorePath = keyStorePath;
         this.keyStorePassword = keyStorePassword;
         this.certificateAlias = certificateAlias;
@@ -114,7 +115,8 @@ public abstract class AbstractMGWJWTGenerator {
         this.restrictedClaims = new ArrayList<>(Arrays.asList(restrictedClaims));
         defaultRestrictedClaims = new ArrayList<>(Arrays.asList("iss", "sub", "aud", "exp",
                 "nbf", "iat", "jti", "application", "tierInfo", "subscribedAPIs", "keytype"));
-        this.setClaimMapping(claimMapping);
+        this.restrictedClaims.addAll(defaultRestrictedClaims);
+        this.claimMapping = claimMapping;
     }
 
     public String getPrivateKeyAlias() {
@@ -371,7 +373,7 @@ public abstract class AbstractMGWJWTGenerator {
             }
         }
         for (Map.Entry<String, Object> claimEntry : claims.entrySet()) {
-            jwtClaimSetBuilder.claim(remoteClaim(claimEntry.getKey()), claimEntry.getValue());
+            jwtClaimSetBuilder.claim(mapRemoteClaim(claimEntry.getKey()), claimEntry.getValue());
         }
         JWTClaimsSet jwtClaimsSet = jwtClaimSetBuilder.build();
         return jwtClaimsSet.toJSONObject().toString();
@@ -421,7 +423,7 @@ public abstract class AbstractMGWJWTGenerator {
         this.claimMapping = claimMapping;
     }
 
-    private String remoteClaim(String key) {
+    private String mapRemoteClaim(String key) {
         if (claimMapping == null || claimMapping.isEmpty() || !claimMapping.containsKey(key)) {
             return key;
         }

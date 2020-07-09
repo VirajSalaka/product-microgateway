@@ -451,9 +451,10 @@
   # The User Info endpoint where the user claims are received from
   userInfoEndpoint = "https://localhost:9443/user-info/claims/generate"
   # Map the remote claim to a local claim
+  //todo: move this to jwt config
   [[jwtGeneratorConfig.claimMapping]]
     localClaim = "http://wso2.org/claims/userprincipal"
-    remoteClaim = "http://wso2.org/claims/userprincipalllllllllllll";
+    remoteClaim = "http://wso2.org/claims/userprincipalllllllllllll"
 
   # JWT Generator cache configurations
   [jwtGeneratorConfig.jwtGeneratorCaching]

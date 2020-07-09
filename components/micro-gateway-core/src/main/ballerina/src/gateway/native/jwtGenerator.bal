@@ -86,7 +86,6 @@ public function loadJWTGeneratorClass(string className,
                                 cacheExpiry,
                                 jTokenIssuer,
                                 tokenAudience);
-    
 }
 
 # Invoke the interop function to resolves the keystore path
@@ -181,7 +180,7 @@ public function jLoadJWTGeneratorClassWithClaimMapping(handle className,
                                                         any[] tokenAudience,
                                                         map<string> claimMapping) 
                                                         returns boolean = @java:Method {
-    name: "loadJWTGeneratorClass",
+    name: "loadJWTGeneratorClassM",
     class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
 } external;
 
@@ -214,4 +213,3 @@ public function jGenerateJWTTokenFromUserClaimsMap(ClaimsMapDTO jwtInfo, map<str
     name: "invokeGenerateToken",
     class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
 } external;
-

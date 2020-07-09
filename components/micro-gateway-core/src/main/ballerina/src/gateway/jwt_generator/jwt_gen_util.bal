@@ -162,7 +162,7 @@ function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPa
     applicationClaimsMapDTO.name = authContext.applicationName;
     applicationClaimsMapDTO.tier = authContext.applicationTier;
     customClaimsMapDTO.application = applicationClaimsMapDTO;
-    customClaimsMapDTO.sub = authContext.subscriber;
+    customClaimsMapDTO.sub = authContext.username;
     claimsMapDTO.customClaims = customClaimsMapDTO;
     return claimsMapDTO;
 }

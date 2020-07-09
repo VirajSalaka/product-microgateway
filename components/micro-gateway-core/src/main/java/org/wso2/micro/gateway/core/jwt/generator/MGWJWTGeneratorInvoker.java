@@ -20,6 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ballerinalang.jvm.values.ArrayValue;
 import org.ballerinalang.jvm.values.MapValue;
+import org.ballerinalang.jvm.values.api.BMap;
 import org.wso2.micro.gateway.core.Constants;
 import org.wso2.micro.gateway.jwt.generator.AbstractMGWJWTGenerator;
 
@@ -73,6 +74,29 @@ public class MGWJWTGeneratorInvoker {
             log.error("Error while loading the jwt generator class: " + className, e);
         }
         return false;
+    }
+
+    public static boolean loadJWTGeneratorClassM(String className,
+                                                String dialectURI,
+                                                String signatureAlgorithm,
+                                                String keyStorePath,
+                                                String keyStorePassword,
+                                                String certificateAlias,
+                                                String privateKeyAlias,
+                                                int jwtExpiryTime,
+                                                ArrayValue restrictedClaims,
+                                                boolean cacheEnabled,
+                                                int cacheExpiry,
+                                                String tokenIssuer,
+                                                ArrayValue tokenAudience,
+                                                BMap<String, String> claimMapping) {
+        boolean status = loadJWTGeneratorClass(className, dialectURI, signatureAlgorithm, keyStorePath,
+                            keyStorePassword, certificateAlias, privateKeyAlias, jwtExpiryTime, restrictedClaims,
+                            cacheEnabled, cacheExpiry, tokenIssuer, tokenAudience);
+        if (status) {
+            abstractMGWJWTGenerator.setClaimMapping(claimMapping);
+        }
+        return status;
     }
 
     /**
