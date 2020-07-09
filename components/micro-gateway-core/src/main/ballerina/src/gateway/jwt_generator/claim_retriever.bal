@@ -34,7 +34,7 @@ function retrieveClaims (AuthenticationContext authContext) returns @tainted Cla
     }
     //todo: decide the required behavior
     //the user claims will be received only if dialect is matched.
-    if (DIALECT_URI != DEFAULT_JWT_GENERATOR_DIALECT) {
+    if (DIALECT_URI.trim() != "") {
         userInfoDTO["dialect"] = DIALECT_URI;
     }
     userInfoDTO.accessToken = authContext.apiKey;

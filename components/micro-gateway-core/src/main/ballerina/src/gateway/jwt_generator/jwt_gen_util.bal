@@ -135,33 +135,34 @@ function isSelfContainedToken(jwt:JwtPayload payload) returns boolean {
 
 function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPayload? payload = ()) 
         returns @tainted ClaimsMapDTO {
-    map<string> claimsMap = {};
+    ClaimsMapDTO claimsMapDTO = {};
+
+    CustomClaimsMapDTO customClaimsMapDTO = {};
     ClaimsListDTO ? claimsListDTO = retrieveClaims(authContext);
     if (claimsListDTO is ClaimsListDTO) {
        ClaimDTO[] claimList = claimsListDTO.list;
-       //todo: pick what to include
        foreach ClaimDTO claim in claimList {
-           claimsMap[claim.uri] = claim.value;
+           customClaimsMapDTO[claim.uri] = claim.value;
        }
     }
-    claimsMap["applicationid"] = authContext.applicationId;
-    claimsMap["applicationname"] = authContext.applicationName;
-    claimsMap["applicationtier"] = authContext.applicationTier;
-    claimsMap["subscriber"] = authContext.subscriber;
-    claimsMap["enduser"] = authContext.username;
-
     //todo: ideally authentication context should have the scope variable
     //todo: therefore the scopes wont be there in the oauth2 scenario
     if (!(payload is ())) {
         map<json>? scopesMap = payload["customClaims"];
         if (scopesMap is map<json>) {
             if (scopesMap.hasKey("scope")) {
-                claimsMap["scope"] = scopesMap.get("scope").toString();
+                customClaimsMapDTO["scope"] = scopesMap.get("scope").toString();
             }
         }
     }
-    ClaimsMapDTO claimsMapDTO = {};
-    claimsMapDTO.customClaims = claimsMap;
+    ApplicationClaimsMapDTO applicationClaimsMapDTO = {};
+    applicationClaimsMapDTO.id = authContext.applicationId;
+    applicationClaimsMapDTO.owner = authContext.username;
+    applicationClaimsMapDTO.name = authContext.applicationName;
+    applicationClaimsMapDTO.tier = authContext.applicationTier;
+    customClaimsMapDTO.application = applicationClaimsMapDTO;
+    customClaimsMapDTO.sub = authContext.subscriber;
+    claimsMapDTO.customClaims = customClaimsMapDTO;
     return claimsMapDTO;
 }
 

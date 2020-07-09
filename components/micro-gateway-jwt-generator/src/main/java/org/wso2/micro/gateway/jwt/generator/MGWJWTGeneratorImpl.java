@@ -90,7 +90,7 @@ public class MGWJWTGeneratorImpl extends AbstractMGWJWTGenerator {
             claims.put(dialect + "/apicontext", getApiDetails().get("apiContext"));
         }
         if (StringUtils.isNotEmpty((CharSequence) getApiDetails().get("apiVersion"))) {
-            claims.put(dialect + "/version", getApiDetails().get("apiContext"));
+            claims.put(dialect + "/version", getApiDetails().get("apiVersion"));
         }
         if (StringUtils.isNotEmpty((CharSequence) getApiDetails().get("apiTier"))) {
             claims.put(dialect + "/tier", getApiDetails().get("apiTier"));
@@ -112,7 +112,7 @@ public class MGWJWTGeneratorImpl extends AbstractMGWJWTGenerator {
                 Map<String, Object> customClaims = (Map<String, Object>) jwtInfo.get(key);
                 for (String subKey: customClaims.keySet()) {
                     if (!restrictedClaims.contains(subKey)) {
-                        claims.put(getDialectURI() + subKey, customClaims.get(subKey));
+                        claims.put(subKey, customClaims.get(subKey));
                     }
                 }
             } else {
