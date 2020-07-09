@@ -149,10 +149,13 @@ function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPa
     //todo: ideally authentication context should have the scope variable
     //todo: therefore the scopes wont be there in the oauth2 scenario
     if (!(payload is ())) {
-        map<json>? scopesMap = payload["customClaims"];
-        if (scopesMap is map<json>) {
-            if (scopesMap.hasKey("scope")) {
-                customClaimsMapDTO["scope"] = scopesMap.get("scope").toString();
+        map<json>? customClaims = payload["customClaims"];
+        if (customClaims is map<json>) {
+            foreach var [key, value] in customClaims.entries() {
+                string | error claimVal = trap <string> value;
+                if (claimVal is string) {
+                    customClaimsMapDTO[key] = claimVal;
+                }
             }
         }
     }
