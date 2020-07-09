@@ -500,6 +500,7 @@ public const string MAIN = "Main function";
 public const string OBSERVABILITY_UTIL = "ObservabilityUtil";
 public const string OBSERVABILITY_METRIC_LISTENER = "ObservabilityMetricListener";
 public const string CLAIM_RETRIEVER = "ClaimRetriever";
+public const string JWT_GEN_UTIL = "JwtGenUtil";
 
 public const int DEFAULT_LISTENER_TIMEOUT = 120000;//2 mins
 public const int DEFAULT_ETCD_TRIGGER_TIME = 10000;//10 seconds
@@ -564,6 +565,9 @@ public const string JWT_GENERATOR_IMPLEMENTATION = "generatorImpl";
 public const string JWT_GENERATOR_USERNAME = "admin";
 public const string JWT_GENERATOR_PASSWORD = "password";
 public const string JWT_GENERATOR_USER_INFO_ENDPOINT = "userInfoEndpoint";
+public const string JWT_GENERATOR_CLAIM_MAPPING = "jwtGeneratorConfig.claimMapping";
+public const string JWT_GENERATOR_LOCAL_CLAIM = "localClaim";
+public const string JWT_GENERATOR_REMOTE_CLAIM = "remoteClaim";
 
 // jwt generator caching mechanism
 public const string JWT_GENERATOR_CACHING_ID = "jwtGeneratorConfig.jwtGeneratorCaching";

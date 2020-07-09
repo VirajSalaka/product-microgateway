@@ -17,6 +17,7 @@
 import ballerina/runtime;
 import ballerina/jwt;
 import ballerina/http;
+import ballerina/config;
 
 # Refactoring method for setting JWT header
 #
@@ -180,4 +181,23 @@ function createAPIDetailsMap (runtime:InvocationContext invocationContext) retur
         apiDetails["subscriberTenantDomain"] = authenticationContext.subscriberTenantDomain;
     }
     return apiDetails;
+}
+
+function createRemoteClaimMapping() returns map<string>? {
+    if (!config:contains(JWT_GENERATOR_CLAIM_MAPPING)) {
+        return;
+    }
+    RemoteClaimMappingDTO[] | error claimMappingList = RemoteClaimMappingDTO[]
+                                                            .constructFrom(config:getAsArray(JWT_GENERATOR_CLAIM_MAPPING));
+    if (claimMappingList is RemoteClaimMappingDTO[]) {
+        map<string> remoteClaimMap = {};
+        foreach RemoteClaimMappingDTO mapping in claimMappingList {
+            remoteClaimMap[mapping.remoteClaim] = mapping.localClaim;
+        }
+        printDebug(JWT_GEN_UTIL, "Remote - Local Claim mapping is added : " + remoteClaimMap.toJsonString());
+        return remoteClaimMap;
+    } else {
+        printError(JWT_GEN_UTIL, "Error while parsing the configuration value provided under " + JWT_GENERATOR_CLAIM_MAPPING, 
+            claimMappingList);
+    }
 }

@@ -19,6 +19,7 @@ package org.wso2.micro.gateway.jwt.generator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ballerinalang.jvm.values.api.BMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,7 +27,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- *  Class to implement standard claims and custom claims.
+ * Class to implement standard claims and custom claims.
  */
 public class MGWJWTGeneratorImpl extends AbstractMGWJWTGenerator {
     private static final Logger logger = LogManager.getLogger(MGWJWTGeneratorImpl.class);
@@ -46,6 +47,24 @@ public class MGWJWTGeneratorImpl extends AbstractMGWJWTGenerator {
                                String[] tokenAudience) {
         super(dialectURI, signatureAlgorithm, trustStorePath, trustStorePassword, certificateAlias, privateKeyAlias,
                 jwtExpiryTime, restrictedClaims, jwtCacheEnabled, jwtCacheExpiry, tokenIssuer, tokenAudience);
+    }
+
+    public MGWJWTGeneratorImpl(String dialectURI,
+                               String signatureAlgorithm,
+                               String trustStorePath,
+                               String trustStorePassword,
+                               String certificateAlias,
+                               String privateKeyAlias,
+                               int jwtExpiryTime,
+                               String[] restrictedClaims,
+                               boolean jwtCacheEnabled,
+                               int jwtCacheExpiry,
+                               String tokenIssuer,
+                               String[] tokenAudience,
+                               BMap<String, String> claimMapping) {
+        super(dialectURI, signatureAlgorithm, trustStorePath, trustStorePassword, certificateAlias, privateKeyAlias,
+                jwtExpiryTime, restrictedClaims, jwtCacheEnabled, jwtCacheExpiry, tokenIssuer, tokenAudience,
+                claimMapping);
     }
 
     @Override
@@ -107,10 +126,10 @@ public class MGWJWTGeneratorImpl extends AbstractMGWJWTGenerator {
     @Override
     public Map<String, Object> populateCustomClaims(Map<String, Object> jwtInfo, ArrayList<String> restrictedClaims) {
         Map<String, Object> claims = new HashMap<>();
-        for (String key: jwtInfo.keySet()) {
+        for (String key : jwtInfo.keySet()) {
             if (key.equals("customClaims")) {
                 Map<String, Object> customClaims = (Map<String, Object>) jwtInfo.get(key);
-                for (String subKey: customClaims.keySet()) {
+                for (String subKey : customClaims.keySet()) {
                     if (!restrictedClaims.contains(subKey)) {
                         claims.put(subKey, customClaims.get(subKey));
                     }

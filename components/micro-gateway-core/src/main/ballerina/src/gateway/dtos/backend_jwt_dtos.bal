@@ -46,7 +46,8 @@ public type ClaimsMapDTO record {|
 |};
 
 # This DTO is used to pass the customClaims, when there is no self contained token is involved.
-# + customClaims - custom claims
+# + sub - subscription claim
+# + application - application claim
 public type CustomClaimsMapDTO record {
     string sub = "";
     ApplicationClaimsMapDTO application = {};
@@ -62,4 +63,12 @@ public type ApplicationClaimsMapDTO record {|
     string owner = "";
     string name = "";
     string tier = "";
+|};
+
+# This DTO is used to pass the claims related to application, when there is no self contained token is involved.
+# + localClaim - local claim
+# + remoteClaim - remote claim
+public type RemoteClaimMappingDTO record {|
+    string localClaim;
+    string remoteClaim;
 |};

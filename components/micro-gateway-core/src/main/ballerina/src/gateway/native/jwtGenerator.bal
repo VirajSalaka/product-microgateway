@@ -54,7 +54,10 @@ public function loadJWTGeneratorClass(string className,
     handle jKeyStorePath = getKeystoreLocation(java:fromString(keyStorePathUnresolved));
     handle jKeyStorePassword = java:fromString(keyStorePassword);
     handle jTokenIssuer = java:fromString(tokenIssuer);
-    return jLoadJWTGeneratorClass(jClassName,
+
+    map<string>? claimMapping = createRemoteClaimMapping();
+    if (claimMapping is map<string>) {
+        return jLoadJWTGeneratorClassWithClaimMapping(jClassName,
                                     jDialectURI,
                                     jSignatureAlgorithm,
                                     jKeyStorePath,
@@ -66,7 +69,24 @@ public function loadJWTGeneratorClass(string className,
                                     enabledCaching,
                                     cacheExpiry,
                                     jTokenIssuer,
-                                    tokenAudience);
+                                    tokenAudience,
+                                    claimMapping);
+    } 
+    //to maintain backward compatibility
+    return jLoadJWTGeneratorClass(jClassName,
+                                jDialectURI,
+                                jSignatureAlgorithm,
+                                jKeyStorePath,
+                                jKeyStorePassword,
+                                jCertificateAlias,
+                                jPrivateKeyAlias,
+                                tokenExpiry,
+                                restrictedClaims,
+                                enabledCaching,
+                                cacheExpiry,
+                                jTokenIssuer,
+                                tokenAudience);
+    
 }
 
 # Invoke the interop function to resolves the keystore path
@@ -125,6 +145,42 @@ public function jLoadJWTGeneratorClass(handle className,
                                         int cacheExpiry,
                                         handle tokenIssuer,
                                         any[] tokenAudience) returns boolean = @java:Method {
+    name: "loadJWTGeneratorClass",
+    class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
+} external;
+
+# Interop function to create instance of JWTGenerator
+#
+# + className - className for the jwtgenerator implementation
+# + dialectURI - DialectURI for the standard claims
+# + signatureAlgorithm - Signature algorithm to sign the JWT
+# + keyStorePath - Keystore path
+# + keyStorePassword - Keystore password
+# + certificateAlias - Certificate alias
+# + privateKeyAlias - Private key alias
+# + tokenExpiry - Token expiry value
+# + restrictedClaims - Restricted claims from the configuration
+# + enabledCaching - jwt generator caching enabled
+# + cacheExpiry - jwt generator cache expiry
+# + tokenIssuer - token issuer for the claims
+# + tokenAudience - token audience for the claims
+# + claimMapping - claim mapping for remote claim and local claim
+# + return - Returns `true` if the class is created successfully. or `false` if unsuccessful.
+public function jLoadJWTGeneratorClassWithClaimMapping(handle className,
+                                                        handle dialectURI,
+                                                        handle signatureAlgorithm,
+                                                        handle keyStorePath,
+                                                        handle keyStorePassword,
+                                                        handle certificateAlias,
+                                                        handle privateKeyAlias,
+                                                        int tokenExpiry,
+                                                        any[] restrictedClaims,
+                                                        boolean enabledCaching,
+                                                        int cacheExpiry,
+                                                        handle tokenIssuer,
+                                                        any[] tokenAudience,
+                                                        map<string> claimMapping) 
+                                                        returns boolean = @java:Method {
     name: "loadJWTGeneratorClass",
     class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
 } external;
