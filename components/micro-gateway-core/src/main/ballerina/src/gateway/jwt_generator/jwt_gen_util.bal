@@ -57,11 +57,10 @@ public function setJWTHeaderForOauth2(http:Request req,
 
     (handle|error) generatedToken = generateBackendJWTTokenForOauth(authContext, apiDetails);
     if (generatedToken is error) {
-        printError("JWT_BACKEND_HEADER", "error generation", generatedToken);
+        return false;
     } else {
-        printError("JWT_BACKEND_HEADER", "successfully generated");
+        return setGeneratedTokenAsHeader(req, cacheKey, enabledCaching, generatedToken);
     }
-    return setGeneratedTokenAsHeader(req, cacheKey, enabledCaching, generatedToken);
 }
 
 # Setting backend JWT header when there is no JWT Token is present.

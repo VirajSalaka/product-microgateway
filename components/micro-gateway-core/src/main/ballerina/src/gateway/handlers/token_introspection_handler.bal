@@ -72,26 +72,22 @@ public type KeyValidationHandler object {
         APIConfiguration? apiConfig = apiConfigAnnotationMap[<string>invocationContext.attributes[http:SERVICE_NAME]];
         boolean|auth:Error authenticationResult = false;
         authenticationResult = self.introspectProvider.authenticate(credential);
-        printError("TOKEN_INTROSPECT", "inside token introspect.");
         if (authenticationResult is auth:Error) {
             return prepareAuthenticationError("Failed to authenticate with introspect auth provider.", authenticationResult);
         } else if (!authenticationResult) {
             setErrorMessageToInvocationContext(API_AUTH_INVALID_CREDENTIALS);
             return authenticationResult;
         } else {
-            runtime:Principal? principal = invocationContext["principal"];
+            runtime:Principal? principal = invocationContext?.principal;
             if (principal is runtime:Principal) {
-                printError("temp xxxxxxxx", principal.toString());
                 AuthenticationContext authenticationContext = {};
                 authenticationContext.username = principal?.username ?: USER_NAME_UNKNOWN;
                 string apiName = "";
                 string apiVersion = "";
-                string apiPublisher = "";
 
                 if (apiConfig is APIConfiguration) {
                     apiName = apiConfig.name;
                     apiVersion = apiConfig.apiVersion;
-                    apiPublisher = apiConfig.publisher;
                 }
                 map<any>? claims = principal?.claims;
                 any clientId = claims[CLIENT_ID];
@@ -104,38 +100,32 @@ public type KeyValidationHandler object {
                    invocationContext.attributes[AUTHENTICATION_CONTEXT] = authenticationContext;
                    invocationContext.attributes[KEY_TYPE_ATTR] = authenticationContext.keyType;
                    if (isAllowed) {
-                       //todo: populate the properties properly
                        map<string> apiDetails = createAPIDetailsMap(invocationContext);
-              string cacheKey = credential + apiName + apiVersion;
-              boolean enabledJWTGenerator = getConfigBooleanValue(JWT_GENERATOR_ID,
-                                                                    JWT_GENERATOR_ENABLED,
+                       string cacheKey = credential + apiName + apiVersion;
+                       boolean enabledJWTGenerator = getConfigBooleanValue(JWT_GENERATOR_ID, JWT_GENERATOR_ENABLED,
                                                                     DEFAULT_JWT_GENERATOR_ENABLED);
-                       printError("token_introspect_xxxxx", authenticationContext.toString());
-                       boolean tokenGenStatus = setJWTHeaderForOauth2(req, authenticationContext, cacheKey, enabledJWTGenerator, apiDetails);
+                       boolean tokenGenStatus = setJWTHeaderForOauth2(req, authenticationContext,
+                                                                    cacheKey, enabledJWTGenerator, apiDetails);
+                       if (!tokenGenStatus) {
+                           printError(KEY_AUTHN_FILTER, "Error while adding the Backend JWT header");
+                       }
                    }
                    return isAllowed;    
-                } else {
-                    printError("TOKEN_INTROSPECT", "inside non principal mode");
-                    // Otherwise return the introspection response.
+                } else { // Otherwise return the introspection response.
                     invocationContext.attributes[AUTHENTICATION_CONTEXT] = authenticationContext;
                     invocationContext.attributes[KEY_TYPE_ATTR] = authenticationContext.keyType;
-
-                    AuthenticationContext authContext = <AuthenticationContext>invocationContext.attributes[AUTHENTICATION_CONTEXT];
-
-                    string apiTier = authContext.apiTier;
-                    string subscriberTenantDomain = authContext.subscriberTenantDomain;
-
                     if (authenticationResult) {
-                        printError("TOKEN_INTROSPECT", "inside if statement");
                         map<string> apiDetails = createAPIDetailsMap(invocationContext);
                         string cacheKey = credential + apiName + apiVersion;
                         boolean enabledJWTGenerator = getConfigBooleanValue(JWT_GENERATOR_ID,
                                                                              JWT_GENERATOR_ENABLED,
                                                                              DEFAULT_JWT_GENERATOR_ENABLED);
-                        printError("token_introspect_yyyyyyy", authenticationContext.toString());
-                        boolean tokenGenStatus = setJWTHeaderForOauth2(req, authenticationContext, cacheKey, enabledJWTGenerator, apiDetails);
+                        boolean tokenGenStatus = setJWTHeaderForOauth2(req, authenticationContext, cacheKey,
+                                                        enabledJWTGenerator, apiDetails);
+                        if (!tokenGenStatus) {
+                            printError(KEY_AUTHN_FILTER, "Error while adding the Backend JWT header");
+                        }
                     }
-                    printError("TOKEN_INTROSPECT", "outside if statement");
                     return authenticationResult;
                 }
             }

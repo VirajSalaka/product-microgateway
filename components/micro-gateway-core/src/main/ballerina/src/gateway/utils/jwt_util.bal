@@ -47,7 +47,7 @@ public function isAllowedKey(string token, jwt:JwtPayload payload, boolean isVal
         callerToken: token,
         authenticated: !isValidationEnabled
     };
-    string? username = payload["sub"];
+    string? username = payload?.sub;
     if (username is string) {
         authenticationContext.username = username;
     }
@@ -104,7 +104,7 @@ public function handleSubscribedAPIs(string apiKeyToken, jwt:JwtPayload payload,
     // Then if validateAllowedAPIs is true only set authenticated true after validating APIs.
     authenticationContext.authenticated = !validateAllowedAPIs;
 
-    string? username = payload["sub"];
+    string? username = payload?.sub;
     if (username is string) {
         authenticationContext.username = username;
     }

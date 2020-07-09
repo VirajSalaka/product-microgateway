@@ -32,6 +32,7 @@ function retrieveClaims (AuthenticationContext authContext) returns @tainted Cla
     } else {
         userInfoDTO.username = USER_NAME_UNKNOWN;
     }
+    //todo: decide the required behavior
     //the user claims will be received only if dialect is matched.
     if (DIALECT_URI != DEFAULT_JWT_GENERATOR_DIALECT) {
         userInfoDTO["dialect"] = DIALECT_URI;
@@ -41,7 +42,7 @@ function retrieveClaims (AuthenticationContext authContext) returns @tainted Cla
 
     http:Request claimRetrieveRequest = new;
     claimRetrieveRequest.setHeader(AUTHORIZATION_HEADER, getBasicAuthHeaderValue(jwtGeneratorUsername,
-        jwtGeneratorPassword));
+                                                                                jwtGeneratorPassword));
     if (userInfoDTOJson is json) {
         claimRetrieveRequest.setJsonPayload(userInfoDTOJson);
     }
