@@ -137,7 +137,6 @@ function isSelfContainedToken(jwt:JwtPayload payload) returns boolean {
 function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPayload? payload = ()) 
         returns @tainted ClaimsMapDTO {
     ClaimsMapDTO claimsMapDTO = {};
-
     CustomClaimsMapDTO customClaimsMapDTO = {};
     ClaimsListDTO ? claimsListDTO = retrieveClaims(authContext);
     if (claimsListDTO is ClaimsListDTO) {
@@ -151,6 +150,7 @@ function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPa
     if (!(payload is ())) {
         map<json>? customClaims = payload["customClaims"];
         if (customClaims is map<json>) {
+            //todo: decide whether we put dialect here
             foreach var [key, value] in customClaims.entries() {
                 string | error claimVal = trap <string> value;
                 if (claimVal is string) {
@@ -160,12 +160,13 @@ function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPa
         }
     }
     ApplicationClaimsMapDTO applicationClaimsMapDTO = {};
-    applicationClaimsMapDTO.id = authContext.applicationId;
-    applicationClaimsMapDTO.owner = authContext.username;
-    applicationClaimsMapDTO.name = authContext.applicationName;
-    applicationClaimsMapDTO.tier = authContext.applicationTier;
+    applicationClaimsMapDTO.id = emptyStringIfUnknownValue(authContext.applicationId);
+    applicationClaimsMapDTO.owner = emptyStringIfUnknownValue(authContext.username);
+    applicationClaimsMapDTO.name = emptyStringIfUnknownValue(authContext.applicationName);
+    applicationClaimsMapDTO.tier = emptyStringIfUnknownValue(authContext.applicationTier);
+
     customClaimsMapDTO.application = applicationClaimsMapDTO;
-    customClaimsMapDTO.sub = authContext.username;
+    customClaimsMapDTO.sub = emptyStringIfUnknownValue(authContext.username);
     claimsMapDTO.customClaims = customClaimsMapDTO;
     return claimsMapDTO;
 }
@@ -203,4 +204,8 @@ function createRemoteClaimMapping() returns map<string>? {
         printError(JWT_GEN_UTIL, "Error while parsing the configuration value provided under " + JWT_GENERATOR_CLAIM_MAPPING, 
             claimMappingList);
     }
+}
+
+function emptyStringIfUnknownValue (string value) returns string {
+    return value != UNKNOWN_VALUE ? value : "";
 }
