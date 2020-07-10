@@ -15,15 +15,20 @@
 // under the License.
 
 import ballerina/http;
+import ballerina/config;
 
-string DIALECT_URI = getConfigValue(JWT_GENERATOR_ID,
-                                    JWT_GENERATOR_DIALECT,
-                                    DEFAULT_JWT_GENERATOR_DIALECT);
+string dialectURI = getConfigValue(JWT_GENERATOR_ID, JWT_GENERATOR_DIALECT, DEFAULT_JWT_GENERATOR_DIALECT);
 string jwtGeneratorUsername = getConfigValue(JWT_GENERATOR_ID, JWT_GENERATOR_USERNAME, DEFAULT_JWT_GENERATOR_USERNAME);
 string jwtGeneratorPassword = getConfigValue(JWT_GENERATOR_ID, JWT_GENERATOR_USERNAME, DEFAULT_JWT_GENERATOR_PASSWORD);
 
 //todo: introduce a cache to avoid calling retrieve Claims if needed
 function retrieveClaims (AuthenticationContext authContext) returns @tainted ClaimsListDTO ? {
+
+    if (!config:contains(JWT_GENERATOR_ID + "." + JWT_GENERATOR_USER_INFO_ENDPOINT)) {
+        printDebug(CLAIM_RETRIEVER, "Claims are not retrieved from the API Manager as the " + JWT_GENERATOR_ID + "." +
+            JWT_GENERATOR_USER_INFO_ENDPOINT + " configuration is not provided.");
+        return;
+    }
     UserInfoDTO userInfoDTO = {};
     string? usernameWithTenant = authContext.username;
     if (usernameWithTenant is string) {
@@ -34,8 +39,8 @@ function retrieveClaims (AuthenticationContext authContext) returns @tainted Cla
     }
     //todo: decide the required behavior
     //the user claims will be received only if dialect is matched.
-    if (DIALECT_URI.trim() != "") {
-        userInfoDTO["dialect"] = DIALECT_URI;
+    if (dialectURI.trim() != "") {
+        userInfoDTO["dialect"] = dialectURI;
     }
     userInfoDTO.accessToken = authContext.apiKey;
     json | error userInfoDTOJson = json.constructFrom(userInfoDTO);
