@@ -24,14 +24,19 @@ string jwtGeneratorPassword = getConfigValue(JWT_GENERATOR_ID, JWT_GENERATOR_USE
 //todo: introduce a cache to avoid calling retrieve Claims if needed
 function retrieveClaims (AuthenticationContext authContext) returns @tainted ClaimsListDTO ? {
 
+    //todo: set enabled flag and decide    EnableUserClaims - APIM
+    //todo: add this to the token issuer config
     if (!config:contains(JWT_GENERATOR_ID + "." + JWT_GENERATOR_USER_INFO_ENDPOINT)) {
         printDebug(CLAIM_RETRIEVER, "Claims are not retrieved from the API Manager as the " + JWT_GENERATOR_ID + "." +
             JWT_GENERATOR_USER_INFO_ENDPOINT + " configuration is not provided.");
         return;
     }
     UserInfoDTO userInfoDTO = {};
+    //todo: have a tenant domain, and send the credentials and check
     string? usernameWithTenant = authContext.username;
     if (usernameWithTenant is string) {
+        //todo: last @ , since user email
+        //todo: check if it is required to change based on setEnabledEmail username
         string username = split(usernameWithTenant, "@")[0];
         userInfoDTO.username = username;
     } else {
@@ -42,6 +47,7 @@ function retrieveClaims (AuthenticationContext authContext) returns @tainted Cla
     if (dialectURI.trim() != "") {
         userInfoDTO["dialect"] = dialectURI;
     }
+    //todo : only for oauth2
     userInfoDTO.accessToken = authContext.apiKey;
     json | error userInfoDTOJson = json.constructFrom(userInfoDTO);
 
