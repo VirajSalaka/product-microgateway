@@ -88,6 +88,14 @@ public function loadJWTGeneratorClass(string className,
                                 tokenAudience);
 }
 
+public function loadClaimRetrieverClass (string className, map<anydata> properties) returns boolean {
+    return jLoadClaimRetrieverClass (java:fromString(className), properties);
+}
+
+public function retrieveClaimsFromImpl (AuthenticationContext authContext, jwt:JwtPayload? jwtInfo = ()) returns ClaimsListDTO? {
+    return jRetrieveClaims(authContext);
+}
+
 # Invoke the interop function to resolves the keystore path
 #
 # + unresolvedPath - unresolved keystore path
@@ -211,5 +219,15 @@ public function jGenerateJWTToken(jwt:JwtPayload jwtInfo, map<string> apiDetails
 public function jGenerateJWTTokenFromUserClaimsMap(ClaimsMapDTO jwtInfo, map<string> apiDetails) returns (handle | error) = @java:Method {
     //todo: change the function to idenitfy the two types separately
     name: "invokeGenerateToken",
+    class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
+} external;
+
+function jLoadClaimRetrieverClass (handle className, map<anydata> configuration) returns boolean = @java:Method {
+    name:"loadClaimRetrieverClass",
+    class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
+} external;
+
+function jRetrieveClaims (AuthenticationContext authContext) returns ClaimsListDTO? = @java:Method {
+    name:"getRetrievedClaimsXX",
     class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
 } external;

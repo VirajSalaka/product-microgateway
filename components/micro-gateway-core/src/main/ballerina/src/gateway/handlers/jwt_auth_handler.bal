@@ -43,6 +43,7 @@ public type JWTAuthHandler object {
     private int skewTime = 0;
     private boolean enabledCaching = false;
     private int cacheExpiry = 0;
+    public boolean claimRetrieveClassLoaded = false;
 
     public function __init(JwtAuthProvider jwtAuthProvider) {
         self.jwtAuthProvider = jwtAuthProvider;
@@ -111,8 +112,15 @@ public type JWTAuthHandler object {
                                                         self.cacheExpiry,
                                                         self.tokenIssuer,
                                                         self.tokenAudience);
+
+            map<anydata> tempmap = {};
+            self.claimRetrieveClassLoaded =
+                loadClaimRetrieverClass("org.wso2.micro.gateway.jwt.generator.DefaultMGWClaimRetriever", tempmap);
             if (!self.classLoaded) {
                 printError(KEY_JWT_AUTH_PROVIDER, "JWT Generator class loading failed.");
+            }
+            if (!self.claimRetrieveClassLoaded) {
+                printError(KEY_JWT_AUTH_PROVIDER, "Claim Retriever class loading failed.");
             }
         }
     }
@@ -302,7 +310,7 @@ public function generateAndSetBackendJwtHeader(string credential,
                                 int difference = (cachedTokenExpiry - currentTime);
                                 if (difference < skewTime) {
                                     printDebug(KEY_JWT_AUTH_PROVIDER, "JWT regenerated because of the skew time");
-                                    status = setJWTHeader(payload, req, cacheKey, enabledCaching, apiDetails);
+                                    status = setJWTHeader(<@untainted>payload, req, cacheKey, enabledCaching, apiDetails);
                                 } else {
                                     req.setHeader(jwtheaderName, cachedToken);
                                     status = true;
@@ -314,11 +322,11 @@ public function generateAndSetBackendJwtHeader(string credential,
                         }
                     } else {
                         printDebug(KEY_JWT_AUTH_PROVIDER, "Could not find in the jwt generator cache");
-                        status = setJWTHeader(payload, req, cacheKey, enabledCaching, apiDetails);
+                        status = setJWTHeader(<@untainted>payload, req, cacheKey, enabledCaching, apiDetails);
                     }
                 } else {
                     printDebug(KEY_JWT_AUTH_PROVIDER, "JWT generator caching is disabled");
-                    status = setJWTHeader(payload, req, cacheKey, enabledCaching, apiDetails);
+                    status = setJWTHeader(<@untainted>payload, req, cacheKey, enabledCaching, apiDetails);
                 }
             } else {
                 printDebug(KEY_JWT_AUTH_PROVIDER, "Failed to read JWT token");

@@ -21,6 +21,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ballerinalang.jvm.values.api.BMap;
 
+import javax.net.ssl.HttpsURLConnection;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -124,7 +132,8 @@ public class MGWJWTGeneratorImpl extends AbstractMGWJWTGenerator {
     }
 
     @Override
-    public Map<String, Object> populateCustomClaims(Map<String, Object> jwtInfo, ArrayList<String> restrictedClaims) {
+    public Map<String, Object> populateCustomClaims(Map<String, Object> jwtInfo,
+                                                    ArrayList<String> restrictedClaims) {
         Map<String, Object> claims = new HashMap<>();
         for (String key : jwtInfo.keySet()) {
             if (key.equals("customClaims")) {

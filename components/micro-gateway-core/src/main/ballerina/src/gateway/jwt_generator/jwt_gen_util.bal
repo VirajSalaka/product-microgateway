@@ -138,7 +138,7 @@ function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPa
         returns @tainted ClaimsMapDTO {
     ClaimsMapDTO claimsMapDTO = {};
     CustomClaimsMapDTO customClaimsMapDTO = {};
-    ClaimsListDTO ? claimsListDTO = retrieveClaims(authContext);
+    ClaimsListDTO ? claimsListDTO = retrieveClaims(authContext, payload);
     if (claimsListDTO is ClaimsListDTO) {
        ClaimDTO[] claimList = claimsListDTO.list;
        foreach ClaimDTO claim in claimList {

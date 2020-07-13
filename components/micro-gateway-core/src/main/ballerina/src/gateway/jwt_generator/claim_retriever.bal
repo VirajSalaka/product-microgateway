@@ -15,20 +15,24 @@
 // under the License.
 
 import ballerina/http;
-import ballerina/config;
+import ballerina/jwt;
 
 string dialectURI = getConfigValue(JWT_GENERATOR_ID, JWT_GENERATOR_DIALECT, DEFAULT_JWT_GENERATOR_DIALECT);
 string jwtGeneratorUsername = getConfigValue(JWT_GENERATOR_ID, JWT_GENERATOR_USERNAME, DEFAULT_JWT_GENERATOR_USERNAME);
 string jwtGeneratorPassword = getConfigValue(JWT_GENERATOR_ID, JWT_GENERATOR_USERNAME, DEFAULT_JWT_GENERATOR_PASSWORD);
 
 //todo: introduce a cache to avoid calling retrieve Claims if needed
-function retrieveClaims (AuthenticationContext authContext) returns @tainted ClaimsListDTO ? {
+function retrieveClaims (AuthenticationContext authContext, jwt:JwtPayload? payload = ()) returns @tainted ClaimsListDTO ? {
 
-    if (!config:contains(JWT_GENERATOR_ID + "." + JWT_GENERATOR_USER_INFO_ENDPOINT)) {
-        printDebug(CLAIM_RETRIEVER, "Claims are not retrieved from the API Manager as the " + JWT_GENERATOR_ID + "." +
-            JWT_GENERATOR_USER_INFO_ENDPOINT + " configuration is not provided.");
-        return;
-    }
+    printInfo("CLAIM RETRIEVER XX", "sfsdfsadfasdfasdf");
+
+        ClaimsListDTO? fromJavaData = retrieveClaimsFromImpl(authContext);
+        if (fromJavaData is ClaimsListDTO ){
+            printError("CLAIM RETRIEVER XX" , fromJavaData.toString());
+        } else {
+            printError("CLAIM RETRIEVER XX" , "Null returned");
+        }
+
     UserInfoDTO userInfoDTO = {};
     string? usernameWithTenant = authContext.username;
     if (usernameWithTenant is string) {

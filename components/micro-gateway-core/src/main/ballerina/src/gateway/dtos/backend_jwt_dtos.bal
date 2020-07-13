@@ -36,7 +36,7 @@ public type ClaimDTO record {|
 # + list - claims list
 public type ClaimsListDTO record {|
     int count;
-    ClaimDTO[] list;
+    ClaimDTO[] list = [];
 |};
 
 # This DTO is used to pass the customClaims, when there is no self contained token is involved.
