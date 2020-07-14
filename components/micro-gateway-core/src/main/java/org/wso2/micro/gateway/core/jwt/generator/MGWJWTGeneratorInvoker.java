@@ -21,20 +21,16 @@ import org.apache.logging.log4j.Logger;
 import org.ballerinalang.jvm.types.BPackage;
 import org.ballerinalang.jvm.values.ArrayValue;
 import org.ballerinalang.jvm.values.MapValue;
-import org.ballerinalang.jvm.values.MapValueImpl;
 import org.ballerinalang.jvm.values.api.BArray;
 import org.ballerinalang.jvm.values.api.BMap;
 import org.ballerinalang.jvm.values.api.BValueCreator;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 import org.wso2.micro.gateway.core.Constants;
 import org.wso2.micro.gateway.jwt.generator.AbstractMGWClaimRetriever;
 import org.wso2.micro.gateway.jwt.generator.AbstractMGWJWTGenerator;
 import org.wso2.micro.gateway.jwt.generator.ClaimDTO;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -69,110 +65,56 @@ public class MGWJWTGeneratorInvoker {
                             String[].class);
             Object[] restrictedClaimObjectArray = convertArrayValueToArray(restrictedClaims);
             String[] restrictedClaimArray = Arrays.copyOf(restrictedClaimObjectArray,
-                                                            restrictedClaimObjectArray.length,
-                                                            String[].class);
+                    restrictedClaimObjectArray.length,
+                    String[].class);
             Object[] tokenAudienceObjectArray = convertArrayValueToArray(tokenAudience);
             String[] tokenAudienceArray = Arrays.copyOf(tokenAudienceObjectArray,
-                                                        tokenAudienceObjectArray.length,
-                                                        String[].class);
+                    tokenAudienceObjectArray.length,
+                    String[].class);
             abstractMGWJWTGenerator = (AbstractMGWJWTGenerator) classConstructor
                     .newInstance(dialectURI, signatureAlgorithm, keyStorePath, keyStorePassword, certificateAlias,
                             privateKeyAlias, jwtExpiryTime, restrictedClaimArray, cacheEnabled, cacheExpiry,
                             tokenIssuer, tokenAudienceArray);
             return true;
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException
-                    | InvocationTargetException | NoSuchMethodException e) {
+                | InvocationTargetException | NoSuchMethodException e) {
             log.error("Error while loading the jwt generator class: " + className, e);
         }
         return false;
     }
 
-    public static boolean loadJWTGeneratorClassM(String className,
-                                                String dialectURI,
-                                                String signatureAlgorithm,
-                                                String keyStorePath,
-                                                String keyStorePassword,
-                                                String certificateAlias,
-                                                String privateKeyAlias,
-                                                int jwtExpiryTime,
-                                                ArrayValue restrictedClaims,
-                                                boolean cacheEnabled,
-                                                int cacheExpiry,
-                                                String tokenIssuer,
-                                                ArrayValue tokenAudience,
-                                                BMap<String, String> claimMapping) {
-        boolean status = loadJWTGeneratorClass(className, dialectURI, signatureAlgorithm, keyStorePath,
-                            keyStorePassword, certificateAlias, privateKeyAlias, jwtExpiryTime, restrictedClaims,
-                            cacheEnabled, cacheExpiry, tokenIssuer, tokenAudience);
-        if (status) {
-            abstractMGWJWTGenerator.setClaimMapping(claimMapping);
-        }
-        return status;
-    }
-
     public static boolean loadClaimRetrieverClass(String className, MapValue properties) {
         try {
             Class claimRetrieverClass = MGWJWTGeneratorInvoker.class.getClassLoader().loadClass(className);
-            Constructor classConstructor = claimRetrieverClass.getDeclaredConstructor(Map.class );
+            Constructor classConstructor = claimRetrieverClass.getDeclaredConstructor(Map.class);
             abstractMGWClaimRetriever = (AbstractMGWClaimRetriever) classConstructor.newInstance(
                     convertMapValueToMap(properties));
             return true;
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            return false;
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            return false;
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-            return false;
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-            return false;
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException |
+                InvocationTargetException | NoSuchMethodException e) {
+            log.error("Error while loading the claim retriever class.", e);
             return false;
         }
     }
 
-//    public static Map<String, Object> getRetrievedClaims (BMap<String, Object> jwtInfo, BMap<String, Object> authContext) {
-//        try {
-//             return abstractMGWClaimRetriever.retrieveClaims(convertBMapToMap(authContext),
-//                    convertBMapToMap(jwtInfo));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            return null;
-//        }
-//    }
-
-    public static BMap<String, Object> getRetrievedClaimsXX (BMap<String, Object> authContext) {
+    public static BMap<String, Object> getRetrievedClaims(BMap<String, Object> authContext) {
         try {
-            //BMap<String, Object> bMap = new MapValueImpl<>();
             List<ClaimDTO> claimList = abstractMGWClaimRetriever.retrieveClaims(convertBMapToMap(authContext));
-            BPackage packageId = new BPackage("wso2","gateway","3.1.0");
-            BMap<String, Object> bMap = BValueCreator.createRecordValue(packageId,"ClaimsListDTO");
+            BPackage packageId = new BPackage("wso2", "gateway", "3.1.0");
+            BMap<String, Object> bMap = BValueCreator.createRecordValue(packageId, "ClaimsListDTO");
             bMap.put("count", claimList.size());
             BArray bArray = (BArray) bMap.get("list");
-            for (Object claimDTO:claimList) {
-                bArray.append(BValueCreator.createRecordValue(packageId,"ClaimDTO",
-                        (Map<String,Object>) claimDTO));
+            for (Object claimDTO : claimList) {
+                bArray.append(BValueCreator.createRecordValue(packageId, "ClaimDTO",
+                        (Map<String, Object>) claimDTO));
             }
             return bMap;
-        } catch (IOException e) {
-            e.printStackTrace();
+            //Not to break the flow if an exception occured during claim retrieval
+        } catch (Exception e) {
+            log.error("Error while retrieving user claims from remote url.", e);
             return null;
         }
     }
-
-//    public Map<String, Object> getRetrievedClaims (MapValue authContext) {
-//        try {
-//            return abstractMGWClaimRetriever.retrieveClaims(convertMapValueToMap(authContext),
-//                    null);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            return null;
-//        }
-//    }
 
     /**
      * Invoke token generation method.
@@ -210,7 +152,7 @@ public class MGWJWTGeneratorInvoker {
      */
     public static Map<String, Object> convertMapValueToMap(MapValue mapValue) {
         Map<String, Object> map = new HashMap<>();
-        for (Object key: mapValue.getKeys()) {
+        for (Object key : mapValue.getKeys()) {
             Object valueObject = mapValue.get(key.toString());
             if (valueObject != null && valueObject instanceof MapValue) {
                 MapValue subMapValue = mapValue.getMapValue(key.toString());
@@ -228,7 +170,7 @@ public class MGWJWTGeneratorInvoker {
 
     public static Map<String, Object> convertBMapToMap(BMap<String, Object> bMap) {
         Map<String, Object> map = new HashMap<>();
-        for (String key: bMap.getKeys()) {
+        for (String key : bMap.getKeys()) {
             map.put(key, bMap.get(key));
         }
         return map;

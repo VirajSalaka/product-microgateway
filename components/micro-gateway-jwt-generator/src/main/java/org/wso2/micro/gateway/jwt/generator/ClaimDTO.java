@@ -16,6 +16,9 @@
 
 package org.wso2.micro.gateway.jwt.generator;
 
+/**
+ * Object Structure for the retrieved claims.
+ */
 public class ClaimDTO {
     private String uri;
     private String value;

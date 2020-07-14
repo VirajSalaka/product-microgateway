@@ -139,42 +139,6 @@ public function jLoadJWTGeneratorClass(handle className,
     class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
 } external;
 
-# Interop function to create instance of JWTGenerator
-#
-# + className - className for the jwtgenerator implementation
-# + dialectURI - DialectURI for the standard claims
-# + signatureAlgorithm - Signature algorithm to sign the JWT
-# + keyStorePath - Keystore path
-# + keyStorePassword - Keystore password
-# + certificateAlias - Certificate alias
-# + privateKeyAlias - Private key alias
-# + tokenExpiry - Token expiry value
-# + restrictedClaims - Restricted claims from the configuration
-# + enabledCaching - jwt generator caching enabled
-# + cacheExpiry - jwt generator cache expiry
-# + tokenIssuer - token issuer for the claims
-# + tokenAudience - token audience for the claims
-# + claimMapping - claim mapping for remote claim and local claim
-# + return - Returns `true` if the class is created successfully. or `false` if unsuccessful.
-public function jLoadJWTGeneratorClassWithClaimMapping(handle className,
-                                                        handle dialectURI,
-                                                        handle signatureAlgorithm,
-                                                        handle keyStorePath,
-                                                        handle keyStorePassword,
-                                                        handle certificateAlias,
-                                                        handle privateKeyAlias,
-                                                        int tokenExpiry,
-                                                        any[] restrictedClaims,
-                                                        boolean enabledCaching,
-                                                        int cacheExpiry,
-                                                        handle tokenIssuer,
-                                                        any[] tokenAudience,
-                                                        map<string> claimMapping) 
-                                                        returns boolean = @java:Method {
-    name: "loadJWTGeneratorClassM",
-    class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
-} external;
-
 # Interop function to resolves the keystore path
 #
 # + unresolvedPath - unresolved keystore path
@@ -211,6 +175,6 @@ function jLoadClaimRetrieverClass (handle className, map<any> configuration) ret
 } external;
 
 function jRetrieveClaims (OpaqueTokenInfoDTO userInfo) returns ClaimsListDTO? = @java:Method {
-    name:"getRetrievedClaimsXX",
+    name:"getRetrievedClaims",
     class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
 } external;

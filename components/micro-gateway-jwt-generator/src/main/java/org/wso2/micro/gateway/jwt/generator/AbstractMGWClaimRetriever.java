@@ -16,10 +16,12 @@
 
 package org.wso2.micro.gateway.jwt.generator;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Abstract class for retrieve user claims from remote endpoint.
+ */
 public abstract class AbstractMGWClaimRetriever {
     private Map<String, String> configurationMap;
 
@@ -27,7 +29,7 @@ public abstract class AbstractMGWClaimRetriever {
         this.configurationMap = configurationMap;
     }
 
-    public abstract List<ClaimDTO> retrieveClaims(Map<String, Object> authContext) throws IOException;
+    public abstract List<ClaimDTO> retrieveClaims(Map<String, Object> authContext);
 
     public Map<String, String> getConfigurationMap() {
         return configurationMap;

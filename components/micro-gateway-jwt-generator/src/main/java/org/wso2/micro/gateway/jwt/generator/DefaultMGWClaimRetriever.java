@@ -17,8 +17,9 @@
 package org.wso2.micro.gateway.jwt.generator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,39 +30,48 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
+import javax.net.ssl.HttpsURLConnection;
+
+/**
+ * Class to retrieve user claims from Key Manager component of the API Manager.
+ */
 public class DefaultMGWClaimRetriever extends AbstractMGWClaimRetriever {
+    private static final Logger logger = LogManager.getLogger(AbstractMGWJWTGenerator.class);
 
     public DefaultMGWClaimRetriever(Map<String, String> configurationMap) {
         super(configurationMap);
     }
 
     @Override
-    public List<ClaimDTO> retrieveClaims(Map<String, Object> authContext)
-            throws IOException {
-        System.setProperty("javax.net.ssl.trustStore","/Users/viraj/Documents/APIM-2/resolve_merge/" +
+    public List<ClaimDTO> retrieveClaims(Map<String, Object> authContext) {
+        System.setProperty("javax.net.ssl.trustStore", "/Users/viraj/Documents/APIM-2/resolve_merge/" +
                 "viraj_4/product-microgateway/distribution/target/wso2am-micro-gw-macos-3.2.0-alpha2-SNAPSHOT/" +
                 "runtime/bre/security/ballerinaTruststore.p12");
-        System.setProperty("javax.net.ssl.trustStorePassword","ballerina");
-        URL url;
-        HttpsURLConnection urlConn = null;
-        String userInfoEndpoint = "https://localhost:9443/user-info/claims/generate";
-        url = new URL(userInfoEndpoint);
-        urlConn = (HttpsURLConnection) url.openConnection();
-        urlConn.setHostnameVerifier((s, sslSession) -> true);
-        urlConn.setDoOutput(true);
-        urlConn.setRequestMethod("POST");
-        urlConn.setRequestProperty("Authorization", "Basic YWRtaW46YWRtaW4=");
-        urlConn.setRequestProperty("Content-Type", "application/json");
-        String jsonInputString = "{\"username\": \"admin\"}";
-        try(OutputStream os = urlConn.getOutputStream()) {
-            byte[] input = jsonInputString.getBytes("utf-8");
-            os.write(input, 0, input.length);
-        }
-        int responseCode = urlConn.getResponseCode();
-        if (responseCode == 200) {
-            String responseStr = getResponseString(urlConn.getInputStream());
-            ObjectMapper mapper = new ObjectMapper();
-            return (List<ClaimDTO>) mapper.readValue(responseStr, Map.class).get("list");
+        System.setProperty("javax.net.ssl.trustStorePassword", "ballerina");
+        try {
+            HttpsURLConnection urlConn = null;
+            String userInfoEndpoint = "https://localhost:9443/user-info/claims/generate";
+            URL url = new URL(userInfoEndpoint);
+            urlConn = (HttpsURLConnection) url.openConnection();
+            urlConn.setHostnameVerifier((s, sslSession) -> true);
+            urlConn.setDoOutput(true);
+            urlConn.setRequestMethod("POST");
+            urlConn.setRequestProperty("Authorization", "Basic YWRtaW46YWRtaW4=");
+            urlConn.setRequestProperty("Content-Type", "application/json");
+            String jsonInputString = "{\"username\": \"admin\"}";
+            try (OutputStream os = urlConn.getOutputStream()) {
+                byte[] input = jsonInputString.getBytes("utf-8");
+                os.write(input, 0, input.length);
+            }
+            int responseCode = urlConn.getResponseCode();
+            if (responseCode == 200) {
+                String responseStr = getResponseString(urlConn.getInputStream());
+                ObjectMapper mapper = new ObjectMapper();
+                return (List<ClaimDTO>) mapper.readValue(responseStr, Map.class).get("list");
+            }
+            logger.error("Claim Retrieval request is failed with the response code : " + responseCode);
+        } catch (IOException e) {
+            logger.error("Error while retrieving user claims from remote endpoint", e);
         }
         return null;
     }

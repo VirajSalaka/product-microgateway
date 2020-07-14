@@ -20,13 +20,8 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import net.minidev.json.JSONArray;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ballerinalang.jvm.values.api.BMap;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.Key;
 import java.security.KeyStore;
@@ -60,7 +55,6 @@ public abstract class AbstractMGWJWTGenerator {
     private String[] tokenAudience;
     private Map<String, Object> apiDetails;
     private List<String> defaultRestrictedClaims;
-    private BMap<String, String> claimMapping;
 
     public AbstractMGWJWTGenerator(String dialectURI,
                                    String signatureAlgorithm,
@@ -89,38 +83,6 @@ public abstract class AbstractMGWJWTGenerator {
         defaultRestrictedClaims = new ArrayList<>(Arrays.asList("iss", "sub", "aud", "exp",
                 "nbf", "iat", "jti", "application", "tierInfo", "subscribedAPIs", "keytype"));
         this.restrictedClaims.addAll(defaultRestrictedClaims);
-    }
-
-    public AbstractMGWJWTGenerator(String dialectURI,
-                                   String signatureAlgorithm,
-                                   String keyStorePath,
-                                   String keyStorePassword,
-                                   String certificateAlias,
-                                   String privateKeyAlias,
-                                   int jwtExpiryTime,
-                                   String[] restrictedClaims,
-                                   boolean cacheEnabled,
-                                   int cacheExpiry,
-                                   String tokenIssuer,
-                                   String[] tokenAudience,
-                                   BMap<String, String> claimMapping) {
-
-        this.keyStorePath = keyStorePath;
-        this.keyStorePassword = keyStorePassword;
-        this.certificateAlias = certificateAlias;
-        this.privateKeyAlias = privateKeyAlias;
-        this.jwtExpiryTime = jwtExpiryTime;
-        this.dialectURI = dialectURI;
-        this.signatureAlgorithm = signatureAlgorithm;
-        this.cacheEnabled = cacheEnabled;
-        this.cacheExpiry = cacheExpiry;
-        this.tokenIssuer = tokenIssuer;
-        this.tokenAudience = tokenAudience;
-        this.restrictedClaims = new ArrayList<>(Arrays.asList(restrictedClaims));
-        defaultRestrictedClaims = new ArrayList<>(Arrays.asList("iss", "sub", "aud", "exp",
-                "nbf", "iat", "jti", "application", "tierInfo", "subscribedAPIs", "keytype"));
-        this.restrictedClaims.addAll(defaultRestrictedClaims);
-        this.claimMapping = claimMapping;
     }
 
     public String getPrivateKeyAlias() {
@@ -377,7 +339,7 @@ public abstract class AbstractMGWJWTGenerator {
             }
         }
         for (Map.Entry<String, Object> claimEntry : claims.entrySet()) {
-            jwtClaimSetBuilder.claim(mapRemoteClaim(claimEntry.getKey()), claimEntry.getValue());
+            jwtClaimSetBuilder.claim(claimEntry.getKey(), claimEntry.getValue());
         }
         JWTClaimsSet jwtClaimsSet = jwtClaimSetBuilder.build();
         return jwtClaimsSet.toJSONObject().toString();
@@ -418,19 +380,4 @@ public abstract class AbstractMGWJWTGenerator {
 
     public abstract Map<String, Object> populateCustomClaims(Map<String, Object> jwtInfo,
                                                              ArrayList<String> restrictedClaims);
-
-    public BMap<String, String> getClaimMapping() {
-        return claimMapping;
-    }
-
-    public void setClaimMapping(BMap<String, String> claimMapping) {
-        this.claimMapping = claimMapping;
-    }
-
-    private String mapRemoteClaim(String key) {
-        if (claimMapping == null || claimMapping.isEmpty() || !claimMapping.containsKey(key)) {
-            return key;
-        }
-        return claimMapping.get(key);
-    }
 }

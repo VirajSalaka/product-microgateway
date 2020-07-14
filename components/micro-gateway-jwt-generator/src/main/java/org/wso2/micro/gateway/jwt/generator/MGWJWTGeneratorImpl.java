@@ -19,16 +19,7 @@ package org.wso2.micro.gateway.jwt.generator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ballerinalang.jvm.values.api.BMap;
 
-import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -55,24 +46,6 @@ public class MGWJWTGeneratorImpl extends AbstractMGWJWTGenerator {
                                String[] tokenAudience) {
         super(dialectURI, signatureAlgorithm, trustStorePath, trustStorePassword, certificateAlias, privateKeyAlias,
                 jwtExpiryTime, restrictedClaims, jwtCacheEnabled, jwtCacheExpiry, tokenIssuer, tokenAudience);
-    }
-
-    public MGWJWTGeneratorImpl(String dialectURI,
-                               String signatureAlgorithm,
-                               String trustStorePath,
-                               String trustStorePassword,
-                               String certificateAlias,
-                               String privateKeyAlias,
-                               int jwtExpiryTime,
-                               String[] restrictedClaims,
-                               boolean jwtCacheEnabled,
-                               int jwtCacheExpiry,
-                               String tokenIssuer,
-                               String[] tokenAudience,
-                               BMap<String, String> claimMapping) {
-        super(dialectURI, signatureAlgorithm, trustStorePath, trustStorePassword, certificateAlias, privateKeyAlias,
-                jwtExpiryTime, restrictedClaims, jwtCacheEnabled, jwtCacheExpiry, tokenIssuer, tokenAudience,
-                claimMapping);
     }
 
     @Override
