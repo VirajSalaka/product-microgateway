@@ -96,7 +96,7 @@ public type KeyValidationHandler object {
                 if (clientId != () && clientId is string && self.validateSubscriptions) {
                    [authenticationContext, isAllowed] =
                      validateSubscriptionFromDataStores(credential, clientId, apiName, apiVersion,
-                     self.validateSubscriptions, authenticationContext.username);
+                     self.validateSubscriptions);
                    invocationContext.attributes[AUTHENTICATION_CONTEXT] = authenticationContext;
                    invocationContext.attributes[KEY_TYPE_ATTR] = authenticationContext.keyType;
                    if (isAllowed) {

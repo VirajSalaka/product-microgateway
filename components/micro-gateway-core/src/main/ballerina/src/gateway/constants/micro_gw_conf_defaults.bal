@@ -41,8 +41,6 @@ public const boolean DEFAULT_KM_CONF_CLAIM_RETRIEVAL_ENABLED = false;
 public const string DEFAULT_KM_CONF_CLAIM_RETRIEVAL_IMPLEMENTATION
                                                     = "org.wso2.micro.gateway.jwt.generator.DefaultMGWClaimRetriever";
 
-public const string SECURITY_INSTANCE_ID = "security";
-public const string SECURITY_VALIDATE_SUBSCRIPTIONS = "validateSubscriptions";
 public const boolean DEFAULT_VALIDATE_SUBSCRIPTIONS = false;
 
 public const boolean DEFAULT_KM_CONF_SECURITY_BASIC_ENABLED = true;

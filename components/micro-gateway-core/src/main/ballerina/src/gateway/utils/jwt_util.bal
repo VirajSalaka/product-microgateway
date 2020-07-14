@@ -18,6 +18,7 @@ import ballerina/http;
 import ballerina/jwt;
 import ballerina/runtime;
 
+
 public function isAllowedKey(string token, jwt:JwtPayload payload, boolean isValidationEnabled,
     string consumerKeyClaim, APIGatewayCache gatewayCache) returns boolean {
     boolean isAllowed = !isValidationEnabled;
@@ -32,13 +33,8 @@ public function isAllowedKey(string token, jwt:JwtPayload payload, boolean isVal
         if (customClaims.hasKey(SUBSCRIBED_APIS)) {
             subscribedAPIList = customClaims.get(SUBSCRIBED_APIS);
         }
-        if (subscribedAPIList is json[]) {
-            return handleSubscribedAPIs(token, payload, subscribedAPIList, isValidationEnabled);
-        } else if (isValidationEnabled){
-            return false;
-        } else {
-            return true;
-        }
+        return handleSubscribedAPIs(token, payload, subscribedAPIList, isValidationEnabled);
+
     }
     // if validation is not enabled, mark as an allowed key.
     // if validation is enabled, validation will be done to find if the key is allowed.
@@ -47,10 +43,7 @@ public function isAllowedKey(string token, jwt:JwtPayload payload, boolean isVal
         callerToken: token,
         authenticated: !isValidationEnabled
     };
-    string? username = payload?.sub;
-    if (username is string) {
-        authenticationContext.username = username;
-    }
+
     string|string[]? audiencePayload = payload?.aud;
     printDebug(JWT_UTIL,"Audience value retrieved : " + audiencePayload.toString());
     string consumerKey = "";
@@ -67,7 +60,11 @@ public function isAllowedKey(string token, jwt:JwtPayload payload, boolean isVal
         string apiVersion = apiConfig.apiVersion;
         string apiProvider = apiConfig.publisher;
         [authenticationContext, isAllowed] = validateSubscriptionFromDataStores(token, consumerKey,
-                                                apiName, apiVersion, isValidationEnabled, authenticationContext.username);
+                                                apiName, apiVersion, isValidationEnabled);
+        string? username = payload?.sub;
+        if (username is string) {
+            authenticationContext.username = username;
+        }
     }
 
     // TODO: substore: if possible print authenticationContext object as a json
@@ -92,10 +89,11 @@ public function isAllowedKey(string token, jwt:JwtPayload payload, boolean isVal
 # + subscribedAPIList - subscribedAPIList array
 # + validateAllowedAPIs - validate allowed APIs boolean value
 # + return - subscribed APIs validated or not
-public function handleSubscribedAPIs(string apiKeyToken, jwt:JwtPayload payload, json[] subscribedAPIList,
+public function handleSubscribedAPIs(string apiKeyToken, jwt:JwtPayload payload, json subscribedAPIList,
         boolean validateAllowedAPIs) returns boolean {
 
     runtime:InvocationContext invocationContext = runtime:getInvocationContext();
+    boolean isAllowed = !validateAllowedAPIs;
     //invocation context
     AuthenticationContext authenticationContext = {};
     authenticationContext.apiKey = apiKeyToken;
@@ -144,7 +142,7 @@ public function handleSubscribedAPIs(string apiKeyToken, jwt:JwtPayload payload,
     }
     //validate allowed apis
     APIConfiguration? apiConfig = apiConfigAnnotationMap[<string>invocationContext.attributes[http:SERVICE_NAME]];
-    if (apiConfig is APIConfiguration) {
+    if (apiConfig is APIConfiguration && subscribedAPIList is json[]) {
         string apiName = apiConfig.name;
         string apiVersion = apiConfig.apiVersion;
         int l = subscribedAPIList.length();
@@ -180,7 +178,7 @@ public function handleSubscribedAPIs(string apiKeyToken, jwt:JwtPayload payload,
                     + authenticationContext.subscriberTenantDomain);
                 }
                 invocationContext.attributes[AUTHENTICATION_CONTEXT] = authenticationContext;
-                return true;
+                isAllowed = true;
             }
             index += 1;
         }
@@ -196,25 +194,44 @@ public function handleSubscribedAPIs(string apiKeyToken, jwt:JwtPayload payload,
         + authenticationContext.subscriberTenantDomain);
     }
     invocationContext.attributes[AUTHENTICATION_CONTEXT] = authenticationContext;
-    return false;
+    return isAllowed;
 }
 
-public function getDecodedJWTPayload(string jwtToken) returns @tainted (jwt:JwtPayload | error) {
-    //decode jwt
-    var cachedJwt = trap <jwt:InboundJwtCacheEntry>jwtCache.get(jwtToken);
+public function getDecodedJWTPayloadOfAPIKey(string jwtToken) returns @tainted (jwt:JwtPayload | error) {
+    var cachedJwt = trap <jwt:InboundJwtCacheEntry>apiKeyCache.get(jwtToken);
     if (cachedJwt is jwt:InboundJwtCacheEntry) {
-        printDebug(JWT_UTIL, "jwt found from the jwt cache");
+        printDebug(JWT_UTIL, "jwt found from the api key cache");
         return cachedJwt.jwtPayload;
 
     } else {
-        [jwt:JwtHeader, jwt:JwtPayload] | jwt:Error decodedJWT = jwt:decodeJwt(jwtToken);
-        if (decodedJWT is error) {
-            printDebug(JWT_UTIL, "Error while decoding the JWT token");
-            return error("Error while decoding the JWT token");
-        }
-        [jwt:JwtHeader, jwt:JwtPayload][jwtHeader, payload] = <[jwt:JwtHeader,jwt:JwtPayload]> decodedJWT;
-        return payload;
+        return decodeJWTPayload(jwtToken);
     }
+}
+
+public function getDecodedJWTPayload(string jwtToken, string? issuer) returns @tainted (jwt:JwtPayload | error) {
+    if (issuer is string) {
+        var cachedJwt = trap <jwt:InboundJwtCacheEntry>getCacheObject().getJWTCacheForProvider(issuer).get(jwtToken);
+        if (cachedJwt is jwt:InboundJwtCacheEntry) {
+            printDebug(JWT_UTIL, "jwt found from the jwt cache");
+            return cachedJwt.jwtPayload;
+        } else {
+            return decodeJWTPayload(jwtToken);
+        }
+    } else {
+        //decode jwt
+        return decodeJWTPayload(jwtToken);
+
+    }
+}
+
+function decodeJWTPayload(string jwtToken) returns @tainted (jwt:JwtPayload | error) {
+    [jwt:JwtHeader, jwt:JwtPayload] | jwt:Error decodedJWT = jwt:decodeJwt(jwtToken);
+    if (decodedJWT is error) {
+        printDebug(JWT_UTIL, "Error while decoding the JWT token");
+        return error("Error while decoding the JWT token");
+    }
+    [jwt:JwtHeader, jwt:JwtPayload][jwtHeader, payload] = <[jwt:JwtHeader,jwt:JwtPayload]> decodedJWT;
+    return payload;
 }
 
 function setSubsciberTenantDomain(AuthenticationContext authContext) {
