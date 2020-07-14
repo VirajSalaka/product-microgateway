@@ -43,7 +43,7 @@ public type JWTAuthHandler object {
     private int skewTime = 0;
     private boolean enabledCaching = false;
     private int cacheExpiry = 0;
-    public boolean claimRetrieveClassLoaded = false;
+    private boolean claimRetrieveClassLoaded = false;
 
     public function __init(JwtAuthProvider jwtAuthProvider) {
         self.jwtAuthProvider = jwtAuthProvider;
@@ -113,15 +113,6 @@ public type JWTAuthHandler object {
                                                         self.tokenIssuer,
                                                         self.tokenAudience);
 
-            map<anydata> tempmap = {};
-            self.claimRetrieveClassLoaded =
-                loadClaimRetrieverClass("org.wso2.micro.gateway.jwt.generator.DefaultMGWClaimRetriever", tempmap);
-            if (!self.classLoaded) {
-                printError(KEY_JWT_AUTH_PROVIDER, "JWT Generator class loading failed.");
-            }
-            if (!self.claimRetrieveClassLoaded) {
-                printError(KEY_JWT_AUTH_PROVIDER, "Claim Retriever class loading failed.");
-            }
         }
     }
 

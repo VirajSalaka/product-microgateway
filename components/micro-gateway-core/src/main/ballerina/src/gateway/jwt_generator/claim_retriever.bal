@@ -33,52 +33,69 @@ function retrieveClaims (AuthenticationContext authContext, jwt:JwtPayload? payl
             printError("CLAIM RETRIEVER XX" , "Null returned");
         }
 
-    UserInfoDTO userInfoDTO = {};
-    string? usernameWithTenant = authContext.username;
-    if (usernameWithTenant is string) {
-        string username = split(usernameWithTenant, "@")[0];
-        userInfoDTO.username = username;
-    } else {
-        userInfoDTO.username = USER_NAME_UNKNOWN;
-    }
-    //todo: decide the required behavior
-    //the user claims will be received only if dialect is matched.
-    if (dialectURI.trim() != "") {
-        userInfoDTO["dialect"] = dialectURI;
-    }
-    userInfoDTO.accessToken = authContext.apiKey;
-    json | error userInfoDTOJson = json.constructFrom(userInfoDTO);
+    //UserInfoDTO userInfoDTO = {};
+    //string? usernameWithTenant = authContext.username;
+    //if (usernameWithTenant is string) {
+    //    string username = split(usernameWithTenant, "@")[0];
+    //    userInfoDTO.username = username;
+    //} else {
+    //    userInfoDTO.username = USER_NAME_UNKNOWN;
+    //}
+    ////todo: decide the required behavior
+    ////the user claims will be received only if dialect is matched.
+    //if (dialectURI.trim() != "") {
+    //    userInfoDTO["dialect"] = dialectURI;
+    //}
+    //userInfoDTO.accessToken = authContext.apiKey;
+    //json | error userInfoDTOJson = json.constructFrom(userInfoDTO);
+    //
+    //http:Request claimRetrieveRequest = new;
+    //claimRetrieveRequest.setHeader(AUTHORIZATION_HEADER, getBasicAuthHeaderValue(jwtGeneratorUsername,
+    //                                                                            jwtGeneratorPassword));
+    //if (userInfoDTOJson is json) {
+    //    claimRetrieveRequest.setJsonPayload(userInfoDTOJson);
+    //}
+    //http:Response | error userInfoClaimsResponse = userInfoClaimsEndpoint->post("/",
+    //    claimRetrieveRequest);
+    //
+    //if (userInfoClaimsResponse is http:Response) {
+    //    if (userInfoClaimsResponse.statusCode == http:STATUS_OK) {
+    //        json | error jsonPayload = userInfoClaimsResponse.getJsonPayload();
+    //        if (jsonPayload is json) {
+    //            ClaimsListDTO | error claimsListDTO = ClaimsListDTO.constructFrom(jsonPayload);
+    //            if (claimsListDTO is ClaimsListDTO) {
+    //                printDebug(CLAIM_RETRIEVER, "user claims received for the user " + userInfoDTO.username + " : " +
+    //                    ClaimsListDTO.toString());
+    //                return claimsListDTO;
+    //            }  else {
+    //                printError(CLAIM_RETRIEVER, "Failed to map the json response to a valid ClaimList Object: " +
+    //                    jsonPayload.toString(), claimsListDTO);
+    //            }
+    //        } else {
+    //            printError(CLAIM_RETRIEVER, "Response does not contain JSON payload", jsonPayload);
+    //        }
+    //    } else {
+    //        printError(CLAIM_RETRIEVER, "Response code from claim retrieve endpoint is " +
+    //            userInfoClaimsResponse.statusCode.toString());
+    //    }
+    //} else {
+    //    printError(CLAIM_RETRIEVER, "Error Response received while receiving user claims", userInfoClaimsResponse);
+    //}
 
-    http:Request claimRetrieveRequest = new;
-    claimRetrieveRequest.setHeader(AUTHORIZATION_HEADER, getBasicAuthHeaderValue(jwtGeneratorUsername,
-                                                                                jwtGeneratorPassword));
-    if (userInfoDTOJson is json) {
-        claimRetrieveRequest.setJsonPayload(userInfoDTOJson);
-    }
-    http:Response | error userInfoClaimsResponse = userInfoClaimsEndpoint->post("/",
-        claimRetrieveRequest);
+    //todo: initialize this in the very begining
+    public function loadClaimRetrieverImpl() {
+        map<anydata> tempmap = {};
 
-    if (userInfoClaimsResponse is http:Response) {
-        if (userInfoClaimsResponse.statusCode == http:STATUS_OK) {
-            json | error jsonPayload = userInfoClaimsResponse.getJsonPayload();
-            if (jsonPayload is json) {
-                ClaimsListDTO | error claimsListDTO = ClaimsListDTO.constructFrom(jsonPayload);
-                if (claimsListDTO is ClaimsListDTO) {
-                    printDebug(CLAIM_RETRIEVER, "user claims received for the user " + userInfoDTO.username + " : " +
-                        ClaimsListDTO.toString());
-                    return claimsListDTO;
-                }  else {
-                    printError(CLAIM_RETRIEVER, "Failed to map the json response to a valid ClaimList Object: " +
-                        jsonPayload.toString(), claimsListDTO);
-                }
-            } else {
-                printError(CLAIM_RETRIEVER, "Response does not contain JSON payload", jsonPayload);
-            }
-        } else {
-            printError(CLAIM_RETRIEVER, "Response code from claim retrieve endpoint is " +
-                userInfoClaimsResponse.statusCode.toString());
+        //todo: read this property from configuration
+        //todo: read property map from the configuration
+        //todo: if the class is present and configuration is not there, populate it from the newly introduced apim credentials property
+        boolean claimRetrieveClassLoaded =
+                            loadClaimRetrieverClass("org.wso2.micro.gateway.jwt.generator.DefaultMGWClaimRetriever", tempmap);
+        if (!self.classLoaded) {
+            printError(KEY_JWT_AUTH_PROVIDER, "JWT Generator class loading failed.");
         }
-    } else {
-        printError(CLAIM_RETRIEVER, "Error Response received while receiving user claims", userInfoClaimsResponse);
+        if (!self.claimRetrieveClassLoaded) {
+            printError(KEY_JWT_AUTH_PROVIDER, "Claim Retriever class loading failed.");
+        }
     }
 }

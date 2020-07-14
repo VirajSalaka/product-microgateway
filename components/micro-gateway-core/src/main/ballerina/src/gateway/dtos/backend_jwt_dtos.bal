@@ -72,3 +72,15 @@ public type RemoteClaimMappingDTO record {|
     string localClaim;
     string remoteClaim;
 |};
+
+public type OpaqueTokenInfoDTO record {|
+    //token field is introduced as it is required to get the claims from cache in wso2 implementation
+    string token = "";
+    string scopes = "";
+    string client_id = "";
+    string username = "";
+    string token_type = "Bearer";
+    int exp = 0;
+    int nbf = 0;
+    int iat = 0;
+|};
