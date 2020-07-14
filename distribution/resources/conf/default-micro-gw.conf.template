@@ -56,11 +56,11 @@
   external = false
   # Basic security configurations
   [keyManager.claimRetrieval]
-    enable = false;
+    enable = false
     retrieverImpl="org.wso2.micro.gateway.jwt.generator.DefaultMGWClaimRetriever"
     [[keyManager.claimRetrieval.configuration]]
         key = "Custom_Config_Key_1"
-        value "Custom_Config_Value_1"
+        value = "Custom_Config_Value_1"
   [keymanager.security.basic]
     enabled = true
     username = "admin"

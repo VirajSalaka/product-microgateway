@@ -55,23 +55,6 @@ public function loadJWTGeneratorClass(string className,
     handle jKeyStorePassword = java:fromString(keyStorePassword);
     handle jTokenIssuer = java:fromString(tokenIssuer);
 
-    map<string>? claimMapping = createRemoteClaimMapping();
-    if (claimMapping is map<string>) {
-        return jLoadJWTGeneratorClassWithClaimMapping(jClassName,
-                                    jDialectURI,
-                                    jSignatureAlgorithm,
-                                    jKeyStorePath,
-                                    jKeyStorePassword,
-                                    jCertificateAlias,
-                                    jPrivateKeyAlias,
-                                    tokenExpiry,
-                                    restrictedClaims,
-                                    enabledCaching,
-                                    cacheExpiry,
-                                    jTokenIssuer,
-                                    tokenAudience,
-                                    claimMapping);
-    } 
     //to maintain backward compatibility
     return jLoadJWTGeneratorClass(jClassName,
                                 jDialectURI,
@@ -88,12 +71,12 @@ public function loadJWTGeneratorClass(string className,
                                 tokenAudience);
 }
 
-public function loadClaimRetrieverClass (string className, map<anydata> properties) returns boolean {
+public function loadClaimRetrieverClass (string className, map<any> properties) returns boolean {
     return jLoadClaimRetrieverClass (java:fromString(className), properties);
 }
 
-public function retrieveClaimsFromImpl (AuthenticationContext authContext, jwt:JwtPayload? jwtInfo = ()) returns ClaimsListDTO? {
-    return jRetrieveClaims(authContext);
+public function retrieveClaimsFromImpl (OpaqueTokenInfoDTO userInfo) returns ClaimsListDTO? {
+    return jRetrieveClaims(userInfo);
 }
 
 # Invoke the interop function to resolves the keystore path
@@ -222,12 +205,12 @@ public function jGenerateJWTTokenFromUserClaimsMap(ClaimsMapDTO jwtInfo, map<str
     class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
 } external;
 
-function jLoadClaimRetrieverClass (handle className, map<anydata> configuration) returns boolean = @java:Method {
+function jLoadClaimRetrieverClass (handle className, map<any> configuration) returns boolean = @java:Method {
     name:"loadClaimRetrieverClass",
     class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
 } external;
 
-function jRetrieveClaims (AuthenticationContext authContext) returns ClaimsListDTO? = @java:Method {
+function jRetrieveClaims (OpaqueTokenInfoDTO userInfo) returns ClaimsListDTO? = @java:Method {
     name:"getRetrievedClaimsXX",
     class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
 } external;

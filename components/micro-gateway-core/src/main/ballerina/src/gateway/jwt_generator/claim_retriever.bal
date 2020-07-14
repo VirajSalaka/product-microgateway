@@ -14,24 +14,35 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/http;
-import ballerina/jwt;
+import ballerina/runtime;
 
-string dialectURI = getConfigValue(JWT_GENERATOR_ID, JWT_GENERATOR_DIALECT, DEFAULT_JWT_GENERATOR_DIALECT);
-string jwtGeneratorUsername = getConfigValue(JWT_GENERATOR_ID, JWT_GENERATOR_USERNAME, DEFAULT_JWT_GENERATOR_USERNAME);
-string jwtGeneratorPassword = getConfigValue(JWT_GENERATOR_ID, JWT_GENERATOR_USERNAME, DEFAULT_JWT_GENERATOR_PASSWORD);
+boolean claimRetrieveEnabled = getConfigBooleanValue(KM_CONF_CLAIM_RETRIEVAL_INSTANCE_ID, KM_CONF_CLAIM_RETRIEVAL_ENABLED,
+    DEFAULT_KM_CONF_CLAIM_RETRIEVAL_ENABLED);
 
-//todo: introduce a cache to avoid calling retrieve Claims if needed
-function retrieveClaims (AuthenticationContext authContext, jwt:JwtPayload? payload = ()) returns @tainted ClaimsListDTO ? {
+function retrieveClaims (AuthenticationContext authContext) returns @tainted ClaimsListDTO ? {
 
+    if (!claimRetrieveEnabled) {
+        return;
+    }
     printInfo("CLAIM RETRIEVER XX", "sfsdfsadfasdfasdf");
 
-        ClaimsListDTO? fromJavaData = retrieveClaimsFromImpl(authContext);
-        if (fromJavaData is ClaimsListDTO ){
-            printError("CLAIM RETRIEVER XX" , fromJavaData.toString());
+    runtime:InvocationContext invocationContext = runtime:getInvocationContext();
+    runtime:Principal? principal = invocationContext?.principal;
+
+    if (principal is runtime:Principal) {
+        OpaqueTokenInfoDTO userInfo = generateOpaqueTokenInfo(authContext, principal);
+        //todo: trap the error
+        ClaimsListDTO? claimListDTO = retrieveClaimsFromImpl(userInfo);
+        if (claimListDTO is ClaimsListDTO ){
+            return claimListDTO;
         } else {
             printError("CLAIM RETRIEVER XX" , "Null returned");
         }
+    } else {
+        printDebug(CLAIM_RETRIEVER, "Claim retrieval is not executed due to the unavailability " +
+            "of the principal component");
+    }
+    
 
     //UserInfoDTO userInfoDTO = {};
     //string? usernameWithTenant = authContext.username;
@@ -81,21 +92,57 @@ function retrieveClaims (AuthenticationContext authContext, jwt:JwtPayload? payl
     //} else {
     //    printError(CLAIM_RETRIEVER, "Error Response received while receiving user claims", userInfoClaimsResponse);
     //}
+}
 
-    //todo: initialize this in the very begining
-    public function loadClaimRetrieverImpl() {
-        map<anydata> tempmap = {};
-
-        //todo: read this property from configuration
-        //todo: read property map from the configuration
-        //todo: if the class is present and configuration is not there, populate it from the newly introduced apim credentials property
-        boolean claimRetrieveClassLoaded =
-                            loadClaimRetrieverClass("org.wso2.micro.gateway.jwt.generator.DefaultMGWClaimRetriever", tempmap);
-        if (!self.classLoaded) {
-            printError(KEY_JWT_AUTH_PROVIDER, "JWT Generator class loading failed.");
-        }
-        if (!self.claimRetrieveClassLoaded) {
-            printError(KEY_JWT_AUTH_PROVIDER, "Claim Retriever class loading failed.");
-        }
+public function loadClaimRetrieverImpl() {
+    if (!claimRetrieveEnabled) {
+        printDebug(CLAIM_RETRIEVER, "Claim Retrieval is disabled.");
+        return;
     }
+    printDebug(CLAIM_RETRIEVER, "Claim Retrieval is Enabled.");
+    string claimRetrieverImplClassName = getConfigValue(KM_CONF_CLAIM_RETRIEVAL_INSTANCE_ID, KM_CONF_CLAIM_RETRIEVAL_IMPLEMENTATION,
+        DEFAULT_KM_CONF_CLAIM_RETRIEVAL_IMPLEMENTATION);
+    map<any> claimRetrieverConfig = {};
+    boolean configurationProvided = isConfigAvailable(KM_CONF_CLAIM_RETRIEVAL_CONFIGURATION);
+    if (configurationProvided) {
+        claimRetrieverConfig = getConfigMapValue(KM_CONF_CLAIM_RETRIEVAL_CONFIGURATION);
+    } else {
+        string username = getConfigValue(APIM_CREDENTIALS_INSTANCE_ID, APIM_CREDENTIALS_USERNAME, DEFAULT_APIM_CREDENTIALS_USERNAME);
+        string password = getConfigValue(APIM_CREDENTIALS_INSTANCE_ID, APIM_CREDENTIALS_PASSWORD, DEFAULT_APIM_CREDENTIALS_PASSWORD);
+        string keyManagerURL = getConfigValue(KM_CONF_INSTANCE_ID, KM_SERVER_URL, DEFAULT_KM_SERVER_URL);
+        claimRetrieverConfig["Username"] = username;
+        claimRetrieverConfig["password"] = password;
+        claimRetrieverConfig["KeyManagerUrl"] = keyManagerURL;
+    }
+
+    //todo: read this property from configuration
+    //todo: read property map from the configuration
+    //todo: if the class is present and configuration is not there, populate it from the newly introduced apim credentials property
+    boolean claimRetrieveClassLoaded =
+                        loadClaimRetrieverClass(claimRetrieverImplClassName, claimRetrieverConfig);
+    if (claimRetrieveClassLoaded) {
+        printDebug(CLAIM_RETRIEVER, "JWT Claim Retriever Classloading is successful.");
+    } else {
+        printError(CLAIM_RETRIEVER, "Claim Retriever classloading is failed.");
+        //If the classloading is failed, the configuration is set to disabled.
+        claimRetrieveEnabled = false;
+    }
+}
+
+public function generateOpaqueTokenInfo (AuthenticationContext authContext, runtime:Principal principal) returns OpaqueTokenInfoDTO {
+    
+    OpaqueTokenInfoDTO tokenInfoDTO = {};
+    tokenInfoDTO.username = principal?.username ?: UNKNOWN_VALUE;
+    tokenInfoDTO.scopes = principal?.scopes.toString();
+    map<any>? claims = principal?.claims;
+    tokenInfoDTO.client_id = convertAnyToString(claims[CLIENT_ID]);
+    tokenInfoDTO.token =  authContext.apiKey;
+    return tokenInfoDTO;
+}
+
+function convertAnyToString(any variable) returns string{
+    if (variable is string) {
+        return variable;
+    } 
+    return UNKNOWN_VALUE;
 }

@@ -246,6 +246,10 @@ public function getConfigArrayValue(string instanceId, string property) returns 
     return config:getAsArray(instanceId + "." + property);
 }
 
+public function isConfigAvailable(string property) returns boolean {
+    return config:contains(property);
+}
+
 function getDefaultStringValue(anydata val, string defaultVal) returns string {
     if (val is string) {
         return <string>val;

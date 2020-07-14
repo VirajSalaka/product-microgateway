@@ -17,7 +17,6 @@
 import ballerina/runtime;
 import ballerina/jwt;
 import ballerina/http;
-import ballerina/config;
 
 # Refactoring method for setting JWT header
 #
@@ -138,7 +137,7 @@ function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPa
         returns @tainted ClaimsMapDTO {
     ClaimsMapDTO claimsMapDTO = {};
     CustomClaimsMapDTO customClaimsMapDTO = {};
-    ClaimsListDTO ? claimsListDTO = retrieveClaims(authContext, payload);
+    ClaimsListDTO ? claimsListDTO = retrieveClaims(authContext);
     if (claimsListDTO is ClaimsListDTO) {
        ClaimDTO[] claimList = claimsListDTO.list;
        foreach ClaimDTO claim in claimList {
@@ -152,9 +151,9 @@ function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPa
         if (customClaims is map<json>) {
             //todo: decide whether we put dialect here
             foreach var [key, value] in customClaims.entries() {
-                string | error claimVal = trap <string> value;
-                if (claimVal is string) {
-                    customClaimsMapDTO[key] = claimVal;
+                string | error claimValue = trap <string> value;
+                if (claimValue is string) {
+                    customClaimsMapDTO[key] = claimValue;
                 }
             }
         }
@@ -185,25 +184,6 @@ function createAPIDetailsMap (runtime:InvocationContext invocationContext) retur
         apiDetails["subscriberTenantDomain"] = authenticationContext.subscriberTenantDomain;
     }
     return apiDetails;
-}
-
-function createRemoteClaimMapping() returns map<string>? {
-    if (!config:contains(JWT_GENERATOR_CLAIM_MAPPING)) {
-        return;
-    }
-    RemoteClaimMappingDTO[] | error claimMappingList = RemoteClaimMappingDTO[]
-                                                            .constructFrom(config:getAsArray(JWT_GENERATOR_CLAIM_MAPPING));
-    if (claimMappingList is RemoteClaimMappingDTO[]) {
-        map<string> remoteClaimMap = {};
-        foreach RemoteClaimMappingDTO mapping in claimMappingList {
-            remoteClaimMap[mapping.remoteClaim] = mapping.localClaim;
-        }
-        printDebug(JWT_GEN_UTIL, "Remote - Local Claim mapping is added : " + remoteClaimMap.toJsonString());
-        return remoteClaimMap;
-    } else {
-        printError(JWT_GEN_UTIL, "Error while parsing the configuration value provided under " + JWT_GENERATOR_CLAIM_MAPPING, 
-            claimMappingList);
-    }
 }
 
 function emptyStringIfUnknownValue (string value) returns string {

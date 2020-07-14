@@ -153,7 +153,7 @@ public class MGWJWTGeneratorInvoker {
             BMap<String, Object> bMap = BValueCreator.createRecordValue(packageId,"ClaimsListDTO");
             bMap.put("count", claimList.size());
             BArray bArray = (BArray) bMap.get("list");
-            for (ClaimDTO claimDTO:claimList) {
+            for (Object claimDTO:claimList) {
                 bArray.append(BValueCreator.createRecordValue(packageId,"ClaimDTO",
                         (Map<String,Object>) claimDTO));
             }
