@@ -28,9 +28,18 @@ public abstract class AbstractMGWClaimRetriever {
     }
 
     public abstract List<ClaimDTO> retrieveClaims(Map<String, Object> authContext) throws IOException;
-//    public abstract Map<String, Object> retrieveClaims(Map<String, Object> authContext, Map<String, Object> jwtPayload) throws IOException;
 
     public Map<String, String> getConfigurationMap() {
         return configurationMap;
+    }
+
+    public String getConfigurationValue(String configurationKey) {
+        if (configurationMap == null) {
+            return null;
+        }
+        if (!configurationMap.containsKey(configurationKey)) {
+            return null;
+        }
+        return configurationMap.get(configurationKey);
     }
 }

@@ -29,6 +29,7 @@ import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 import org.wso2.micro.gateway.core.Constants;
 import org.wso2.micro.gateway.jwt.generator.AbstractMGWClaimRetriever;
 import org.wso2.micro.gateway.jwt.generator.AbstractMGWJWTGenerator;
+import org.wso2.micro.gateway.jwt.generator.ClaimDTO;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -36,6 +37,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -133,32 +135,27 @@ public class MGWJWTGeneratorInvoker {
         }
     }
 
-    public static Map<String, Object> getRetrievedClaims (BMap<String, Object> jwtInfo, BMap<String, Object> authContext) {
-        try {
-             return abstractMGWClaimRetriever.retrieveClaims(convertBMapToMap(authContext),
-                    convertBMapToMap(jwtInfo));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
+//    public static Map<String, Object> getRetrievedClaims (BMap<String, Object> jwtInfo, BMap<String, Object> authContext) {
+//        try {
+//             return abstractMGWClaimRetriever.retrieveClaims(convertBMapToMap(authContext),
+//                    convertBMapToMap(jwtInfo));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return null;
+//        }
+//    }
 
     public static BMap<String, Object> getRetrievedClaimsXX (BMap<String, Object> authContext) {
         try {
             //BMap<String, Object> bMap = new MapValueImpl<>();
-            Map<String, Object> map = abstractMGWClaimRetriever.retrieveClaims(convertBMapToMap(authContext));
-            if (map == null) {
-                return null;
-            }
+            List<ClaimDTO> claimList = abstractMGWClaimRetriever.retrieveClaims(convertBMapToMap(authContext));
             BPackage packageId = new BPackage("wso2","gateway","3.1.0");
-            ArrayList<Object> list = (ArrayList<Object>) map.get("list");
-            Object[] claimArray = list.toArray();
             BMap<String, Object> bMap = BValueCreator.createRecordValue(packageId,"ClaimsListDTO");
-            bMap.put("count", claimArray.length);
+            bMap.put("count", claimList.size());
             BArray bArray = (BArray) bMap.get("list");
-            for (Object object:claimArray) {
+            for (ClaimDTO claimDTO:claimList) {
                 bArray.append(BValueCreator.createRecordValue(packageId,"ClaimDTO",
-                        (Map<String,Object>) object));
+                        (Map<String,Object>) claimDTO));
             }
             return bMap;
         } catch (IOException e) {
