@@ -126,16 +126,8 @@ function setGeneratedTokenAsHeader(http:Request req,
     return true;
 }
 
-function isSelfContainedToken(jwt:JwtPayload payload) returns boolean {
-    if (payload.hasKey(APPLICATION)) {
-        return true;
-    }
-    return false;
-}
-
 function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPayload? payload = ()) 
         returns @tainted ClaimsMapDTO {
-    printError("XXXXXX_XXXXXX", authContext.toString());
     ClaimsMapDTO claimsMapDTO = {};
     CustomClaimsMapDTO customClaimsMapDTO = {};
     //todo: add scopes in oauth2 flow

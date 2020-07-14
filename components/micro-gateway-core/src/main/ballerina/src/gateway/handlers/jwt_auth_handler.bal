@@ -200,6 +200,9 @@ public function setBackendJwtHeader(string credential, http:Request req, string?
 # + apiVersion - version of the current API
 # + return - Returns map<string> with the extracted details.
 public function getAPIDetails(jwt:JwtPayload payload, string apiName, string apiVersion) returns map<string> {
+    if (!isSelfContainedToken(payload)) {
+        return createAPIDetailsMap(runtime:getInvocationContext());
+    }
     map<string> apiDetails = {
         apiName: "",
         apiContext: "",
@@ -250,9 +253,7 @@ public function getAPIDetails(jwt:JwtPayload payload, string apiName, string api
                 index += 1;
             }
         }
-        return apiDetails;
     }
-    apiDetails = createAPIDetailsMap(runtime:getInvocationContext());
     return apiDetails;
 }
 
