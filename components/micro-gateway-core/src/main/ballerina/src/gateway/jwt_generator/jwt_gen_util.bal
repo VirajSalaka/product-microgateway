@@ -135,21 +135,22 @@ function isSelfContainedToken(jwt:JwtPayload payload) returns boolean {
 
 function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPayload? payload = ()) 
         returns @tainted ClaimsMapDTO {
+    printError("XXXXXX_XXXXXX", authContext.toString());
     ClaimsMapDTO claimsMapDTO = {};
     CustomClaimsMapDTO customClaimsMapDTO = {};
-    ClaimsListDTO ? claimsListDTO = retrieveClaims(authContext);
-    if (claimsListDTO is ClaimsListDTO) {
-       ClaimDTO[] claimList = claimsListDTO.list;
-       foreach ClaimDTO claim in claimList {
-           customClaimsMapDTO[claim.uri] = claim.value;
-       }
-    }
-    //todo: ideally authentication context should have the scope variable
-    //todo: therefore the scopes wont be there in the oauth2 scenario
-    if (!(payload is ())) {
+    //todo: add scopes in oauth2 flow
+    if (payload is ()) {
+        //if payload is not preset, we call the claim retriever implementation
+        ClaimsListDTO ? claimsListDTO = retrieveClaims(authContext);
+        if (claimsListDTO is ClaimsListDTO) {
+           ClaimDTO[] claimList = claimsListDTO.list;
+           foreach ClaimDTO claim in claimList {
+               customClaimsMapDTO[claim.uri] = claim.value;
+           }
+        }
+    } else  {
         map<json>? customClaims = payload["customClaims"];
         if (customClaims is map<json>) {
-            //todo: decide whether we put dialect here
             foreach var [key, value] in customClaims.entries() {
                 string | error claimValue = trap <string> value;
                 if (claimValue is string) {
@@ -160,12 +161,12 @@ function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPa
     }
     ApplicationClaimsMapDTO applicationClaimsMapDTO = {};
     applicationClaimsMapDTO.id = emptyStringIfUnknownValue(authContext.applicationId);
-    applicationClaimsMapDTO.owner = emptyStringIfUnknownValue(authContext.username);
+    applicationClaimsMapDTO.owner = emptyStringIfUnknownValue(authContext.subscriber);
     applicationClaimsMapDTO.name = emptyStringIfUnknownValue(authContext.applicationName);
     applicationClaimsMapDTO.tier = emptyStringIfUnknownValue(authContext.applicationTier);
 
     customClaimsMapDTO.application = applicationClaimsMapDTO;
-    customClaimsMapDTO.sub = emptyStringIfUnknownValue(authContext.username);
+    claimsMapDTO.sub = emptyStringIfUnknownValue(authContext.username);
     claimsMapDTO.customClaims = customClaimsMapDTO;
     return claimsMapDTO;
 }

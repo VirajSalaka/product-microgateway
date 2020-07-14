@@ -31,8 +31,7 @@ function retrieveClaims (AuthenticationContext authContext) returns @tainted Cla
 
     if (principal is runtime:Principal) {
         OpaqueTokenInfoDTO userInfo = generateOpaqueTokenInfo(authContext, principal);
-        //todo: trap the error
-        ClaimsListDTO? claimListDTO = retrieveClaimsFromImpl(userInfo);
+        ClaimsListDTO? | error claimListDTO = trap retrieveClaimsFromImpl(userInfo);
         if (claimListDTO is ClaimsListDTO ){
             return claimListDTO;
         } else {
