@@ -233,6 +233,12 @@ public const string NAME = "name";
 public const string VERSIONS = "versions";
 public const string VERSION = "version";
 public const string ALIAS_LIST = "aliasList";
+public const string KM_CONF_CLAIM_RETRIEVAL_INSTANCE_ID = "keyManager.claimRetrieval";
+public const string KM_CONF_CLAIM_RETRIEVAL_ENABLED = "enabled";
+public const string KM_CONF_CLAIM_RETRIEVAL_IMPLEMENTATION = "retrieverImpl";
+public const string KM_CONF_CLAIM_RETRIEVAL_CONFIGURATION = "keyManager.claimRetrieval.configuration";
+public const string KM_CONF_CLAIM_RETRIEVAL_CONFIGURATION_KEY = "key";
+public const string KM_CONF_CLAIM_RETRIEVAL_CONFIGURATION_VALUE = "value";
 
 public const string HTTP_CLIENTS_INSTANCE_ID = "httpClients";
 public const string HTTP_CLIENTS_POOL_CONFIG_INSTANCE_ID = "httpClients.poolConfig";
@@ -562,12 +568,6 @@ public const string JWT_GENERATOR_RESTRICTED_CLAIMS = "restrictedClaims";
 public const string JWT_GENERATOR_TOKEN_ISSUER = "issuer";
 public const string JWT_GENERATOR_TOKEN_AUDIENCE = "audience";
 public const string JWT_GENERATOR_IMPLEMENTATION = "generatorImpl";
-public const string JWT_GENERATOR_USERNAME = "admin";
-public const string JWT_GENERATOR_PASSWORD = "password";
-public const string JWT_GENERATOR_USER_INFO_ENDPOINT = "userInfoEndpoint";
-public const string JWT_GENERATOR_CLAIM_MAPPING = "jwtGeneratorConfig.claimMapping";
-public const string JWT_GENERATOR_LOCAL_CLAIM = "localClaim";
-public const string JWT_GENERATOR_REMOTE_CLAIM = "remoteClaim";
 
 // jwt generator caching mechanism
 public const string JWT_GENERATOR_CACHING_ID = "jwtGeneratorConfig.jwtGeneratorCaching";
@@ -579,3 +579,7 @@ public const string JWT_GENERATOR_TOKEN_CACHE_EVICTION_FACTOR = "tokenCacheEvict
 // server configurations
 public const string SERVER_CONF_ID = "server";
 public const string SERVER_TIMESTAMP_SKEW = "timestampSkew";
+
+public const string APIM_CREDENTIALS_INSTANCE_ID = "apim.credentials";
+public const string APIM_CREDENTIALS_USERNAME = "username";
+public const string APIM_CREDENTIALS_PASSWORD = "password";

@@ -37,6 +37,10 @@ public const string DEFAULT_KM_TOKEN_CONTEXT = "oauth2";
 public const int DEFAULT_TIMESTAMP_SKEW = 5000;
 public const boolean DEFAULT_EXTERNAL = false;
 
+public const boolean DEFAULT_KM_CONF_CLAIM_RETRIEVAL_ENABLED = false;
+public const string DEFAULT_KM_CONF_CLAIM_RETRIEVAL_IMPLEMENTATION
+                                                    = "org.wso2.micro.gateway.jwt.generator.DefaultMGWClaimRetriever";
+
 public const string SECURITY_INSTANCE_ID = "security";
 public const string SECURITY_VALIDATE_SUBSCRIPTIONS = "validateSubscriptions";
 public const boolean DEFAULT_VALIDATE_SUBSCRIPTIONS = false;
@@ -187,5 +191,8 @@ public const boolean DEFAULT_JWT_GENERATOR_TOKEN_CACHE_ENABLED = true;
 public const string DEFAULT_JWT_GENERATOR_USERNAME = "admin";
 public const string DEFAULT_JWT_GENERATOR_PASSWORD = "admin";
 public const string DEFAULT_JWT_GENERATOR_USER_INFO_ENDPOINT = "https://localhost:9443/user-info/claims/generate";
+
+public const string DEFAULT_APIM_CREDENTIALS_USERNAME = "admin";
+public const string DEFAULT_APIM_CREDENTIALS_PASSWORD = "admin";
 
 public const int DEFAULT_SERVER_TIMESTAMP_SKEW = -1;
