@@ -35,9 +35,11 @@ public type RetrievedUserClaimsListDTO record {|
 # + iss - token issuer
 # + sub - subscription claim
 # + customClaims - custom claims
+# + token_type - token type : oauth2 or jwt
 public type ClaimsMapDTO record {
     string iss = "";
     string sub = "";
+    string token_type = "";
     CustomClaimsMapDTO customClaims = {};
 };
 

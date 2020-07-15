@@ -149,7 +149,9 @@ function createMapFromRetrievedUserClaimsListDTO(AuthenticationContext authConte
             }
         }
         claimsMapDTO.iss = "https://localhost:9443/oauth2/token";
+        claimsMapDTO.token_type = "oauth2";
     } else  {
+        claimsMapDTO.token_type = "jwt";
         string? iss = payload?.iss;
         if (iss is string) {
             claimsMapDTO.iss = iss;
