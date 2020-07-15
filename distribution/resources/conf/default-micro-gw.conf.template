@@ -454,8 +454,8 @@
   [jwtGeneratorConfig.claimRetrieval]
       # User claim retriever implementation
       retrieverImpl="org.wso2.micro.gateway.jwt.generator.DefaultMGWClaimRetriever"
-      [keyManager.claimRetrieval.configuration]
-          custom_config_key = custom_config_property
+      [jwtGeneratorConfig.claimRetrieval.configuration]
+          custom_config_key = "custom_config_property"
   # JWT Generator cache configurations
   [jwtGeneratorConfig.jwtGeneratorCaching]
     # Enable jwt generator token caching

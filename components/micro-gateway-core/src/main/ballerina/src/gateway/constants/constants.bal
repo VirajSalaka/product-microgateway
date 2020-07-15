@@ -233,12 +233,6 @@ public const string NAME = "name";
 public const string VERSIONS = "versions";
 public const string VERSION = "version";
 public const string ALIAS_LIST = "aliasList";
-public const string KM_CONF_CLAIM_RETRIEVAL_INSTANCE_ID = "keyManager.claimRetrieval";
-public const string KM_CONF_CLAIM_RETRIEVAL_ENABLED = "enabled";
-public const string KM_CONF_CLAIM_RETRIEVAL_IMPLEMENTATION = "retrieverImpl";
-public const string KM_CONF_CLAIM_RETRIEVAL_CONFIGURATION = "keyManager.claimRetrieval.configuration";
-public const string KM_CONF_CLAIM_RETRIEVAL_CONFIGURATION_KEY = "key";
-public const string KM_CONF_CLAIM_RETRIEVAL_CONFIGURATION_VALUE = "value";
 
 public const string HTTP_CLIENTS_INSTANCE_ID = "httpClients";
 public const string HTTP_CLIENTS_POOL_CONFIG_INSTANCE_ID = "httpClients.poolConfig";
@@ -326,6 +320,7 @@ public const string CERTIFICATE_ALIAS = "certificateAlias";
 public const string JWKS_URL = "jwksURL";
 public const string TRUST_STORE_PATH = "trustStorePath";
 public const string TRUST_STORE_PASSWORD = "trustStorePassword";
+public const string REMOTE_USER_CLAIM_RETRIEVAL_ENABLED = "remoteUserClaimRetrievalEnabled";
 
 public const string API_KEY_INSTANCE_ID = "apikey.tokenConfigs";
 public const string API_KEY_ISSUER_ENABLED = "enabled";
@@ -572,6 +567,9 @@ public const string JWT_GENERATOR_RESTRICTED_CLAIMS = "restrictedClaims";
 public const string JWT_GENERATOR_TOKEN_ISSUER = "issuer";
 public const string JWT_GENERATOR_TOKEN_AUDIENCE = "audience";
 public const string JWT_GENERATOR_IMPLEMENTATION = "generatorImpl";
+public const string JWT_GENERATOR__CLAIM_RETRIEVAL_INSTANCE_ID = "jwtGeneratorConfig.claimRetrieval";
+public const string JWT_GENERATOR_CLAIM_RETRIEVAL_IMPLEMENTATION = "retrieverImpl";
+public const string JWT_GENERATOR_CLAIM_RETRIEVAL_CONFIGURATION = "jwtGeneratorConfig.claimRetrieval.configuration";
 
 // jwt generator caching mechanism
 public const string JWT_GENERATOR_CACHING_ID = "jwtGeneratorConfig.jwtGeneratorCaching";

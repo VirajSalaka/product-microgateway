@@ -31,11 +31,12 @@ public function setJWTHeader(jwt:JwtPayload payload,
                                 http:Request req,
                                 string cacheKey,
                                 boolean enabledCaching,
-                                map<string> apiDetails)
+                                map<string> apiDetails,
+                                boolean remoteUserClaimRetrievalEnabled)
                                 returns @tainted boolean {
     AuthenticationContext authContext = 
         <AuthenticationContext> runtime:getInvocationContext().attributes[AUTHENTICATION_CONTEXT];
-    (handle|error) generatedToken = generateBackendTokenForJWT(authContext, payload, apiDetails);
+    (handle|error) generatedToken = generateBackendTokenForJWT(authContext, payload, apiDetails, remoteUserClaimRetrievalEnabled);
     return setGeneratedTokenAsHeader(req, cacheKey, enabledCaching, generatedToken);
 }
 
@@ -70,13 +71,15 @@ public function setJWTHeaderForOauth2(http:Request req,
 # + apiDetails - extracted api details for the current api
 # + return - JWT Token
 # or the `AuthenticationError` in case of an error.
-function generateBackendTokenForJWT(AuthenticationContext authContext, jwt:JwtPayload payload, map<string> apiDetails)  
-        returns handle | error {
+function generateBackendTokenForJWT(AuthenticationContext authContext, jwt:JwtPayload payload, map<string> apiDetails, 
+                boolean remoteUserClaimRetrievalEnabled) returns handle | error {
     (handle|error) generatedToken;
     if (isSelfContainedToken(payload)) {
         generatedToken = generateJWTToken(payload, apiDetails);
     } else {
-        ClaimsMapDTO claimsMapDTO = createMapFromRetrievedUserClaimsListDTO(authContext, payload);
+        ClaimsMapDTO claimsMapDTO = createMapFromRetrievedUserClaimsListDTO(authContext,
+                                                                            remoteUserClaimRetrievalEnabled,
+                                                                            payload);
         generatedToken = generateJWTTokenFromUserClaimsMap(claimsMapDTO, apiDetails);
     }
     return generatedToken;
@@ -89,7 +92,10 @@ function generateBackendTokenForJWT(AuthenticationContext authContext, jwt:JwtPa
 # or the `AuthenticationError` in case of an error.
 function generateBackendJWTTokenForOauth(AuthenticationContext authContext, map<string> apiDetails) returns handle | error {
     (handle|error) generatedToken;
-    ClaimsMapDTO claimsMapDTO = createMapFromRetrievedUserClaimsListDTO(authContext);
+    boolean remoteUserClaimRetrievalEnabled = getConfigBooleanValue(KM_CONF_INSTANCE_ID, 
+                                                                    REMOTE_USER_CLAIM_RETRIEVAL_ENABLED, 
+                                                                    DEFAULT_JWT_REMOTE_USER_CLAIM_RETRIEVAL_ENABLED);
+    ClaimsMapDTO claimsMapDTO = createMapFromRetrievedUserClaimsListDTO(authContext, remoteUserClaimRetrievalEnabled);
     generatedToken = generateJWTTokenFromUserClaimsMap(claimsMapDTO, apiDetails);
     return generatedToken;
 }
@@ -128,10 +134,13 @@ function setGeneratedTokenAsHeader(http:Request req,
 # populate and return ClaimsMapDTO object which is required to the further processing of Jwt generator implementation.
 #
 # + authContext - Authentication Context
+# + remoteUserClaimRetrievalEnabled - true if remoteUserClaimRetrieval is enabled
 # + payload - For the jwt, payload of the decoded jwt
 # + return - ClaimsMapDTO
-function createMapFromRetrievedUserClaimsListDTO(AuthenticationContext authContext, jwt:JwtPayload? payload = ())
-        returns @tainted ClaimsMapDTO {
+function createMapFromRetrievedUserClaimsListDTO(AuthenticationContext authContext, 
+                                                    boolean remoteUserClaimRetrievalEnabled, 
+                                                    jwt:JwtPayload? payload = ())
+                                                    returns @tainted ClaimsMapDTO {
     ClaimsMapDTO claimsMapDTO = {};
     CustomClaimsMapDTO customClaimsMapDTO = {};
     //todo: add scopes in oauth2 flow
@@ -145,13 +154,11 @@ function createMapFromRetrievedUserClaimsListDTO(AuthenticationContext authConte
                 foreach string scope in scopes {
                     concatenatedScope += scope + " ";
                 }
-                customClaimsMapDTO["scopes"] = concatenatedScope.trim();
+                customClaimsMapDTO["scope"] = concatenatedScope.trim();
             }
         }
         claimsMapDTO.iss = "https://localhost:9443/oauth2/token";
-        claimsMapDTO.token_type = "oauth2";
     } else  {
-        claimsMapDTO.token_type = "jwt";
         string? iss = payload?.iss;
         if (iss is string) {
             claimsMapDTO.iss = iss;
@@ -167,11 +174,13 @@ function createMapFromRetrievedUserClaimsListDTO(AuthenticationContext authConte
         }
     }
     //todo: change the function body in a more convient way since runtime:principal is already taken.
-    RetrievedUserClaimsListDTO ? claimsListDTO = retrieveClaims(authContext, payload);
-    if (claimsListDTO is RetrievedUserClaimsListDTO) {
-        ClaimDTO[] claimList = claimsListDTO.list;
-        foreach ClaimDTO claim in claimList {
-            customClaimsMapDTO[claim.uri] = claim.value;
+    if (remoteUserClaimRetrievalEnabled) {
+        RetrievedUserClaimsListDTO ? claimsListDTO = retrieveClaims(authContext, payload);
+        if (claimsListDTO is RetrievedUserClaimsListDTO) {
+            ClaimDTO[] claimList = claimsListDTO.list;
+            foreach ClaimDTO claim in claimList {
+                customClaimsMapDTO[claim.uri] = claim.value;
+            }
         }
     }
 

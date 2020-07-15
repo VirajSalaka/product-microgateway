@@ -17,8 +17,7 @@
 import ballerina/jwt;
 import ballerina/runtime;
 
-boolean claimRetrieveEnabled = getConfigBooleanValue(KM_CONF_CLAIM_RETRIEVAL_INSTANCE_ID, KM_CONF_CLAIM_RETRIEVAL_ENABLED,
-    DEFAULT_KM_CONF_CLAIM_RETRIEVAL_ENABLED);
+boolean claimRetrieveEnabled = true;
 
 # To retrieve claims via the user specific claim retrieve implementation.
 # 
@@ -61,29 +60,29 @@ function retrieveClaims (AuthenticationContext authContext, jwt:JwtPayload? payl
 
 # To do the class loading operation for the user specific claim retriever implementation.
 public function loadClaimRetrieverImpl() {
-    if (!claimRetrieveEnabled) {
-        printDebug(CLAIM_RETRIEVER, "Claim Retrieval is disabled from configuration.");
+    
+    //todo: bring a configuration if required
+    if (!isConfigAvailable(JWT_GENERATOR__CLAIM_RETRIEVAL_INSTANCE_ID, JWT_GENERATOR_CLAIM_RETRIEVAL_IMPLEMENTATION)) {
+        printDebug(CLAIM_RETRIEVER, "Claim Retrieval related class loading is disabled as the implementation is not provided." +  
+                    "Hence claim retrieval is disabled");
+        claimRetrieveEnabled = false;            
         return;
     }
-    printDebug(CLAIM_RETRIEVER, "Claim Retrieval is Enabled from configuration.");
-    string claimRetrieverImplClassName = getConfigValue(KM_CONF_CLAIM_RETRIEVAL_INSTANCE_ID,
-                                                        KM_CONF_CLAIM_RETRIEVAL_IMPLEMENTATION,
-                                                        DEFAULT_KM_CONF_CLAIM_RETRIEVAL_IMPLEMENTATION);
-    map<any> claimRetrieverConfig = {};
-    //todo: config available not works for instance_id, hence change the logic
-    boolean configurationProvided = isConfigAvailable(KM_CONF_CLAIM_RETRIEVAL_CONFIGURATION);
-    if (configurationProvided) {
-        claimRetrieverConfig = getConfigMapValue(KM_CONF_CLAIM_RETRIEVAL_CONFIGURATION);
-    } else {
+
+    string claimRetrieverImplClassName = getConfigValue(JWT_GENERATOR__CLAIM_RETRIEVAL_INSTANCE_ID,
+                                                        JWT_GENERATOR_CLAIM_RETRIEVAL_IMPLEMENTATION,
+                                                        DEFAULT_JWT_GENERATOR_CLAIM_RETRIEVAL_IMPLEMENTATION);
+    map<any> claimRetrieverConfig = getConfigMapValue(JWT_GENERATOR_CLAIM_RETRIEVAL_CONFIGURATION);
+
+    if (claimRetrieverConfig.length() == 0) {
         string username = getConfigValue(APIM_CREDENTIALS_INSTANCE_ID, APIM_CREDENTIALS_USERNAME,
                             DEFAULT_APIM_CREDENTIALS_USERNAME);
         string password = getConfigValue(APIM_CREDENTIALS_INSTANCE_ID, APIM_CREDENTIALS_PASSWORD,
                             DEFAULT_APIM_CREDENTIALS_PASSWORD);
         string keyManagerURL = getConfigValue(KM_CONF_INSTANCE_ID, KM_SERVER_URL, DEFAULT_KM_SERVER_URL);
-        //todo: populate the properties properly
-        claimRetrieverConfig["Username"] = username;
-        claimRetrieverConfig["password"] = password;
-        claimRetrieverConfig["KeyManagerUrl"] = keyManagerURL;
+        claimRetrieverConfig[APIM_CREDENTIALS_USERNAME] = username;
+        claimRetrieverConfig[APIM_CREDENTIALS_PASSWORD] = password;
+        claimRetrieverConfig[KM_SERVER_URL] = keyManagerURL;
     }
 
     boolean claimRetrieveClassLoaded =
@@ -109,8 +108,9 @@ function generateAuthContextInfoFromPrincipal(AuthenticationContext authContext,
     userAuthContextDTO.token_type = "oauth2";
     userAuthContextDTO.issuer = "https://localhost:9443/oauth2/token";
     userAuthContextDTO.token =  authContext.apiKey;
-    userAuthContextDTO.client_id = authContext.consumerKey;
     map<any>? claims = principal?.claims;
+    //cannot use authContext here as the clientId is not populated if subscription is not enabled.
+    userAuthContextDTO.client_id = claims[CLIENT_ID];
     if (claims is map<any> ) {
         userAuthContextDTO.customClaims = claims;
     }
