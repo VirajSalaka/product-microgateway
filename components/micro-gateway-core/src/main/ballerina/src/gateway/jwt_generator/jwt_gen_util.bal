@@ -136,16 +136,25 @@ function createMapFromRetrievedUserClaimsListDTO(AuthenticationContext authConte
     CustomClaimsMapDTO customClaimsMapDTO = {};
     //todo: add scopes in oauth2 flow
     if (payload is ()) {
-        //if payload is not preset, we call the claim retriever implementation
-        RetrievedUserClaimsListDTO ? claimsListDTO = retrieveClaims(authContext);
-        if (claimsListDTO is RetrievedUserClaimsListDTO) {
-           ClaimDTO[] claimList = claimsListDTO.list;
-           foreach ClaimDTO claim in claimList {
-               customClaimsMapDTO[claim.uri] = claim.value;
-           }
+        runtime:InvocationContext invocationContext = runtime:getInvocationContext();
+        runtime:Principal? principal = invocationContext?.principal;
+        if (principal is runtime:Principal) {
+            string[]? scopes = principal?.scopes;
+            if (scopes is string[]) {
+                string concatenatedScope = "";
+                foreach string scope in scopes {
+                    concatenatedScope += scope + " ";
+                }
+                customClaimsMapDTO["scopes"] = concatenatedScope.trim();
+            }
         }
+        claimsMapDTO.iss = "https://localhost:9443/oauth2/token";
     } else  {
-        map<json>? customClaims = payload["customClaims"];
+        string? iss = payload?.iss;
+        if (iss is string) {
+            claimsMapDTO.iss = iss;
+        }
+        map<json>? customClaims = payload?.customClaims;
         if (customClaims is map<json>) {
             foreach var [key, value] in customClaims.entries() {
                 string | error claimValue = trap <string> value;
@@ -155,6 +164,15 @@ function createMapFromRetrievedUserClaimsListDTO(AuthenticationContext authConte
             }
         }
     }
+    //todo: change the function body in a more convient way since runtime:principal is already taken.
+    RetrievedUserClaimsListDTO ? claimsListDTO = retrieveClaims(authContext, payload);
+    if (claimsListDTO is RetrievedUserClaimsListDTO) {
+        ClaimDTO[] claimList = claimsListDTO.list;
+        foreach ClaimDTO claim in claimList {
+            customClaimsMapDTO[claim.uri] = claim.value;
+        }
+    }
+
     //todo: pass a default value for issuer in oauth2 case as well
     //todo: pass the issuer in jwt
     ApplicationClaimsMapDTO applicationClaimsMapDTO = {};

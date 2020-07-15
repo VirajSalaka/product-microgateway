@@ -32,12 +32,14 @@ public type RetrievedUserClaimsListDTO record {|
 
 # This DTO is used to pass the Claims to JWT generation (preserving ballerina jwt payload structure where
 # the self contained access token structure), when there is no self contained token is involved.
+# + iss - token issuer
 # + sub - subscription claim
 # + customClaims - custom claims
-public type ClaimsMapDTO record {|
+public type ClaimsMapDTO record {
+    string iss = "";
     string sub = "";
     CustomClaimsMapDTO customClaims = {};
-|};
+};
 
 # This DTO is used to pass specifically the customClaims (preserving ballerina jwt payload structure where there
 # is self contained access token), when there is no self contained token is involved.
