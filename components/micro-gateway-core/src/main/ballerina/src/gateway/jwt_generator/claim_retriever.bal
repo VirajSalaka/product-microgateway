@@ -14,40 +14,48 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/jwt;
 import ballerina/runtime;
 
 boolean claimRetrieveEnabled = getConfigBooleanValue(KM_CONF_CLAIM_RETRIEVAL_INSTANCE_ID, KM_CONF_CLAIM_RETRIEVAL_ENABLED,
     DEFAULT_KM_CONF_CLAIM_RETRIEVAL_ENABLED);
 
 # To retrieve claims via the user specific claim retrieve implementation.
+# 
 # + authContext - Authentication Context
+# + payload - jwt payload if it is handled via jwt auth provider
 # + return - ClaimListDTO if there are any claims added from the user specific implementation
-function retrieveClaims (AuthenticationContext authContext) returns @tainted ClaimsListDTO ? {
+function retrieveClaims (AuthenticationContext authContext, jwt:JwtPayload? payload = ()) returns @tainted RetrievedUserClaimsListDTO ? {
     //if claim retrieve variable is disabled, there is no need to run through the method.
     if (!claimRetrieveEnabled) {
         return;
     }
-    runtime:InvocationContext invocationContext = runtime:getInvocationContext();
-    runtime:Principal? principal = invocationContext?.principal;
-
-    if (principal is runtime:Principal) {
-        OpaqueTokenInfoDTO userInfo = generateOpaqueTokenInfo(authContext, principal);
-        printDebug (CLAIM_RETRIEVER, "Opaque token information passed down to the claim retrieval implementation : " +
-            userInfo.toString());
-        ClaimsListDTO? | error claimListDTO = trap retrieveClaimsFromImpl(userInfo);
-        if (claimListDTO is ClaimsListDTO ) {
-            printDebug (CLAIM_RETRIEVER, "Claims List received from the claim retrieval implementation : " +
-                        claimListDTO.toString());
-            return claimListDTO;
-        } else if (claimListDTO is ()) {
-            printDebug(CLAIM_RETRIEVER , "No user claims are received from the claim retrieval implementation");
-        } else {
-            printError(CLAIM_RETRIEVER , "Error while retrieving user claims from the claim retrieval implementation",
-                claimListDTO);
-        }
+    UserAuthContextDTO userInfo = {};
+    if(payload is jwt:JwtPayload) {
+        userInfo = generateAuthContextInfoFromJWT(authContext, payload);
     } else {
-        printDebug(CLAIM_RETRIEVER, "Claim retrieval implementation is not executed due to the unavailability " +
-            "of the principal component");
+        runtime:InvocationContext invocationContext = runtime:getInvocationContext();
+        runtime:Principal? principal = invocationContext?.principal;
+        if (principal is runtime:Principal) {
+            userInfo = generateAuthContextInfoFromPrincipal(authContext, principal);
+        } else {
+            printDebug(CLAIM_RETRIEVER, "Claim retrieval implementation is not executed due to the unavailability " +
+                "of the principal component");
+            return;
+        }
+    }
+    printDebug (CLAIM_RETRIEVER, "User Auth Context information provided to the claim retrieval implementation : " +
+            userInfo.toString());
+    RetrievedUserClaimsListDTO? | error claimListDTO = trap retrieveClaimsFromImpl(userInfo);
+    if (claimListDTO is RetrievedUserClaimsListDTO ) {
+        printDebug (CLAIM_RETRIEVER, "Claims List received from the claim retrieval implementation : " +
+                    claimListDTO.toString());
+        return claimListDTO;
+    } else if (claimListDTO is ()) {
+        printDebug(CLAIM_RETRIEVER , "No user claims are received from the claim retrieval implementation");
+    } else {
+        printError(CLAIM_RETRIEVER , "Error while retrieving user claims from the claim retrieval implementation",
+            claimListDTO);
     }
 }
 
@@ -90,19 +98,45 @@ public function loadClaimRetrieverImpl() {
 }
 
 # Populate the DTO required for the claim retrieval implementation from authContext and principal component.
+# 
 # + authContext - Authentication Context
 # + principal - Principal component
-# + return - populated OpaqueTokenInfoDTO
-function generateOpaqueTokenInfo (AuthenticationContext authContext, runtime:Principal principal)
-        returns OpaqueTokenInfoDTO {
-    OpaqueTokenInfoDTO tokenInfoDTO = {};
-    tokenInfoDTO.username = principal?.username ?: UNKNOWN_VALUE;
-    tokenInfoDTO.scope = principal?.scopes.toString();
+# + return - populated UserAuthContextDTO
+function generateAuthContextInfoFromPrincipal(AuthenticationContext authContext, runtime:Principal principal)
+        returns UserAuthContextDTO {
+    UserAuthContextDTO userAuthContextDTO = {};
+    userAuthContextDTO.username = principal?.username ?: UNKNOWN_VALUE;
+    userAuthContextDTO.token_type = "oauth2";
+    userAuthContextDTO.issuer = "https://localhost:9443/oauth2/token";
+    userAuthContextDTO.token =  authContext.apiKey;
+    userAuthContextDTO.client_id = authContext.consumerKey;
     map<any>? claims = principal?.claims;
-    tokenInfoDTO.client_id = convertAnyToString(claims[CLIENT_ID]);
-    tokenInfoDTO.token =  authContext.apiKey;
-    return tokenInfoDTO;
+    if (claims is map<any> ) {
+        userAuthContextDTO.customClaims = claims;
+    }
+    return userAuthContextDTO;
 }
+
+# Populate the DTO required for the claim retrieval implementation from authContext and principal component.
+# 
+# + authContext - Authentication Context
+# + payload - JWT payload
+# + return - populated UserAuthContextDTO
+function generateAuthContextInfoFromJWT(AuthenticationContext authContext, jwt:JwtPayload payload)
+        returns UserAuthContextDTO {
+    UserAuthContextDTO userAuthContextDTO = {};
+    userAuthContextDTO.username = authContext.username;
+    userAuthContextDTO.token_type = "jwt";
+    userAuthContextDTO.issuer = payload?.iss ?: UNKNOWN_VALUE;
+    userAuthContextDTO.client_id = authContext.consumerKey;
+    map<any>? claims = payload?.customClaims;
+    userAuthContextDTO.token =  authContext.apiKey;
+    if (claims is map<any> ) {
+        userAuthContextDTO.customClaims = claims;
+    }
+    return userAuthContextDTO;
+}
+
 
 function convertAnyToString(any variable) returns string{
     if (variable is string) {

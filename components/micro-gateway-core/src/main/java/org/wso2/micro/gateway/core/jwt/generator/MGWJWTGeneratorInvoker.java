@@ -101,7 +101,7 @@ public class MGWJWTGeneratorInvoker {
         try {
             List<ClaimDTO> claimList = abstractMGWClaimRetriever.retrieveClaims(convertBMapToMap(authContext));
             BPackage packageId = new BPackage("wso2", "gateway", "3.1.0");
-            BMap<String, Object> bMap = BValueCreator.createRecordValue(packageId, "ClaimsListDTO");
+            BMap<String, Object> bMap = BValueCreator.createRecordValue(packageId, "RetrievedUserClaimsListDTO");
             bMap.put("count", claimList.size());
             BArray bArray = (BArray) bMap.get("list");
             for (Object claimDTO : claimList) {

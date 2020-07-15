@@ -25,7 +25,7 @@ public type ClaimDTO record {|
 # This represents the DTO which is mapped with the result received from user specific claim retrieval process.
 # + count - number of claims
 # + list - claims list
-public type ClaimsListDTO record {|
+public type RetrievedUserClaimsListDTO record {|
     int count;
     ClaimDTO[] list = [];
 |};
@@ -59,23 +59,17 @@ public type ApplicationClaimsMapDTO record {|
 |};
 
 # This DTO is to pass the required information for user specific claim retrieval process.
-# + token - Opaque Token
-# + scope - scope
+# + issuer - issuer
+# + token - token
 # + client_id - client ID
 # + username - username
-# + token_type - token type
-# + exp - expiring timestamp
-# + iat - issued timestamp
-# + nbf - not before timestamp
-public type OpaqueTokenInfoDTO record {|
-    //token field is introduced as it is required to get the claims from cache in wso2 implementation
+# + token_type - token type (jwt or oauth2)
+# + customClaims - customClaims of the JWT or the information received from introspection response
+public type UserAuthContextDTO record {|
+    string issuer = "";
     string token = "";
-    string scope = "";
     string client_id = "";
     string username = "";
-    string token_type = "Bearer";
-    int exp = 0;
-    int nbf = 0;
-    int iat = 0;
-    //todo: issuer, token, client_id, username, tokentype, and customClaims map (in opaque scenario it is empty, and in jwt scenario, add the custom claims)
+    string token_type = "";
+    map<any> customClaims = {};
 |};

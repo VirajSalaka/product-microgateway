@@ -76,7 +76,7 @@ function generateBackendTokenForJWT(AuthenticationContext authContext, jwt:JwtPa
     if (isSelfContainedToken(payload)) {
         generatedToken = generateJWTToken(payload, apiDetails);
     } else {
-        ClaimsMapDTO claimsMapDTO = createMapFromClaimsListDTO(authContext, payload);
+        ClaimsMapDTO claimsMapDTO = createMapFromRetrievedUserClaimsListDTO(authContext, payload);
         generatedToken = generateJWTTokenFromUserClaimsMap(claimsMapDTO, apiDetails);
     }
     return generatedToken;
@@ -89,7 +89,7 @@ function generateBackendTokenForJWT(AuthenticationContext authContext, jwt:JwtPa
 # or the `AuthenticationError` in case of an error.
 function generateBackendJWTTokenForOauth(AuthenticationContext authContext, map<string> apiDetails) returns handle | error {
     (handle|error) generatedToken;
-    ClaimsMapDTO claimsMapDTO = createMapFromClaimsListDTO(authContext);
+    ClaimsMapDTO claimsMapDTO = createMapFromRetrievedUserClaimsListDTO(authContext);
     generatedToken = generateJWTTokenFromUserClaimsMap(claimsMapDTO, apiDetails);
     return generatedToken;
 }
@@ -130,15 +130,15 @@ function setGeneratedTokenAsHeader(http:Request req,
 # + authContext - Authentication Context
 # + payload - For the jwt, payload of the decoded jwt
 # + return - ClaimsMapDTO
-function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPayload? payload = ()) 
+function createMapFromRetrievedUserClaimsListDTO(AuthenticationContext authContext, jwt:JwtPayload? payload = ())
         returns @tainted ClaimsMapDTO {
     ClaimsMapDTO claimsMapDTO = {};
     CustomClaimsMapDTO customClaimsMapDTO = {};
     //todo: add scopes in oauth2 flow
     if (payload is ()) {
         //if payload is not preset, we call the claim retriever implementation
-        ClaimsListDTO ? claimsListDTO = retrieveClaims(authContext);
-        if (claimsListDTO is ClaimsListDTO) {
+        RetrievedUserClaimsListDTO ? claimsListDTO = retrieveClaims(authContext);
+        if (claimsListDTO is RetrievedUserClaimsListDTO) {
            ClaimDTO[] claimList = claimsListDTO.list;
            foreach ClaimDTO claim in claimList {
                customClaimsMapDTO[claim.uri] = claim.value;
