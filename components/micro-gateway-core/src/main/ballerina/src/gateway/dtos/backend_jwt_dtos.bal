@@ -77,4 +77,5 @@ public type OpaqueTokenInfoDTO record {|
     int exp = 0;
     int nbf = 0;
     int iat = 0;
+    //todo: issuer, token, client_id, username, tokentype, and customClaims map (in opaque scenario it is empty, and in jwt scenario, add the custom claims)
 |};

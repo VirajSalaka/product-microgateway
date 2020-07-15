@@ -155,6 +155,8 @@ function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPa
             }
         }
     }
+    //todo: pass a default value for issuer in oauth2 case as well
+    //todo: pass the issuer in jwt
     ApplicationClaimsMapDTO applicationClaimsMapDTO = {};
     applicationClaimsMapDTO.id = emptyStringIfUnknownValue(authContext.applicationId);
     applicationClaimsMapDTO.owner = emptyStringIfUnknownValue(authContext.subscriber);

@@ -426,6 +426,7 @@
       name="MyAPI"
       versions="*"
 
+//todo: have claim retriever class mentioned under this config and enabled is set based of token issuer separately.
 # JWT Generator configurations
 [jwtGeneratorConfig]
   # Enable jwt generator
