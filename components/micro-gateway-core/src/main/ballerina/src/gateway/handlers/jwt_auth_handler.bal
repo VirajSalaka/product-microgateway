@@ -43,7 +43,6 @@ public type JWTAuthHandler object {
     private int skewTime = 0;
     private boolean enabledCaching = false;
     private int cacheExpiry = 0;
-    private boolean claimRetrieveClassLoaded = false;
 
     public function __init(JwtAuthProvider jwtAuthProvider) {
         self.jwtAuthProvider = jwtAuthProvider;
@@ -112,7 +111,6 @@ public type JWTAuthHandler object {
                                                         self.cacheExpiry,
                                                         self.tokenIssuer,
                                                         self.tokenAudience);
-
         }
     }
 

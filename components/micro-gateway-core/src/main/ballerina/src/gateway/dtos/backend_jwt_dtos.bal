@@ -14,15 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# This is the DTO sent from Microgateway to retrieve user claims.
-# Additionally we can provide "domain", "dialect" properties as well.
-# + username - username
-# + accessToken - accessToken
-public type UserInfoDTO record {
-    string username = "";
-    string accessToken = "";
-};
-
 # This represents a single key-value pair returned from the APIM.
 # + uri - claim
 # + value - value
@@ -31,7 +22,7 @@ public type ClaimDTO record {|
     string value;
 |};
 
-# This represents the DTO which is mapped with the response with userclaims.
+# This represents the DTO which is mapped with the result received from user specific claim retrieval process.
 # + count - number of claims
 # + list - claims list
 public type ClaimsListDTO record {|
@@ -39,7 +30,8 @@ public type ClaimsListDTO record {|
     ClaimDTO[] list = [];
 |};
 
-# This DTO is used to pass the customClaims, when there is no self contained token is involved.
+# This DTO is used to pass the Claims to JWT generation (preserving ballerina jwt payload structure where
+# the self contained access token structure), when there is no self contained token is involved.
 # + sub - subscription claim
 # + customClaims - custom claims
 public type ClaimsMapDTO record {|
@@ -47,7 +39,8 @@ public type ClaimsMapDTO record {|
     CustomClaimsMapDTO customClaims = {};
 |};
 
-# This DTO is used to pass the customClaims, when there is no self contained token is involved.
+# This DTO is used to pass specifically the customClaims (preserving ballerina jwt payload structure where there
+# is self contained access token), when there is no self contained token is involved.
 # + application - application claim
 public type CustomClaimsMapDTO record {
     ApplicationClaimsMapDTO application = {};
@@ -65,18 +58,19 @@ public type ApplicationClaimsMapDTO record {|
     string tier = "";
 |};
 
-# This DTO is used to pass the claims related to application, when there is no self contained token is involved.
-# + localClaim - local claim
-# + remoteClaim - remote claim
-public type RemoteClaimMappingDTO record {|
-    string localClaim;
-    string remoteClaim;
-|};
-
+# This DTO is to pass the required information for user specific claim retrieval process.
+# + token - Opaque Token
+# + scope - scope
+# + client_id - client ID
+# + username - username
+# + token_type - token type
+# + exp - expiring timestamp
+# + iat - issued timestamp
+# + nbf - not before timestamp
 public type OpaqueTokenInfoDTO record {|
     //token field is introduced as it is required to get the claims from cache in wso2 implementation
     string token = "";
-    string scopes = "";
+    string scope = "";
     string client_id = "";
     string username = "";
     string token_type = "Bearer";

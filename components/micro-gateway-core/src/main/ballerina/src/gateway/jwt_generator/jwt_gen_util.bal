@@ -114,7 +114,6 @@ function setGeneratedTokenAsHeader(http:Request req,
     printDebug(KEY_JWT_AUTH_PROVIDER, "Generated jwt token");
     printDebug(KEY_JWT_AUTH_PROVIDER, "Token: " + generatedToken.toString());
 
-    //todo: add to cache if cache enabled
     if (enabledCaching) {
         error? err = jwtGeneratorCache.put(<@untainted>cacheKey, <@untainted>generatedToken.toString());
         if (err is error) {
@@ -126,6 +125,11 @@ function setGeneratedTokenAsHeader(http:Request req,
     return true;
 }
 
+# populate and return ClaimsMapDTO object which is required to the further processing of Jwt generator implementation.
+#
+# + authContext - Authentication Context
+# + payload - For the jwt, payload of the decoded jwt
+# + return - ClaimsMapDTO
 function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPayload? payload = ()) 
         returns @tainted ClaimsMapDTO {
     ClaimsMapDTO claimsMapDTO = {};
@@ -163,7 +167,11 @@ function createMapFromClaimsListDTO(AuthenticationContext authContext, jwt:JwtPa
     return claimsMapDTO;
 }
 
-//todo: check if there are performance related issues
+# Populate Map to keep API related information for JWT generation process
+#
+# + invocationContext - ballerina runtime invocationContext
+# + return - String map with the properties: apiName, apiVersion, apiTier, apiContext, apiPublisher and
+#               subscriberTenantDomain
 function createAPIDetailsMap (runtime:InvocationContext invocationContext) returns map<string> {
     map<string> apiDetails = {};
     AuthenticationContext authenticationContext = <AuthenticationContext>invocationContext.attributes[AUTHENTICATION_CONTEXT];
