@@ -25,6 +25,7 @@ import ballerina/http;
 # + cacheKey - key for the jwt generator cache
 # + enabledCaching - jwt generator caching enabled
 # + apiDetails - extracted api details for the current api
+# + remoteUserClaimRetrievalEnabled - true if remoteUserClaimRetrieval is enabled
 # + return - Returns `true` if the token generation and setting the header completed successfully
 # or the `AuthenticationError` in case of an error.
 public function setJWTHeader(jwt:JwtPayload payload,
@@ -143,8 +144,8 @@ function createMapFromRetrievedUserClaimsListDTO(AuthenticationContext authConte
                                                     returns @tainted ClaimsMapDTO {
     ClaimsMapDTO claimsMapDTO = {};
     CustomClaimsMapDTO customClaimsMapDTO = {};
-    //todo: add scopes in oauth2 flow
     if (payload is ()) {
+        //if payload is empty, this is from oauth2 flow
         runtime:InvocationContext invocationContext = runtime:getInvocationContext();
         runtime:Principal? principal = invocationContext?.principal;
         if (principal is runtime:Principal) {
@@ -157,7 +158,7 @@ function createMapFromRetrievedUserClaimsListDTO(AuthenticationContext authConte
                 customClaimsMapDTO["scope"] = concatenatedScope.trim();
             }
         }
-        claimsMapDTO.iss = "https://localhost:9443/oauth2/token";
+        claimsMapDTO.iss = getConfigValue(KM_CONF_INSTANCE_ID, KM_CONF_ISSUER, DEFAULT_KM_CONF_ISSUER);
     } else  {
         string? iss = payload?.iss;
         if (iss is string) {
@@ -173,7 +174,7 @@ function createMapFromRetrievedUserClaimsListDTO(AuthenticationContext authConte
             }
         }
     }
-    //todo: change the function body in a more convient way since runtime:principal is already taken.
+    //todo: change the function body in a more convenient way since runtime:principal is already taken.
     if (remoteUserClaimRetrievalEnabled) {
         RetrievedUserClaimsListDTO ? claimsListDTO = retrieveClaims(authContext, payload);
         if (claimsListDTO is RetrievedUserClaimsListDTO) {
@@ -184,8 +185,6 @@ function createMapFromRetrievedUserClaimsListDTO(AuthenticationContext authConte
         }
     }
 
-    //todo: pass a default value for issuer in oauth2 case as well
-    //todo: pass the issuer in jwt
     ApplicationClaimsMapDTO applicationClaimsMapDTO = {};
     applicationClaimsMapDTO.id = emptyStringIfUnknownValue(authContext.applicationId);
     applicationClaimsMapDTO.owner = emptyStringIfUnknownValue(authContext.subscriber);

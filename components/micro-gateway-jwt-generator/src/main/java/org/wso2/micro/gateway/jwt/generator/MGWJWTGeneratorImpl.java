@@ -48,7 +48,6 @@ public class MGWJWTGeneratorImpl extends AbstractMGWJWTGenerator {
                 jwtExpiryTime, restrictedClaims, jwtCacheEnabled, jwtCacheExpiry, tokenIssuer, tokenAudience);
     }
 
-    //todo: check if token issuer works with jwt
     @Override
     public Map<String, Object> populateStandardClaims(Map<String, Object> jwtInfo) {
         long currentTime = System.currentTimeMillis();
@@ -56,7 +55,6 @@ public class MGWJWTGeneratorImpl extends AbstractMGWJWTGenerator {
         String dialect = this.getDialectURI();
         Map<String, Object> claims = new HashMap<>();
         HashMap<String, Object> customClaims = (HashMap<String, Object>) jwtInfo.get("customClaims");
-        //todo: in oauth2 set the incoming iss to identify the issuer (from introspect call if available)
         claims.put("iss", getTokenIssuer());
         if (getTokenAudience().length == 1) {
             claims.put("aud", getTokenAudience()[0]);

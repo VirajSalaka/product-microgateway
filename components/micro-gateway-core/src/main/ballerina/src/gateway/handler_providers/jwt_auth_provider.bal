@@ -29,6 +29,7 @@ import ballerina/stringutils;
 # + className - Transformation class Name
 # + classLoaded - Class loaded or not
 # + gatewayCache - the `APIGatewayCache instence`
+# + remoteUserClaimRetrievalEnabled - true if remoteUserClaimRetrieval is enabled for the issuer
 public type JwtAuthProvider object {
     *auth:InboundAuthProvider;
 

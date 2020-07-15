@@ -57,6 +57,8 @@
   # Remote User Claim Retrieval Enabled
   remoteUserClaimRetrievalEnabled = false
   # Basic security configurations
+  # Issuer
+  issuer = "https://localhost:9443/oauth2/token"
   [keymanager.security.basic]
     enabled = true
     username = "admin"
@@ -427,7 +429,6 @@
       name="MyAPI"
       versions="*"
 
-//todo: have claim retriever class mentioned under this config and enabled is set based of token issuer separately.
 # JWT Generator configurations
 [jwtGeneratorConfig]
   # Enable jwt generator

@@ -163,7 +163,6 @@ public function jGenerateJWTToken(jwt:JwtPayload jwtInfo, map<string> apiDetails
 # + apiDetails - details of the subscribed APIS
 # + return - Returns the generated JWT token.
 public function jGenerateJWTTokenFromUserClaimsMap(ClaimsMapDTO jwtInfo, map<string> apiDetails) returns (handle | error) = @java:Method {
-    //todo: change the function to idenitfy the two types separately
     name: "invokeGenerateToken",
     class: "org.wso2.micro.gateway.core.jwt.generator.MGWJWTGeneratorInvoker"
 } external;

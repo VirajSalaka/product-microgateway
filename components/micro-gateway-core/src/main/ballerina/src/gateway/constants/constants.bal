@@ -233,6 +233,7 @@ public const string NAME = "name";
 public const string VERSIONS = "versions";
 public const string VERSION = "version";
 public const string ALIAS_LIST = "aliasList";
+public const string KM_CONF_ISSUER = "issuer";
 
 public const string HTTP_CLIENTS_INSTANCE_ID = "httpClients";
 public const string HTTP_CLIENTS_POOL_CONFIG_INSTANCE_ID = "httpClients.poolConfig";

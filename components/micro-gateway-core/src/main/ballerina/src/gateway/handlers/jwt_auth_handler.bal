@@ -266,6 +266,7 @@ public function getAPIDetails(jwt:JwtPayload payload, string apiName, string api
 # + enabledCaching - jwt generator caching enabled
 # + skewTime - skew time to backend
 # + issuer - The jwt issuer who issued the token and comes in the iss claim.
+# + remoteUserClaimRetrievalEnabled - true if remoteUserClaimRetrieval is enabled
 # + return - Returns `true` if the token generation and setting the header completed successfully
 # or the `AuthenticationError` in case of an error.
 public function generateAndSetBackendJwtHeader(string credential,

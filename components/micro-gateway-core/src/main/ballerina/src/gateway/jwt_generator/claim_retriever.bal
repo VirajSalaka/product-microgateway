@@ -106,13 +106,16 @@ function generateAuthContextInfoFromPrincipal(AuthenticationContext authContext,
     UserAuthContextDTO userAuthContextDTO = {};
     userAuthContextDTO.username = principal?.username ?: UNKNOWN_VALUE;
     userAuthContextDTO.token_type = "oauth2";
-    userAuthContextDTO.issuer = "https://localhost:9443/oauth2/token";
+    userAuthContextDTO.issuer = getConfigValue(KM_CONF_INSTANCE_ID, KM_CONF_ISSUER, DEFAULT_KM_CONF_ISSUER);
     userAuthContextDTO.token =  authContext.apiKey;
     map<any>? claims = principal?.claims;
-    //cannot use authContext here as the clientId is not populated if subscription is not enabled.
-    userAuthContextDTO.client_id = claims[CLIENT_ID];
-    if (claims is map<any> ) {
+    if (claims is map<any>) {
         userAuthContextDTO.customClaims = claims;
+        //cannot use authContext here as the clientId is not populated if subscription is not enabled.
+        any clientId = claims[CLIENT_ID];
+        if (clientId is string) {
+            userAuthContextDTO.client_id = clientId;
+        }
     }
     return userAuthContextDTO;
 }
