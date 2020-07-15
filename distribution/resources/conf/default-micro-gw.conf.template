@@ -54,11 +54,8 @@
   tokenContext = "oauth2"
   # External Key Manager
   external = false
-  [keyManager.claimRetrieval]
-      enabled = false
-      retrieverImpl="org.wso2.micro.gateway.jwt.generator.DefaultMGWClaimRetriever"
-      [keyManager.claimRetrieval.configuration]
-          custom_config_key = custom_config_property
+  # Remote User Claim Retrieval Enabled
+  remoteUserClaimRetrievalEnabled = false
   # Basic security configurations
   [keymanager.security.basic]
     enabled = true
@@ -108,6 +105,8 @@
   consumerKeyClaim = "aud"
   #class name of JWT claims value mapper transformer if you need claims mapping.
   claimMapperClassName = "org.wso2.micro.gateway.jwtTransformer.DefaultJwtTransformer"
+  # Remote User Claim Retrieval Enabled
+  remoteUserClaimRetrievalEnabled = false
   # The key of remote claims and the local claims if you need claims mapping.
   [[jwtTokenConfig.claims]]
     remoteClaim = "scp"
@@ -124,6 +123,8 @@
   validateSubscription = false
   #class name of JWT claims value mapper transformer if you need claims mapping.
   claimMapperClassName = "org.wso2.micro.gateway.jwtTransformer.customJwtTransformer"
+  # Remote User Claim Retrieval Enabled
+  remoteUserClaimRetrievalEnabled = false
   # The key of remote claims and the local claims if you need claims mapping.
   [[jwtTokenConfig.claims]]
     remoteClaim = "scps"
@@ -450,6 +451,11 @@
   audience=["http://org.wso2.apimgt/gateway"]
   # JWT token generator implementation
   generatorImpl="org.wso2.micro.gateway.jwt.generator.MGWJWTGeneratorImpl"
+  [jwtGeneratorConfig.claimRetrieval]
+      # User claim retriever implementation
+      retrieverImpl="org.wso2.micro.gateway.jwt.generator.DefaultMGWClaimRetriever"
+      [keyManager.claimRetrieval.configuration]
+          custom_config_key = custom_config_property
   # JWT Generator cache configurations
   [jwtGeneratorConfig.jwtGeneratorCaching]
     # Enable jwt generator token caching
