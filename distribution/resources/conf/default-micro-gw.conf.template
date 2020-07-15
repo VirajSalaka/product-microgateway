@@ -55,7 +55,7 @@
   # External Key Manager
   external = false
   [keyManager.claimRetrieval]
-      enabled = true
+      enabled = false
       retrieverImpl="org.wso2.micro.gateway.jwt.generator.DefaultMGWClaimRetriever"
       [keyManager.claimRetrieval.configuration]
           custom_config_key = custom_config_property
