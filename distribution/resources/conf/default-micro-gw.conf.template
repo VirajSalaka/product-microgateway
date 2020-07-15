@@ -153,10 +153,10 @@
   # Persistent revocation configurations
   [tokenRevocationConfig.persistent]
     enablePersistentStorageRetrieval = false
-    # Use etcd as the default persistent storage
-    useDefault = true
-    # The hostname of your persistent storage server (e.g.: <etcd-server-access-URL>/<service>/keys/jti/)
-    hostname = "https://127.0.0.1:2379/v2/keys/jti/"
+    # Use APIM as the default persistent storage. Other types are "etcd" and "custom"
+    type = "default"
+    # The endpoint url of your persistent storage server (e.g.: <etcd-server-access-URL>/<service>/keys/jti/)
+    endpointURL = "https://localhost:9443/internal/data/v1"
     # The username of your persistent storage server
     username = "root"
     # The password of your persistent storage server
@@ -173,6 +173,8 @@
 
 # Analytics configurations
 [analytics]
+  # The configured API Manager analytics stream version
+  streamVersion = "3.2.0"
   # Configurations for file upload analytics
   [analytics.fileUpload]
     enable = false
@@ -482,7 +484,12 @@
   eventListeningEndpoints = "amqp://admin:admin@carbon/carbon?brokerlist='tcp://localhost:5672'"
   listOfTenants = ["carbon.super"]
 
+# API Manager default credentials
 [apim.credentials]
 username = "admin"
 password = "admin"
 
+# Token validation configuration
+[security]
+  # Enable/ Disable subscription validation for tokens.
+  validateSubscriptions = false

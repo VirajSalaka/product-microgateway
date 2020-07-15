@@ -60,7 +60,7 @@ public function isAllowedKey(string token, jwt:JwtPayload payload, boolean isVal
         string apiVersion = apiConfig.apiVersion;
         string apiProvider = apiConfig.publisher;
         [authenticationContext, isAllowed] = validateSubscriptionFromDataStores(token, consumerKey,
-                                                apiName, apiVersion, isValidationEnabled, authenticationContext.username);
+                                                apiName, apiVersion, isValidationEnabled);
         string? username = payload?.sub;
         if (username is string) {
             authenticationContext.username = username;

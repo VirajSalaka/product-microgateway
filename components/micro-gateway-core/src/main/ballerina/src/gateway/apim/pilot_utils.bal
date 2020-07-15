@@ -62,7 +62,7 @@ function convertApiEventToApiDTO(json apiEvent) returns Api {
 }
 
 function validateSubscriptionFromDataStores(string token, string consumerKey, string apiName, string apiVersion,
-                    boolean isValidateSubscription, string username) returns ([AuthenticationContext, boolean]) {
+                    boolean isValidateSubscription) returns ([AuthenticationContext, boolean]) {
     boolean isAllowed = !isValidateSubscription;
     runtime:InvocationContext invocationContext = runtime:getInvocationContext();
     string subscriptionKey = consumerKey + ":" + apiName + ":"  + apiVersion;
@@ -72,8 +72,7 @@ function validateSubscriptionFromDataStores(string token, string consumerKey, st
     var api = pilotDataProvider.getApi(apiName, apiVersion);
     AuthenticationContext authenticationContext = {
         apiKey: token,
-        authenticated: !isValidateSubscription,
-        username: username
+        authenticated: !isValidateSubscription
     };
     authenticationContext.consumerKey = consumerKey;
     invocationContext.attributes[KEY_TYPE_ATTR] = PRODUCTION_KEY_TYPE;
