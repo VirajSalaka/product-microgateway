@@ -57,18 +57,18 @@ public function loadJWTGeneratorClass(string className,
 
     //to maintain backward compatibility
     return jLoadJWTGeneratorClass(jClassName,
-                                jDialectURI,
-                                jSignatureAlgorithm,
-                                jKeyStorePath,
-                                jKeyStorePassword,
-                                jCertificateAlias,
-                                jPrivateKeyAlias,
-                                tokenExpiry,
-                                restrictedClaims,
-                                enabledCaching,
-                                cacheExpiry,
-                                jTokenIssuer,
-                                tokenAudience);
+                                    jDialectURI,
+                                    jSignatureAlgorithm,
+                                    jKeyStorePath,
+                                    jKeyStorePassword,
+                                    jCertificateAlias,
+                                    jPrivateKeyAlias,
+                                    tokenExpiry,
+                                    restrictedClaims,
+                                    enabledCaching,
+                                    cacheExpiry,
+                                    jTokenIssuer,
+                                    tokenAudience);
 }
 
 public function loadClaimRetrieverClass (string className, map<any> properties) returns boolean {
@@ -86,7 +86,6 @@ public function retrieveClaimsFromImpl (OpaqueTokenInfoDTO userInfo) returns Cla
 public function getKeystoreLocation(handle unresolvedPath) returns handle {
     return jGetKeystoreLocation(unresolvedPath);
 }
-
 
 # Invoke the interop function to generate JWT token
 #

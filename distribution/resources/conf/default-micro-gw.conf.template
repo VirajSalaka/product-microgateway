@@ -57,9 +57,8 @@
   [keyManager.claimRetrieval]
       enabled = true
       retrieverImpl="org.wso2.micro.gateway.jwt.generator.DefaultMGWClaimRetriever"
-      [[keyManager.claimRetrieval.configuration]]
-          key = "Custom_Config_Key_1"
-          value = "Custom_Config_Value_1"
+      [keyManager.claimRetrieval.configuration]
+          custom_config_key = custom_config_property
   # Basic security configurations
   [keymanager.security.basic]
     enabled = true
@@ -450,7 +449,6 @@
   audience=["http://org.wso2.apimgt/gateway"]
   # JWT token generator implementation
   generatorImpl="org.wso2.micro.gateway.jwt.generator.MGWJWTGeneratorImpl"
-
   # JWT Generator cache configurations
   [jwtGeneratorConfig.jwtGeneratorCaching]
     # Enable jwt generator token caching
