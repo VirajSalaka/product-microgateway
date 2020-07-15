@@ -62,6 +62,7 @@ public function loadClaimRetrieverImpl() {
                                                         KM_CONF_CLAIM_RETRIEVAL_IMPLEMENTATION,
                                                         DEFAULT_KM_CONF_CLAIM_RETRIEVAL_IMPLEMENTATION);
     map<any> claimRetrieverConfig = {};
+    //todo: config available not works for instance_id, hence change the logic
     boolean configurationProvided = isConfigAvailable(KM_CONF_CLAIM_RETRIEVAL_CONFIGURATION);
     if (configurationProvided) {
         claimRetrieverConfig = getConfigMapValue(KM_CONF_CLAIM_RETRIEVAL_CONFIGURATION);

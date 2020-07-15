@@ -83,12 +83,12 @@ public class MGWJWTGeneratorInvoker {
         return false;
     }
 
-    public static boolean loadClaimRetrieverClass(String className, MapValue properties) {
+    public static boolean loadClaimRetrieverClass(String className, BMap<String, Object> properties) {
         try {
             Class claimRetrieverClass = MGWJWTGeneratorInvoker.class.getClassLoader().loadClass(className);
             Constructor classConstructor = claimRetrieverClass.getDeclaredConstructor(Map.class);
             abstractMGWClaimRetriever = (AbstractMGWClaimRetriever) classConstructor.newInstance(
-                    convertMapValueToMap(properties));
+                    convertBMapToMap(properties));
             return true;
         } catch (ClassNotFoundException | IllegalAccessException | InstantiationException |
                 InvocationTargetException | NoSuchMethodException e) {
