@@ -226,7 +226,7 @@
                             <goal>wget</goal>
                         </goals>
                         <configuration>
-                            <url>https://dist.ballerina.io/downloads/${ballerina.platform.version}/jballerina-${ballerina.platform.version}.zip</url>
+                            <url>http://dist-dev.ballerina.io/downloads/1.2.7/jballerina-1.2.7.zip</url>
                             <unpack>true</unpack>
                             <outputDirectory>${project.build.directory}/extracted-distribution/</outputDirectory>
                         </configuration>
