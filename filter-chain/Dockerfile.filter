@@ -1,0 +1,68 @@
+FROM golang:1.13-alpine3.11 as builder
+
+LABEL maintainer="dev@wso2.org"
+
+ENV LANG=C.UTF-8
+
+# Microgateway runtime distribution filename.
+ARG USER=ballerina
+ARG USER_ID=802
+ARG USER_GROUP=ballerina
+ARG USER_GROUP_ID=802
+ARG USER_HOME=/home/${USER}
+
+# build argument for MOTD
+ARG MOTD="\n\
+ Welcome to WSO2 Docker Resources \n\
+ --------------------------------- \n\
+ This Docker container comprises of a WSO2 product, running with its latest GA release \n\
+ which is under the Apache License, Version 2.0. \n\
+ Read more about Apache License, Version 2.0 here @ http://www.apache.org/licenses/LICENSE-2.0.\n\n"
+ENV ENV=${USER_HOME}"/.ashrc"
+
+RUN \
+    addgroup -S -g ${USER_GROUP_ID} ${USER_GROUP} \
+    && adduser -S -u ${USER_ID} -h ${USER_HOME} -G ${USER_GROUP} ${USER} 
+
+ENV APP_HOME /go/src/filterChian
+
+RUN mkdir -p $APP_HOME
+WORKDIR $APP_HOME
+COPY . .
+
+RUN go mod download
+RUN go mod verify
+
+RUN go build -o filterChainServer
+
+# FROM debian:buster
+# ENV APP_HOME /go/src/pilot
+
+# ARG USER=ballerina
+# ARG USER_ID=802
+# ARG USER_GROUP=ballerina
+# ARG USER_GROUP_ID=802
+# ARG USER_HOME=/home/${USER}
+
+# # build argument for MOTD
+# ARG MOTD="\n\
+#  Welcome to WSO2 Docker Resources \n\
+#  --------------------------------- \n\
+#  This Docker container comprises of a WSO2 product, running with its latest GA release \n\
+#  which is under the Apache License, Version 2.0. \n\
+#  Read more about Apache License, Version 2.0 here @ http://www.apache.org/licenses/LICENSE-2.0.\n\n"
+# ENV ENV=${USER_HOME}"/.ashrc"
+
+# RUN \
+#     groupadd --system -g ${USER_GROUP_ID} ${USER_GROUP} \
+#     && useradd --system --create-home --home-dir ${USER_HOME} --no-log-init -g ${USER_GROUP_ID} -u ${USER_ID} ${USER} \
+#     && echo '[ ! -z "${TERM}" -a -r /etc/motd ] && cat /etc/motd' >> /etc/bash.bashrc; echo "${MOTD}" > /etc/motd
+
+# RUN mkdir -p $APP_HOME    
+# COPY --chown=${USER}:${USER_GROUP} --from=builder $APP_HOME/pilotServer $APP_HOME
+
+# ARG USER=ballerina
+# WORKDIR $APP_HOME
+# RUN ls
+
+CMD ./filterChainServer

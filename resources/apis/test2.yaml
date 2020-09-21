@@ -1,6 +1,6 @@
 openapi: "3.0"
 info:
-  description: "This is a samle server etsore sr      e  [hp/wagger.o](htp//swag.o)  n [.es()s y cn  p  `sie`    n"
+  description: "This is a samle sfg     dfs   [.es()s y cn  p  `sie`    n"
   version: "1.0.0"
   title: "Swagger Petstore"
 
@@ -12,15 +12,15 @@ x-wso2-basepath: /petstore/v2
 
 x-wso2-production-endpoints:
   urls:
-    - 'https://petstore.swagger.io/api/v3'
-  type: "https"
+    - 'http://www.mocky.io/v2/5185415ba171ea3a00704eed'
+  type: "http"
 x-wso2-sandbox-endpoints:
   urls:
     - 'http://sandbox.com:8000/api/v3'
   type: http
 
 servers:
-  - url: 'https://petstore.swagger.io:8000/api/v3'
+  - url: 'http://www.mocky.io/v2/5185415ba171ea3a00704eed'
 
 schemes:
   - "https"

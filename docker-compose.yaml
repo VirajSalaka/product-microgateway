@@ -1,15 +1,31 @@
 version: "3.7"
 services:
+
+  filterchain:
+    build: 
+      context: ./filter-chain
+      dockerfile: Dockerfile.filter
+    ports:
+      - "8081:8081"
+  # pilot:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.pilot
+  #   volumes:  
+  #     - ./resources/apis/test2.yaml:/go/src/pilot/resources/apis/test2.yaml
+  #   ports:
+  #     - "9095:9095"
+  #     - "18000:18000"
   envoy:
-    image: envoyproxy/envoy:v1.14.1
+    image: envoyproxy/envoy:v1.14.4
     volumes:
-      - ./envoy.yaml:/etc/envoy/envoy.yaml
+      - ./envoy.yaml:/etc/envoy/envoy.yaml   
 #    expose:
 #      - "80"
 #      - "8001"
     ports:
       - "10000:10000"
-      - "9000:9000"
+      - "9000:9000"             
   # zipkin:
   #   image: openzipkin/zipkin
   #   expose:

@@ -1,10 +1,13 @@
+node:
+  id: sdfdsfasdfadfsd
+  cluster: ssssss
 admin:
-  access_log_path: /dev/null
+  access_log_path: /tmp/admin_access.log
   address:
     socket_address:
+      protocol: TCP
       address: 0.0.0.0
       port_value: 9000
-
 dynamic_resources:
   ads_config:
     api_type: GRPC
@@ -29,17 +32,87 @@ dynamic_resources:
       grpc_services:
         - envoy_grpc:
             cluster_name: xds_cluster
-      set_node_on_first_message_only: true
-node:
-  cluster: service_greeter
-  id: test-id
+      set_node_on_first_message_only: true      
 static_resources:
+  listeners:
+  - name: listener_0
+    address:
+      socket_address:
+        protocol: TCP
+        address: 0.0.0.0
+        port_value: 10000
+    filter_chains:
+    - filters:
+      - name: envoy.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager
+          stat_prefix: ingress_http
+          route_config:
+            name: routeProd_SwaggerPetstoreNew1.0.0
+            virtual_hosts:
+            - name: serviceProd_SwaggerPetstoreNew1.0.0
+              domains: ["*"]
+              # routes:
+              # - match:
+              #     path: "/v2/pet/2"
+              #   route:
+              #     host_rewrite: petstore.swagger.io
+              #     cluster: clusterProd_SwaggerPetstoreNew1.0.0
+          http_filters:
+          - name: envoy.ext_authz
+            typed_config:
+              "@type": type.googleapis.com/envoy.config.filter.http.ext_authz.v2.ExtAuthz
+              grpc_service:
+                envoy_grpc:
+                  cluster_name: ext-authz
+
+                # Default is 200ms; override if your server needs e.g. warmup time.
+                timeout: 10s
+#              include_peer_certificate: false
+          - name: envoy.router
+            config: {}
   clusters:
-    - connect_timeout: 1s
-      hosts:
-        - socket_address:
-            address: 172.17.0.1
-            port_value: 18000
-      http2_protocol_options: {}
-      name: xds_cluster
-      type: STRICT_DNS
+  - connect_timeout: 1s
+    hosts:
+      - socket_address:
+          address: 192.168.8.102
+          port_value: 18000
+    http2_protocol_options: {}
+    name: xds_cluster
+    type: STRICT_DNS
+  - name: ext-authz
+    type: static
+    http2_protocol_options: {}
+    load_assignment:
+      cluster_name: ext-authz
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: 192.168.8.102
+                port_value: 8081
+
+    # This timeout controls the initial TCP handshake timeout - not the timeout for the
+    # entire request.
+    connect_timeout: 1s
+#  - name: zipkin
+#    connect_timeout: 1s
+#    type: strict_dns
+#    lb_policy: round_robin
+#    load_assignment:
+#      cluster_name: zipkin
+#      endpoints:
+#      - lb_endpoints:
+#        - endpoint:
+#            address:
+#              socket_address:
+#                address: 172.17.0.1
+#                port_value: 9411
+#stats_sinks:
+#  name: envoy.stat_sinks.statsd
+#  config:
+#    address:
+#      socket_address:
+#        address: 172.17.0.1
+#        port_value: 8125

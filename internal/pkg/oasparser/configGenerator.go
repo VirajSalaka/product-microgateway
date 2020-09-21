@@ -19,16 +19,18 @@ package oasparser
 //package envoy_config_generator
 
 import (
+	"encoding/json"
+	"fmt"
 
-	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	clusterv3 "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
+	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 
-	swgger "github.com/wso2/micro-gw/internal/pkg/oasparser/swaggerOperator"
-	enovoy "github.com/wso2/micro-gw/internal/pkg/oasparser/envoyCodegen"
 	logger "github.com/wso2/micro-gw/internal/loggers"
+	enovoy "github.com/wso2/micro-gw/internal/pkg/oasparser/envoyCodegen"
 	"github.com/wso2/micro-gw/internal/pkg/oasparser/models/envoy"
+	swgger "github.com/wso2/micro-gw/internal/pkg/oasparser/swaggerOperator"
 
 	"strings"
 )
@@ -72,10 +74,12 @@ func GetProductionSources(location string) ([]types.Resource, []types.Resource, 
 		routeConfigNameP := "routeProd_" + strings.Replace(mgwSwaggers[0].GetTitle(), " ", "", -1) + mgwSwaggers[0].GetVersion()
 		listnerProd := enovoy.CreateListener(listenerNameP, routeConfigNameP, vHostP)
 
-		envoyNodeProd.SetListener(&listnerProd)
 		envoyNodeProd.SetClusters(clustersP)
+		envoyNodeProd.SetListener(&listnerProd)
 		envoyNodeProd.SetRoutes(routesP)
 		envoyNodeProd.SetEndpoints(endpointsP)
+		s, _ := json.MarshalIndent(envoyNodeProd, "", "\t")
+		fmt.Println(string(s))
 
 	} else {
 		logger.LoggerOasparser.Error("No Api definitions found")
