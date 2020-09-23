@@ -1,6 +1,6 @@
 openapi: "3.0"
 info:
-  description: "This is a samle sfg     dfs   [.es()s y cn  p  `sie`    n"
+  description: "This is a samle sfg     dfs   s()s y cn  p  `sie`    n"
   version: "1.0.0"
   title: "Swagger Petstore"
 
@@ -64,7 +64,7 @@ paths:
       tags:
         - "pet"
       summary: "Finds Pets by status"
-      description: "Multiple status values can be provided with comma separated strings"
+      description: "Multiple status value can be provided with comma separated strings"
       operationId: "findPetsByStatus"
       produces:
         - "application/xml"

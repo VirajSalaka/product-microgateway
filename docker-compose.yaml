@@ -3,19 +3,21 @@ services:
 
   filterchain:
     build: 
-      context: ./filter-chain
-      dockerfile: Dockerfile.filter
+      context: .
+      dockerfile: filter-chain/Dockerfile.filter
+    volumes:
+      - ./resources/apis:/go/src/filterChian/filter-chain/artifacts/apis   
     ports:
       - "8081:8081"
-  # pilot:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.pilot
-  #   volumes:  
-  #     - ./resources/apis/test2.yaml:/go/src/pilot/resources/apis/test2.yaml
-  #   ports:
-  #     - "9095:9095"
-  #     - "18000:18000"
+  pilot:
+    build:
+      context: .
+      dockerfile: Dockerfile.pilot
+    volumes:  
+      - /Users/viraj/Desktop/rc2/wso2am-micro-gw-toolkit-macos-3.2.0/bin/pizza/api_definitions/swagger.yaml:/go/src/pilot/resources/apis/test2.yaml
+    ports:
+      - "9095:9095"
+      - "18000:18000"
   envoy:
     image: envoyproxy/envoy:v1.14.4
     volumes:
@@ -23,6 +25,8 @@ services:
 #    expose:
 #      - "80"
 #      - "8001"
+    depends_on:
+      - pilot
     ports:
       - "10000:10000"
       - "9000:9000"             
