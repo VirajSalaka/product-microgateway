@@ -17,29 +17,34 @@
 package mgw
 
 import (
-	endpointservicev3 "github.com/envoyproxy/go-control-plane/envoy/service/endpoint/v3"
-	clusterservicev3 "github.com/envoyproxy/go-control-plane/envoy/service/cluster/v3"
-	routeservicev3 "github.com/envoyproxy/go-control-plane/envoy/service/route/v3"
-	listenerservicev3 "github.com/envoyproxy/go-control-plane/envoy/service/listener/v3"
-	discoveryv3 "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
+	"log"
+	"time"
+
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	clusterservicev3 "github.com/envoyproxy/go-control-plane/envoy/service/cluster/v3"
+	discoveryv3 "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
+	endpointservicev3 "github.com/envoyproxy/go-control-plane/envoy/service/endpoint/v3"
+	listenerservicev3 "github.com/envoyproxy/go-control-plane/envoy/service/listener/v3"
+	routeservicev3 "github.com/envoyproxy/go-control-plane/envoy/service/route/v3"
 	cachev3 "github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	xdsv3 "github.com/envoyproxy/go-control-plane/pkg/server/v3"
+	testv3 "github.com/envoyproxy/go-control-plane/pkg/test/v3"
 
-	mgwconfig "github.com/wso2/micro-gw/configs/confTypes"
-	apiserver "github.com/wso2/micro-gw/internal/pkg/api"
-	logger "github.com/wso2/micro-gw/internal/loggers"
-	oasParser "github.com/wso2/micro-gw/internal/pkg/oasparser"
-	"github.com/wso2/micro-gw/configs"
-	"github.com/fsnotify/fsnotify"
-	"google.golang.org/grpc"
-	"os/signal"
-	"sync/atomic"
-	"net"
-	"os"
 	"context"
 	"flag"
 	"fmt"
+	"net"
+	"os"
+	"os/signal"
+	"sync/atomic"
+
+	"github.com/fsnotify/fsnotify"
+	"github.com/wso2/micro-gw/configs"
+	mgwconfig "github.com/wso2/micro-gw/configs/confTypes"
+	logger "github.com/wso2/micro-gw/internal/loggers"
+	apiserver "github.com/wso2/micro-gw/internal/pkg/api"
+	oasParser "github.com/wso2/micro-gw/internal/pkg/oasparser"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -57,7 +62,6 @@ var (
 	version int32
 
 	cache cachev3.SnapshotCache
-
 )
 
 const (
@@ -70,12 +74,11 @@ const (
 func init() {
 	flag.BoolVar(&debug, "debug", true, "Use debug logging")
 	flag.BoolVar(&onlyLogging, "onlyLogging", false, "Only demo AccessLogging Service")
-	flag.UintVar(&port, "port", 18000, "Management server port")
+	flag.UintVar(&port, "port", 18002, "Management server port")
 	flag.UintVar(&gatewayPort, "gateway", 18001, "Management server port for HTTP gateway")
 	flag.UintVar(&alsPort, "als", 18090, "Accesslog server port")
 	flag.StringVar(&mode, "ads", Ads, "Management server type (ads, xds, rest)")
 }
-
 
 // IDHash uses ID field as the node hash.
 type IDHash struct{}
@@ -89,7 +92,6 @@ func (IDHash) ID(node *corev3.Node) string {
 }
 
 var _ cachev3.NodeHash = IDHash{}
-
 
 const grpcMaxConcurrentStreams = 1000000
 
@@ -117,7 +119,7 @@ func RunManagementServer(ctx context.Context, server xdsv3.Server, port uint) {
 	routeservicev3.RegisterRouteDiscoveryServiceServer(grpcServer, server)
 	listenerservicev3.RegisterListenerDiscoveryServiceServer(grpcServer, server)
 
-	logger.LoggerMgw.Info("port: ",port, " management server listening")
+	logger.LoggerMgw.Info("port: ", port, " management server listening")
 	//log.Fatalf("", Serve(lis))
 	//go func() {
 	go func() {
@@ -125,7 +127,7 @@ func RunManagementServer(ctx context.Context, server xdsv3.Server, port uint) {
 			logger.LoggerMgw.Error(err)
 		}
 	}()
-	//<-ctx.Done()
+	// <-ctx.Done()
 	//grpcServer.GracefulStop()
 	//}()
 
@@ -166,6 +168,10 @@ func Run(conf *mgwconfig.Config) {
 	watcher, _ := fsnotify.NewWatcher()
 	err := watcher.Add(conf.Apis.Location)
 
+	signal := make(chan struct{})
+	//todo: implement own set of callbacks.
+	cbv3 := &testv3.Callbacks{Signal: signal, Debug: true}
+
 	if err != nil {
 		logger.LoggerMgw.Fatal("Error reading the api definitions.", err)
 	}
@@ -183,12 +189,11 @@ func Run(conf *mgwconfig.Config) {
 		logger.LoggerMgw.Fatal("Error reading the log configs. ", err)
 	}
 
-
 	logger.LoggerMgw.Info("Starting control plane ....")
 
 	cache = cachev3.NewSnapshotCache(mode != Ads, IDHash{}, nil)
 
-	srv := xdsv3.NewServer(ctx, cache, nil)
+	srv := xdsv3.NewServer(ctx, cache, cbv3)
 
 	//als := &myals.AccessLogService{}
 	//go RunAccessLogServer(ctx, als, alsPort)
@@ -196,6 +201,19 @@ func Run(conf *mgwconfig.Config) {
 	// start the xDS server
 	RunManagementServer(ctx, srv, port)
 	go apiserver.Start(conf)
+
+	log.Println("waiting for the first request...")
+	select {
+	case <-sig:
+		logger.LoggerMgw.Error("Interrupted explicitly.")
+		os.Exit(1)
+		break
+	case <-signal:
+		break
+	case <-time.After(1 * time.Minute):
+		logger.LoggerMgw.Error("timeout waiting for the first request")
+		os.Exit(1)
+	}
 
 	updateEnvoy(conf.Apis.Location)
 OUTER:

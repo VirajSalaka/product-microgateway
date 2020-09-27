@@ -18,13 +18,13 @@ package envoyCodegen
 
 import (
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
-	hcmv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
 	ext_authv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/ext_authz/v3"
 	routerv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/router/v3"
+	hcmv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 
-	logger "github.com/wso2/micro-gw/internal/loggers"
 	"github.com/golang/protobuf/ptypes"
+	logger "github.com/wso2/micro-gw/internal/loggers"
 )
 
 /**
@@ -58,9 +58,6 @@ func getRouterHttpFilter() hcmv3.HttpFilter {
 		SuppressEnvoyHeaders:     false,
 		StrictCheckHeaders:       nil,
 		RespectExpectedRqTimeout: false,
-		XXX_NoUnkeyedLiteral:     struct{}{},
-		XXX_unrecognized:         nil,
-		XXX_sizecache:            0,
 	}
 
 	routeFilterTypedConf, err := ptypes.MarshalAny(&routeFilterConf)
@@ -69,11 +66,8 @@ func getRouterHttpFilter() hcmv3.HttpFilter {
 	}
 
 	filter := hcmv3.HttpFilter{
-		Name:                 wellknown.Router,
-		ConfigType:           &hcmv3.HttpFilter_TypedConfig{TypedConfig: routeFilterTypedConf},
-		XXX_NoUnkeyedLiteral: struct{}{},
-		XXX_unrecognized:     nil,
-		XXX_sizecache:        0,
+		Name:       wellknown.Router,
+		ConfigType: &hcmv3.HttpFilter_TypedConfig{TypedConfig: routeFilterTypedConf},
 	}
 
 	return filter

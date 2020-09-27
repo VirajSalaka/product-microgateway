@@ -7,15 +7,6 @@ services:
       dockerfile: Dockerfile.filter
     ports:
       - "8081:8081"
-  # pilot:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.pilot
-  #   volumes:  
-  #     - ./resources/apis/test2.yaml:/go/src/pilot/resources/apis/test2.yaml
-  #   ports:
-  #     - "9095:9095"
-  #     - "18000:18000"
   envoy:
     image: envoyproxy/envoy:v1.14.4
     volumes:
@@ -25,7 +16,18 @@ services:
 #      - "8001"
     ports:
       - "10000:10000"
-      - "9000:9000"             
+      - "9000:9000"     
+  pilot:
+    build:
+      context: .
+      dockerfile: Dockerfile.pilot
+    volumes:  
+      - ./resources/apis/test2.yaml:/go/src/pilot/resources/apis/test2.yaml
+    depends_on: 
+      - envoy
+    ports:
+      - "9095:9095"
+      - "18002:18002"             
   # zipkin:
   #   image: openzipkin/zipkin
   #   expose:
