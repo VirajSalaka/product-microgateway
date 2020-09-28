@@ -16,18 +16,19 @@ services:
 #      - "8001"
     ports:
       - "10000:10000"
-      - "9000:9000"     
+      - "9000:9000"   
+    links:
+      - pilot   
+      - filterchain        
   pilot:
     build:
       context: .
       dockerfile: Dockerfile.pilot
     volumes:  
       - ./resources/apis/test2.yaml:/go/src/pilot/resources/apis/test2.yaml
-    depends_on: 
-      - envoy
     ports:
       - "9095:9095"
-      - "18002:18002"             
+      - "18002:18002"        
   # zipkin:
   #   image: openzipkin/zipkin
   #   expose:

@@ -24,7 +24,7 @@ RUN \
     addgroup -S -g ${USER_GROUP_ID} ${USER_GROUP} \
     && adduser -S -u ${USER_ID} -h ${USER_HOME} -G ${USER_GROUP} ${USER} 
 
-ENV APP_HOME /go/src/filterChian
+ENV APP_HOME /go/src/filter-chain
 
 RUN mkdir -p $APP_HOME
 WORKDIR $APP_HOME

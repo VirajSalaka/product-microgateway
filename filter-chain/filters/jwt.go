@@ -8,17 +8,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	envoy_type "github.com/envoyproxy/go-control-plane/envoy/type"
-	"github.com/gogo/googleapis/google/rpc"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"strconv"
 	"strings"
 	"time"
-	ext_authz "github.com/envoyproxy/go-control-plane/envoy/service/auth/v2"
-	"google.golang.org/genproto/googleapis/rpc/status"
 
+	"github.com/dgrijalva/jwt-go"
+	ext_authz "github.com/envoyproxy/go-control-plane/envoy/service/auth/v2"
+	envoy_type "github.com/envoyproxy/go-control-plane/envoy/type"
+	"github.com/gogo/googleapis/google/rpc"
+	log "github.com/sirupsen/logrus"
+	"google.golang.org/genproto/googleapis/rpc/status"
 )
 
 //JWT represents the JWT token found in the decrypted "Authorization" header.
@@ -37,7 +37,7 @@ type JWT struct {
 	Iss      string `json:"iss"`
 	TierInfo struct {
 	} `json:"tierInfo"`
-	Keytype        string        `json:"keytype"`
+	Keytype        string `json:"keytype"`
 	SubscribedAPIs []struct {
 		Name                   string `json:"name"`
 		Context                string `json:"context"`
@@ -46,17 +46,16 @@ type JWT struct {
 		SubscriptionTier       string `json:"subscriptionTier"`
 		SubscriberTenantDomain string `json:"subscriberTenantDomain"`
 	} `json:"subscribedAPIs"`
-	ConsumerKey    string        `json:"consumerKey"`
-	Exp            int64         `json:"exp"`
-	Iat            int           `json:"iat"`
-	Jti            string        `json:"jti"`
+	ConsumerKey string `json:"consumerKey"`
+	Exp         int64  `json:"exp"`
+	Iat         int    `json:"iat"`
+	Jti         string `json:"jti"`
 }
 
 const (
 	StdPadding rune = '=' // Standard padding character
 	NoPadding  rune = -1  // No padding
 )
-
 
 type Subscription struct {
 	name                   string
@@ -85,9 +84,7 @@ type TokenData struct {
 
 var Unknown = "__unknown__"
 
-
 var UnauthorizedError = errors.New("Invalid access token")
-
 
 // handle JWT token
 func HandleJWT(validateSubscription bool, publicCert []byte, requestAttributes map[string]string) (bool, TokenData, error) {
@@ -256,7 +253,6 @@ func getTokenDataForJWT(jwtData *JWT, apiName string, apiVersion string) TokenDa
 	return token
 }
 
-
 //reading the secret
 func ReadFile(fileName string) ([]byte, error) {
 
@@ -268,19 +264,18 @@ func ReadFile(fileName string) ([]byte, error) {
 	return secretValue, err
 }
 
-
 func ValidateToken(ctx context.Context, req *ext_authz.CheckRequest) (*ext_authz.CheckResponse, error) {
 
-	caCert,_ := ReadFile("./filter-chain/artifacts/security/server.pem")
+	caCert, _ := ReadFile("/go/src/filter-chain/artifacts/security/server.pem")
 
 	auth := false
 	for k := range req.Attributes.Request.Http.Headers {
 		if k == "authorization" {
 			//h = true
 			//header := req.Attributes.Request.Http.Headers["authorization"]
-			auth, _, _ = HandleJWT(false, caCert,req.Attributes.Request.Http.Headers )
+			auth, _, _ = HandleJWT(false, caCert, req.Attributes.Request.Http.Headers)
 			fmt.Println("JWT header detected" + k)
-			break;
+			break
 		}
 	}
 
@@ -289,9 +284,7 @@ func ValidateToken(ctx context.Context, req *ext_authz.CheckRequest) (*ext_authz
 		resp = &ext_authz.CheckResponse{
 			Status: &status.Status{Code: int32(rpc.OK)},
 			HttpResponse: &ext_authz.CheckResponse_OkResponse{
-				OkResponse: &ext_authz.OkHttpResponse{
-
-				},
+				OkResponse: &ext_authz.OkHttpResponse{},
 			},
 		}
 
@@ -300,11 +293,10 @@ func ValidateToken(ctx context.Context, req *ext_authz.CheckRequest) (*ext_authz
 			Status: &status.Status{Code: int32(rpc.UNAUTHENTICATED)},
 			HttpResponse: &ext_authz.CheckResponse_DeniedResponse{
 				DeniedResponse: &ext_authz.DeniedHttpResponse{
-					Status:  &envoy_type.HttpStatus{
+					Status: &envoy_type.HttpStatus{
 						Code: envoy_type.StatusCode_Unauthorized,
 					},
 					Body: "Error occurred while authenticating.",
-
 				},
 			},
 		}

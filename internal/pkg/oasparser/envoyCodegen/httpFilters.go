@@ -33,11 +33,11 @@ import (
  * @return []*hcm.HttpFilter  Http filter set as a array
  */
 func getHttpFilters() []*hcmv3.HttpFilter {
-	//extAauth := GetExtAauthzHttpFilter()
+	extAauth := getExtAauthzHttpFilter()
 	router := getRouterHttpFilter()
 
 	httpFilters := []*hcmv3.HttpFilter{
-		//&extAauth,
+		&extAauth,
 		&router,
 	}
 
