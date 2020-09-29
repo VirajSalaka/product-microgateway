@@ -28,7 +28,8 @@ import (
 	routeservicev3 "github.com/envoyproxy/go-control-plane/envoy/service/route/v3"
 	cachev3 "github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	xdsv3 "github.com/envoyproxy/go-control-plane/pkg/server/v3"
-	testv3 "github.com/envoyproxy/go-control-plane/pkg/test/v3"
+
+	// testv3 "github.com/envoyproxy/go-control-plane/pkg/test/v3"
 
 	"context"
 	"flag"
@@ -139,10 +140,6 @@ func RunManagementServer(ctx context.Context, server xdsv3.Server, port uint) {
  * @param location   Swagger files location
  */
 func updateEnvoy(location string) {
-	var nodeId string
-	if len(cache.GetStatusKeys()) > 0 {
-		nodeId = cache.GetStatusKeys()[0]
-	}
 
 	listeners, clusters, routes, endpoints := oasParser.GetProductionSources(location)
 
@@ -151,9 +148,41 @@ func updateEnvoy(location string) {
 	snap := cachev3.NewSnapshot(fmt.Sprint(version), endpoints, clusters, routes, listeners, nil)
 	snap.Consistent()
 
-	err := cache.SetSnapshot(nodeId, snap)
-	if err != nil {
-		logger.LoggerMgw.Error(err)
+	if len(cache.GetStatusKeys()) > 0 {
+		for i := 0; i < len(cache.GetStatusKeys()); i++ {
+			var nodeId string
+			nodeId = cache.GetStatusKeys()[i]
+			err := cache.SetSnapshot(nodeId, snap)
+			if err != nil {
+				logger.LoggerMgw.Error(err)
+			}
+		}
+	}
+}
+
+/**
+ * Recreate the envoy instances from swaggers using envoy id.
+ *
+ * @param location   Swagger files location
+ */
+func updateEnvoyForSpecificNode(location string, nodeId string) {
+
+	//todo (VirajSalaka): avoid printing the error message
+	_, error := cache.GetSnapshot(nodeId)
+	//if the snapshot exists, it means that the envoy is already updated.
+	//todo: change the logic as move forward
+	if error != nil {
+		listeners, clusters, routes, endpoints := oasParser.GetProductionSources(location)
+
+		atomic.AddInt32(&version, 1)
+		logger.LoggerMgw.Infof(">>>>>>>>>>>>>>>>>>> creating snapshot Version for node " + nodeId + " : " + fmt.Sprint(version))
+		snap := cachev3.NewSnapshot(fmt.Sprint(version), endpoints, clusters, routes, listeners, nil)
+		snap.Consistent()
+
+		err := cache.SetSnapshot(nodeId, snap)
+		if err != nil {
+			logger.LoggerMgw.Error(err)
+		}
 	}
 }
 
@@ -170,7 +199,7 @@ func Run(conf *mgwconfig.Config) {
 
 	signal := make(chan struct{})
 	//todo: implement own set of callbacks.
-	cbv3 := &testv3.Callbacks{Signal: signal, Debug: true}
+	cbv3 := &Callbacks{Signal: signal, Debug: true}
 
 	if err != nil {
 		logger.LoggerMgw.Fatal("Error reading the api definitions.", err)
@@ -214,8 +243,7 @@ func Run(conf *mgwconfig.Config) {
 		logger.LoggerMgw.Error("timeout waiting for the first request")
 		os.Exit(1)
 	}
-
-	updateEnvoy(conf.Apis.Location)
+	// updateEnvoy(conf.Apis.Location)
 OUTER:
 	for {
 		select {

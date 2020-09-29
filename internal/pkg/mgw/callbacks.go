@@ -5,6 +5,8 @@ import (
 	"log"
 	"sync"
 
+	"github.com/wso2/micro-gw/configs"
+
 	discovery "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
 )
 
@@ -32,7 +34,16 @@ func (cb *Callbacks) OnStreamClosed(id int64) {
 		log.Printf("stream %d closed\n", id)
 	}
 }
-func (cb *Callbacks) OnStreamRequest(int64, *discovery.DiscoveryRequest) error {
+func (cb *Callbacks) OnStreamRequest(id int64, drq *discovery.DiscoveryRequest) error {
+	log.Println("stream request received")
+	// s, _ := json.MarshalIndent(drq, "", "\t")
+	// log.Println("request : " + string(s))
+	// log.Println("stream request received ---- ")
+
+	nodeId := drq.Node.GetId()
+	conf, _ := configs.ReadConfigs()
+	updateEnvoyForSpecificNode(conf.Apis.Location, nodeId)
+
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
 	cb.Requests++
@@ -43,8 +54,11 @@ func (cb *Callbacks) OnStreamRequest(int64, *discovery.DiscoveryRequest) error {
 	return nil
 }
 func (cb *Callbacks) OnStreamResponse(int64, *discovery.DiscoveryRequest, *discovery.DiscoveryResponse) {
+	log.Println("stream response received")
+
 }
 func (cb *Callbacks) OnFetchRequest(_ context.Context, req *discovery.DiscoveryRequest) error {
+	log.Println("fetch request received")
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
 	cb.Fetches++
@@ -54,4 +68,6 @@ func (cb *Callbacks) OnFetchRequest(_ context.Context, req *discovery.DiscoveryR
 	}
 	return nil
 }
-func (cb *Callbacks) OnFetchResponse(*discovery.DiscoveryRequest, *discovery.DiscoveryResponse) {}
+func (cb *Callbacks) OnFetchResponse(*discovery.DiscoveryRequest, *discovery.DiscoveryResponse) {
+	log.Println("fetch response received")
+}

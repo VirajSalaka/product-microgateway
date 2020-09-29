@@ -18,17 +18,17 @@ services:
       - "10000:10000"
       - "9000:9000"   
     links:
-      - pilot   
+    #   # - pilot   
       - filterchain        
-  pilot:
-    build:
-      context: .
-      dockerfile: Dockerfile.pilot
-    volumes:  
-      - ./resources/apis/test2.yaml:/go/src/pilot/resources/apis/test2.yaml
-    ports:
-      - "9095:9095"
-      - "18002:18002"        
+  # pilot:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.pilot
+  #   volumes:  
+  #     - ./resources/apis/test2.yaml:/go/src/pilot/resources/apis/test2.yaml
+  #   ports:
+  #     - "9095:9095"
+  #     - "18002:18002"        
   # zipkin:
   #   image: openzipkin/zipkin
   #   expose:
