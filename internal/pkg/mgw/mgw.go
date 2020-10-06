@@ -21,11 +21,7 @@ import (
 	"time"
 
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
-	clusterservicev3 "github.com/envoyproxy/go-control-plane/envoy/service/cluster/v3"
 	discoveryv3 "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
-	endpointservicev3 "github.com/envoyproxy/go-control-plane/envoy/service/endpoint/v3"
-	listenerservicev3 "github.com/envoyproxy/go-control-plane/envoy/service/listener/v3"
-	routeservicev3 "github.com/envoyproxy/go-control-plane/envoy/service/route/v3"
 	cachev3 "github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	xdsv3 "github.com/envoyproxy/go-control-plane/pkg/server/v3"
 
@@ -115,10 +111,10 @@ func RunManagementServer(ctx context.Context, server xdsv3.Server, port uint) {
 
 	// register services
 	discoveryv3.RegisterAggregatedDiscoveryServiceServer(grpcServer, server)
-	endpointservicev3.RegisterEndpointDiscoveryServiceServer(grpcServer, server)
-	clusterservicev3.RegisterClusterDiscoveryServiceServer(grpcServer, server)
-	routeservicev3.RegisterRouteDiscoveryServiceServer(grpcServer, server)
-	listenerservicev3.RegisterListenerDiscoveryServiceServer(grpcServer, server)
+	// endpointservicev3.RegisterEndpointDiscoveryServiceServer(grpcServer, server)
+	// clusterservicev3.RegisterClusterDiscoveryServiceServer(grpcServer, server)
+	// routeservicev3.RegisterRouteDiscoveryServiceServer(grpcServer, server)
+	// listenerservicev3.RegisterListenerDiscoveryServiceServer(grpcServer, server)
 
 	logger.LoggerMgw.Info("port: ", port, " management server listening")
 	//log.Fatalf("", Serve(lis))
@@ -145,7 +141,7 @@ func updateEnvoy(location string) {
 
 	atomic.AddInt32(&version, 1)
 	logger.LoggerMgw.Infof(">>>>>>>>>>>>>>>>>>> creating snapshot Version " + fmt.Sprint(version))
-	snap := cachev3.NewSnapshot(fmt.Sprint(version), endpoints, clusters, routes, listeners, nil)
+	snap := cachev3.NewSnapshot(fmt.Sprint(version), endpoints, clusters, routes, listeners, nil, nil)
 	snap.Consistent()
 
 	if len(cache.GetStatusKeys()) > 0 {
@@ -176,7 +172,7 @@ func updateEnvoyForSpecificNode(location string, nodeId string) {
 
 		atomic.AddInt32(&version, 1)
 		logger.LoggerMgw.Infof(">>>>>>>>>>>>>>>>>>> creating snapshot Version for node " + nodeId + " : " + fmt.Sprint(version))
-		snap := cachev3.NewSnapshot(fmt.Sprint(version), endpoints, clusters, routes, listeners, nil)
+		snap := cachev3.NewSnapshot(fmt.Sprint(version), endpoints, clusters, routes, listeners, nil, nil)
 		snap.Consistent()
 
 		err := cache.SetSnapshot(nodeId, snap)
@@ -239,11 +235,11 @@ func Run(conf *mgwconfig.Config) {
 		break
 	case <-signal:
 		break
-	case <-time.After(1 * time.Minute):
+	case <-time.After(100 * time.Second):
 		logger.LoggerMgw.Error("timeout waiting for the first request")
 		os.Exit(1)
 	}
-	// updateEnvoy(conf.Apis.Location)
+	//updateEnvoy(conf.Apis.Location)
 OUTER:
 	for {
 		select {

@@ -1,5 +1,5 @@
 node:
-  id: sdfdsfasdfadf
+  id: sdfdsddd
   cluster: ssssss
 admin:
   access_log_path: /tmp/admin_access.log
@@ -15,24 +15,30 @@ dynamic_resources:
     grpc_services:
       - envoy_grpc:
           cluster_name: xds_cluster
-  cds_config:
+  cds_config: 
+    ads: {}
     resource_api_version: V3
-    api_config_source:
-      api_type: GRPC
-      transport_api_version: V3
-      grpc_services:
-        - envoy_grpc:
-            cluster_name: xds_cluster
-      set_node_on_first_message_only: true
-  lds_config:
-    resource_api_version: V3
-    api_config_source:
-      api_type: GRPC
-      transport_api_version: V3
-      grpc_services:
-        - envoy_grpc:
-            cluster_name: xds_cluster
-      set_node_on_first_message_only: true      
+  lds_config: 
+    ads: {}  
+    resource_api_version: V3      
+  # cds_config:
+  #   resource_api_version: V3
+  #   api_config_source:
+  #     api_type: GRPC
+  #     transport_api_version: V3
+  #     grpc_services:
+  #       - envoy_grpc:
+  #           cluster_name: xds_cluster
+  #     set_node_on_first_message_only: true
+  # lds_config:
+  #   resource_api_version: V3
+  #   api_config_source:
+  #     api_type: GRPC
+  #     transport_api_version: V3
+  #     grpc_services:
+  #       - envoy_grpc:
+  #           cluster_name: xds_cluster
+  #     set_node_on_first_message_only: true      
 static_resources:
 #   listeners:
 #   - name: listener_0
@@ -75,7 +81,7 @@ static_resources:
   - connect_timeout: 1s
     hosts:
       - socket_address:
-          address: 192.168.8.101
+          address: 192.168.8.100
           port_value: 18002
     http2_protocol_options: {}
     name: xds_cluster

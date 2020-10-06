@@ -1,6 +1,6 @@
 openapi: "3.0"
 info:
-  description: "temp 4"
+  description: "temp 3"
   version: "1.0.0"
   title: "Swagger Petstore"
 
