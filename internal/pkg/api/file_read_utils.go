@@ -18,30 +18,42 @@
 package api
 
 import (
+	"archive/zip"
+	"bytes"
+	"fmt"
 	"io/ioutil"
-	"net/http"
+	"strings"
 
 	logger "github.com/wso2/micro-gw/internal/loggers"
+	xds "github.com/wso2/micro-gw/internal/pkg/xds"
 )
 
-//This package contains the REST API for the control plane configurations
+func UnzipFileToByteArray(payload []byte) {
+	zipReader, err := zip.NewReader(bytes.NewReader(payload), int64(len(payload)))
 
-type RESTService struct{}
+	if err != nil {
+		fmt.Println("Error occured in unzipping")
+		fmt.Println(err.Error())
+	}
 
-// TODO: Implement. Simply copy the swagger content to the location defined in the configs or directly deploy the api.
-// Deploy API in microgateway.
-func (rest *RESTService) ApiPOST(w http.ResponseWriter, r *http.Request) {
-	logger.LoggerApi.Info(w, "Your API is added")
-	jsonByteArray, _ := ioutil.ReadAll(r.Body)
-	UnzipFileToByteArray(jsonByteArray)
+	for _, f := range zipReader.File {
+		if strings.HasSuffix(f.Name, ".json") {
+			fmt.Println(f.Name)
+			unzippedFileBytes, err := readZipFile(f)
+			if err != nil {
+				logger.LoggerMgw.Error(err)
+				continue
+			}
+			xds.UpdateEnvoyByteArr(unzippedFileBytes)
+		}
+	}
 }
 
-// Update deployed api
-func (rest *RESTService) ApiPUT(w http.ResponseWriter, r *http.Request) {
-
-}
-
-// Remove a deployed api
-func (rest *RESTService) ApiDELETE(w http.ResponseWriter, r *http.Request) {
-
+func readZipFile(zf *zip.File) ([]byte, error) {
+	f, err := zf.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return ioutil.ReadAll(f)
 }

@@ -18,15 +18,17 @@ package swaggerOperator
 
 import (
 	"encoding/json"
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-openapi/spec"
-	"github.com/wso2/micro-gw/internal/pkg/oasparser/models/apiDefinition"
-	"github.com/wso2/micro-gw/internal/pkg/oasparser/utills"
-	logger "github.com/wso2/micro-gw/internal/loggers"
 	"io/ioutil"
 	"os"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/go-openapi/spec"
+	logger "github.com/wso2/micro-gw/internal/loggers"
+	"github.com/wso2/micro-gw/internal/pkg/oasparser/models/apiDefinition"
+	"github.com/wso2/micro-gw/internal/pkg/oasparser/utills"
 )
 
+//TODO: (VirajSalaka) Remove the scenario where openapis are updated from swagger location.
 /**
  * Generate mgw swagger instance.
  *
@@ -67,6 +69,21 @@ func GenerateMgwSwagger(location string) ([]apiDefinition.MgwSwagger, error) {
 }
 
 /**
+ * Generate mgw swagger instance from File.
+ *
+ * @param location   Swagger file location
+ * @return []apiDefinition.MgwSwagger  Mgw swagger instances as a array
+ */
+func GenerateMgwSwaggerFromByteArray(byteArray []byte) []apiDefinition.MgwSwagger {
+	var mgwSwaggers []apiDefinition.MgwSwagger
+
+	mgwSwagger := GetMgwSwagger(byteArray)
+	mgwSwaggers = append(mgwSwaggers, mgwSwagger)
+
+	return mgwSwaggers
+}
+
+/**
  * Get mgw swagger instance.
  *
  * @param apiContent   Api content as a byte array
@@ -80,7 +97,7 @@ func GetMgwSwagger(apiContent []byte) apiDefinition.MgwSwagger {
 		//log.Fatal("Error converting api file to json:", err)
 	}
 
-	swaggerVerison:= utills.FindSwaggerVersion(apiJsn)
+	swaggerVerison := utills.FindSwaggerVersion(apiJsn)
 
 	if swaggerVerison == "2" {
 		//map json to struct
@@ -88,7 +105,7 @@ func GetMgwSwagger(apiContent []byte) apiDefinition.MgwSwagger {
 		err = json.Unmarshal(apiJsn, &ApiData2)
 		if err != nil {
 			//log.Fatal("Error openAPI unmarsheliing: %v\n", err)
-			logger.LoggerOasparser.Error("Error openAPI unmarsheliing",err)
+			logger.LoggerOasparser.Error("Error openAPI unmarsheliing", err)
 		} else {
 			mgwSwagger.SetInfoSwagger(ApiData2)
 		}
@@ -101,7 +118,7 @@ func GetMgwSwagger(apiContent []byte) apiDefinition.MgwSwagger {
 
 		if err != nil {
 			//log.Fatal("Error openAPI unmarsheliing: %v\n", err)
-			logger.LoggerOasparser.Error("Error openAPI unmarsheliing",err)
+			logger.LoggerOasparser.Error("Error openAPI unmarsheliing", err)
 		} else {
 			mgwSwagger.SetInfoOpenApi(*ApiData3)
 		}

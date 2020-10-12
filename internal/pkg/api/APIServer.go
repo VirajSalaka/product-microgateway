@@ -17,10 +17,11 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"github.com/wso2/micro-gw/configs/confTypes"
 	logger "github.com/wso2/micro-gw/internal/loggers"
-	"net/http"
 )
 
 type Server struct {

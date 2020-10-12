@@ -19,20 +19,21 @@ package oasparser
 //package envoy_config_generator
 
 import (
-
-	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	clusterv3 "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
+	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
+	"github.com/wso2/micro-gw/internal/pkg/oasparser/models/apiDefinition"
 
-	swgger "github.com/wso2/micro-gw/internal/pkg/oasparser/swaggerOperator"
-	enovoy "github.com/wso2/micro-gw/internal/pkg/oasparser/envoyCodegen"
 	logger "github.com/wso2/micro-gw/internal/loggers"
+	enovoy "github.com/wso2/micro-gw/internal/pkg/oasparser/envoyCodegen"
 	"github.com/wso2/micro-gw/internal/pkg/oasparser/models/envoy"
+	swgger "github.com/wso2/micro-gw/internal/pkg/oasparser/swaggerOperator"
 
 	"strings"
 )
 
+//TODO: (VirajSalaka) Remove the envoy update from openAPI file location
 /**
  * Get all production resources for envoy.
  *
@@ -42,14 +43,32 @@ import (
  * @return []types.Resource Production routes
  * @return []types.Resource Production endpoints
  */
-func GetProductionSources(location string) ([]types.Resource, []types.Resource, []types.Resource, []types.Resource) {
+func GetProductionSourcesFromFile(location string) ([]types.Resource, []types.Resource, []types.Resource, []types.Resource) {
 	logger.LoggerOasparser.Debug("debug check....................")
 	mgwSwaggers, err := swgger.GenerateMgwSwagger(location)
 	if err != nil {
 		logger.LoggerOasparser.Fatal("Error Generating mgwSwagger struct:", err)
 
 	}
+	return getProductionSources(mgwSwaggers)
+}
 
+/**
+ * Get all production resources for envoy from file.
+ *
+ * @param byte[]  swagger as byte array
+ * @return []types.Resource Production listeners
+ * @return []types.Resource Production clusters
+ * @return []types.Resource Production routes
+ * @return []types.Resource Production endpoints
+ */
+func GetProductionSourcesFromByteArray(byteArr []byte) ([]types.Resource, []types.Resource, []types.Resource, []types.Resource) {
+	logger.LoggerOasparser.Debug("debug check....................")
+	mgwSwaggers := swgger.GenerateMgwSwaggerFromByteArray(byteArr)
+	return getProductionSources(mgwSwaggers)
+}
+
+func getProductionSources(mgwSwaggers []apiDefinition.MgwSwagger) ([]types.Resource, []types.Resource, []types.Resource, []types.Resource) {
 	var (
 		routesP    []*routev3.Route
 		clustersP  []*clusterv3.Cluster
