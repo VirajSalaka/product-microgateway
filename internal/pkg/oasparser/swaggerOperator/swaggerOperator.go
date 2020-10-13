@@ -128,6 +128,27 @@ func GetMgwSwagger(apiContent []byte) apiDefinition.MgwSwagger {
 	return mgwSwagger
 }
 
+func GetOpenAPIVersionAndJsonContent(apiContent []byte) (string, []byte, error) {
+	apiJsn, err := utills.ToJSON(apiContent)
+	if err != nil {
+		logger.LoggerOasparser.Error("Error converting api file to json:", err)
+		return "", apiContent, err
+	}
+	swaggerVerison := utills.FindSwaggerVersion(apiJsn)
+	return swaggerVerison, apiJsn, nil
+}
+
+func GetOpenAPIV3Struct(openAPIJson []byte) (openapi3.Swagger, error) {
+	var apiData3 openapi3.Swagger
+
+	err := json.Unmarshal(openAPIJson, &apiData3)
+	if err != nil {
+		logger.LoggerOasparser.Error("Error openAPI unmarsheliing", err)
+		return apiData3, err
+	}
+	return apiData3, nil
+}
+
 /**
  * Check availability of endpoint.
  *

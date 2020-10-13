@@ -110,6 +110,8 @@ func Run(conf *mgwconfig.Config) {
 	sig := make(chan os.Signal)
 	signal.Notify(sig, os.Interrupt)
 	watcher, _ := fsnotify.NewWatcher()
+
+	xds.Init()
 	err := watcher.Add(conf.Apis.Location)
 
 	if err != nil {
