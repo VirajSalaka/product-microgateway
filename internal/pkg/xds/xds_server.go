@@ -10,6 +10,7 @@ import (
 	openAPI3 "github.com/getkin/kin-openapi/openapi3"
 	logger "github.com/wso2/micro-gw/internal/loggers"
 	oasParser "github.com/wso2/micro-gw/internal/pkg/oasparser"
+	"github.com/wso2/micro-gw/internal/pkg/oasparser/models/apiDefinition"
 	swaggerOperator "github.com/wso2/micro-gw/internal/pkg/oasparser/swaggerOperator"
 )
 
@@ -18,7 +19,8 @@ var (
 
 	cache cachev3.SnapshotCache
 
-	openAPIMap map[string]openAPI3.Swagger
+	openAPIMap      map[string]openAPI3.Swagger
+	envoyOpenAPIMap map[string][]string
 )
 
 // IDHash uses ID field as the node hash.
@@ -37,6 +39,7 @@ var _ cachev3.NodeHash = IDHash{}
 func Init() {
 	cache = cachev3.NewSnapshotCache(false, IDHash{}, nil)
 	openAPIMap = make(map[string]openAPI3.Swagger)
+	envoyOpenAPIMap = make(map[string][]string)
 }
 
 func GetXdsCache() cachev3.SnapshotCache {
@@ -62,12 +65,28 @@ func UpdateEnvoyByteArr(byteArr []byte) {
 	if openAPIVersion == "3" {
 		openAPIV3Struct, _ = swaggerOperator.GetOpenAPIV3Struct(jsonContent)
 		apiMapKey = openAPIV3Struct.Info.Title + ":" + openAPIV3Struct.Info.Version
+		fmt.Println("-----")
+		// vendorExtensions := apiDefinition.ConvertExtensibletoReadableFormat(openAPIV3Struct.ExtensionProps)
+		// if y, found := vendorExtensions[constants.XWSO2BASEPATH]; found {
+		// 	if val, ok := y.(string); ok {
+		// 		fmt.Println(val)
+		// 	}
+		// }
+		labelArr := apiDefinition.GetXWso2Label(openAPIV3Struct.ExtensionProps)
+		fmt.Println(labelArr)
 		existingOpenAPI, ok := openAPIMap[apiMapKey]
 		if ok {
 			if reflect.DeepEqual(openAPIV3Struct, existingOpenAPI) {
+				//As the openAPI already contains the label feature.
 				return
 			}
+			openAPIMap[apiMapKey] = openAPIV3Struct
 		}
+		apiArray, ok := envoyOpenAPIMap["test-id"]
+		if !ok || Contains(apiArray, "test-id") {
+			apiArray = append(apiArray, apiMapKey)
+		}
+		fmt.Println(apiArray)
 		openAPIMap[apiMapKey] = openAPIV3Struct
 	}
 
@@ -108,6 +127,16 @@ func UpdateEnvoy(location string) {
 	if err != nil {
 		logger.LoggerMgw.Error(err)
 	}
+}
+
+//TODO: (VirajSalaka) Introduce a common package
+func Contains(a []string, x string) bool {
+	for _, n := range a {
+		if x == n {
+			return true
+		}
+	}
+	return false
 }
 
 //TODO: (VirajSalaka) Remove
