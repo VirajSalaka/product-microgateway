@@ -3,9 +3,11 @@ package xds
 import (
 	"fmt"
 	"reflect"
+	"sync"
 	"sync/atomic"
 
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	cachev3 "github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	openAPI3 "github.com/getkin/kin-openapi/openapi3"
 	logger "github.com/wso2/micro-gw/internal/loggers"
@@ -19,8 +21,13 @@ var (
 
 	cache cachev3.SnapshotCache
 
-	openAPIMap      map[string]openAPI3.Swagger
-	envoyOpenAPIMap map[string][]string
+	openAPIMap            map[string]openAPI3.Swagger
+	openAPIEnvoyMap       map[string][]string
+	openAPIRoutesMap      map[string][]types.Resource
+	openAPIListenersMap   map[string][]types.Resource
+	openAPIClustersMap    map[string][]types.Resource
+	openAPIEndpointsMap   map[string][]types.Resource
+	envoyUpdateVersionMap map[string]int64
 )
 
 // IDHash uses ID field as the node hash.
@@ -39,7 +46,12 @@ var _ cachev3.NodeHash = IDHash{}
 func Init() {
 	cache = cachev3.NewSnapshotCache(false, IDHash{}, nil)
 	openAPIMap = make(map[string]openAPI3.Swagger)
-	envoyOpenAPIMap = make(map[string][]string)
+	openAPIEnvoyMap = make(map[string][]string)
+	openAPIRoutesMap = make(map[string][]types.Resource)
+	openAPIListenersMap = make(map[string][]types.Resource)
+	openAPIClustersMap = make(map[string][]types.Resource)
+	openAPIEndpointsMap = make(map[string][]types.Resource)
+	envoyUpdateVersionMap = make(map[string]int64)
 }
 
 func GetXdsCache() cachev3.SnapshotCache {
@@ -52,55 +64,43 @@ func GetXdsCache() cachev3.SnapshotCache {
  * @param []byte   Swagger file as byte array
  */
 func UpdateEnvoyByteArr(byteArr []byte) {
-	var nodeId string
-	//TODO: (VirajSalaka) Keep a hard coded value for the nodeID for the initial setup.
-	// if len(cache.GetStatusKeys()) > 0 {
-	// 	nodeId = cache.GetStatusKeys()[0]
-	// }
-	nodeId = "test-id"
 	var apiMapKey string
 	var openAPIV3Struct openAPI3.Swagger
+
+	//TODO: (VirajSalaka) Optimize locking
+	var l sync.Mutex
+	l.Lock()
+	defer l.Unlock()
 
 	openAPIVersion, jsonContent, _ := swaggerOperator.GetOpenAPIVersionAndJsonContent(byteArr)
 	if openAPIVersion == "3" {
 		openAPIV3Struct, _ = swaggerOperator.GetOpenAPIV3Struct(jsonContent)
 		apiMapKey = openAPIV3Struct.Info.Title + ":" + openAPIV3Struct.Info.Version
-		fmt.Println("-----")
-		// vendorExtensions := apiDefinition.ConvertExtensibletoReadableFormat(openAPIV3Struct.ExtensionProps)
-		// if y, found := vendorExtensions[constants.XWSO2BASEPATH]; found {
-		// 	if val, ok := y.(string); ok {
-		// 		fmt.Println(val)
-		// 	}
-		// }
-		labelArr := apiDefinition.GetXWso2Label(openAPIV3Struct.ExtensionProps)
-		fmt.Println(labelArr)
 		existingOpenAPI, ok := openAPIMap[apiMapKey]
 		if ok {
 			if reflect.DeepEqual(openAPIV3Struct, existingOpenAPI) {
-				//As the openAPI already contains the label feature.
+				//Works as the openAPI already contains the label feature.
 				return
 			}
-			openAPIMap[apiMapKey] = openAPIV3Struct
 		}
-		apiArray, ok := envoyOpenAPIMap["test-id"]
-		if !ok || Contains(apiArray, "test-id") {
-			apiArray = append(apiArray, apiMapKey)
-		}
-		fmt.Println(apiArray)
 		openAPIMap[apiMapKey] = openAPIV3Struct
+	} else {
+		//TODO: (VirajSalaka) add openAPI v2 support
+		logger.LoggerMgw.Errorln("only the openapi version 3 is supported at the moment.")
+		return
 	}
-
+	oldLabels, _ := openAPIEnvoyMap[apiMapKey]
+	//TODO: (VirajSalaka) Handle OpenAPIs which does not have label (Current Impl , it will be labelled as default)
+	newLabels := apiDefinition.GetXWso2Label(openAPIV3Struct.ExtensionProps)
+	openAPIEnvoyMap[apiMapKey] = newLabels
 	listeners, clusters, routes, endpoints := oasParser.GetProductionSourcesFromByteArray(byteArr)
+	//TODO: (VirajSalaka) Decide if the routes and listeners need their own map since it is not going to be changed based on API at the moment.
+	openAPIRoutesMap[apiMapKey] = routes
+	openAPIListenersMap[apiMapKey] = listeners
+	openAPIClustersMap[apiMapKey] = clusters
+	openAPIEndpointsMap[apiMapKey] = endpoints
 
-	atomic.AddInt32(&version, 1)
-	logger.LoggerMgw.Infof(">>>>>>>>>>>>>>>>>>> creating snapshot Version " + fmt.Sprint(version))
-	snap := cachev3.NewSnapshot(fmt.Sprint(version), endpoints, clusters, routes, listeners, nil)
-	snap.Consistent()
-
-	err := cache.SetSnapshot(nodeId, snap)
-	if err != nil {
-		logger.LoggerMgw.Error(err)
-	}
+	updateXdsCacheOnAPIAdd(oldLabels, newLabels)
 }
 
 /**
@@ -129,14 +129,85 @@ func UpdateEnvoy(location string) {
 	}
 }
 
-//TODO: (VirajSalaka) Introduce a common package
-func Contains(a []string, x string) bool {
+func arrayContains(a []string, x string) bool {
 	for _, n := range a {
 		if x == n {
 			return true
 		}
 	}
 	return false
+}
+
+func mergeResourceArrays(resourceArrays [][]types.Resource) []types.Resource {
+	var totalLength int
+	var compositeArray []types.Resource
+	for _, resourceArray := range resourceArrays {
+		totalLength += len(resourceArray)
+	}
+	compositeArray = make([]types.Resource, totalLength)
+	startingIndex := 0
+	lastIndex := 0
+	for _, resourceArray := range resourceArrays {
+		lastIndex += len(resourceArray)
+		copy(compositeArray[startingIndex:lastIndex], resourceArray)
+		startingIndex = lastIndex
+	}
+	return compositeArray
+}
+
+//by the time this method is called, openAPIEnvoy map is updated.
+//We are keeping old labels in a different label
+func updateXdsCacheOnAPIAdd(oldLabels []string, newLabels []string) {
+
+	//TODO: (VirajSalaka) check possible optimizations, Since the number of labels are low by design it should not be an issue
+	for _, oldLabel := range oldLabels {
+		if !arrayContains(newLabels, oldLabel) {
+			endpoints, clusters, routes, listeners := generateEnvoyResoucesForLabel(oldLabel)
+			updateXdsCache(oldLabel, endpoints, clusters, routes, listeners)
+		}
+	}
+
+	for _, newLabel := range newLabels {
+		endpoints, clusters, routes, listeners := generateEnvoyResoucesForLabel(newLabel)
+		updateXdsCache(newLabel, endpoints, clusters, routes, listeners)
+	}
+}
+
+func generateEnvoyResoucesForLabel(label string) ([]types.Resource, []types.Resource, []types.Resource, []types.Resource) {
+	var clusterArrays [][]types.Resource
+	var routeArrays [][]types.Resource
+	var endpointArrays [][]types.Resource
+	var listenerArrays [][]types.Resource
+	for apiKey, labels := range openAPIEnvoyMap {
+		if arrayContains(labels, label) {
+			clusterArrays = append(clusterArrays, openAPIClustersMap[apiKey])
+			routeArrays = append(routeArrays, openAPIRoutesMap[apiKey])
+			endpointArrays = append(endpointArrays, openAPIEndpointsMap[apiKey])
+			listenerArrays = append(listenerArrays, openAPIListenersMap[apiKey])
+		}
+	}
+	return mergeResourceArrays(endpointArrays), mergeResourceArrays(clusterArrays), mergeResourceArrays(routeArrays),
+		mergeResourceArrays(listenerArrays)
+}
+
+func updateXdsCache(label string, endpoints []types.Resource, clusters []types.Resource, routes []types.Resource, listeners []types.Resource) {
+	version, ok := envoyUpdateVersionMap[label]
+	if ok {
+		version += 1
+	} else {
+		//TODO : (VirajSalaka) Fix control plane restart scenario
+		version = 1
+	}
+	//TODO: (VirajSalaka) kept same version for all the resources as we are using simple cache implementation.
+	//Will be updated once we moved to incremental XDS
+	snap := cachev3.NewSnapshot(fmt.Sprint(version), endpoints, clusters, routes, listeners, nil)
+	snap.Consistent()
+	err := cache.SetSnapshot(label, snap)
+	if err != nil {
+		logger.LoggerMgw.Error(err)
+	}
+	envoyUpdateVersionMap[label] = version
+	logger.LoggerMgw.Infof("New cache update for the label: " + label + " version: " + fmt.Sprint(version))
 }
 
 //TODO: (VirajSalaka) Remove

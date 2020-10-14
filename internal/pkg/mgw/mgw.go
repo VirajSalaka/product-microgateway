@@ -144,7 +144,7 @@ func Run(conf *mgwconfig.Config) {
 	RunManagementServer(ctx, srv, port)
 	go apiserver.Start(conf)
 
-	xds.UpdateEnvoy(conf.Apis.Location)
+	//xds.UpdateEnvoy(conf.Apis.Location)
 OUTER:
 	for {
 		select {

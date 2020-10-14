@@ -22,13 +22,15 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"strings"
 
 	logger "github.com/wso2/micro-gw/internal/loggers"
+	"github.com/wso2/micro-gw/internal/pkg/oasparser/utills"
 	xds "github.com/wso2/micro-gw/internal/pkg/xds"
 )
 
-func UnzipFileToByteArray(payload []byte) {
+func UnzipAndApplyZippedProject(payload []byte) {
 	zipReader, err := zip.NewReader(bytes.NewReader(payload), int64(len(payload)))
 
 	if err != nil {
@@ -36,7 +38,10 @@ func UnzipFileToByteArray(payload []byte) {
 		fmt.Println(err.Error())
 	}
 
+	//TODO: (VirajSalaka) this won't support for distributed openAPI definition
 	for _, f := range zipReader.File {
+		//TODO: (VirajSalaka) provide a proper regex to filter openAPI json
+		//TODO: (VirajSalaka) support .yaml files
 		if strings.HasSuffix(f.Name, ".json") {
 			fmt.Println(f.Name)
 			unzippedFileBytes, err := readZipFile(f)
@@ -47,6 +52,15 @@ func UnzipFileToByteArray(payload []byte) {
 			xds.UpdateEnvoyByteArr(unzippedFileBytes)
 		}
 	}
+}
+
+func ApplyOpenAPIFile(payload []byte) {
+	apiJsn, err := utills.ToJSON(payload)
+	if err != nil {
+		log.Fatal("Error converting api file to json:", err)
+		return
+	}
+	xds.UpdateEnvoyByteArr(apiJsn)
 }
 
 func readZipFile(zf *zip.File) ([]byte, error) {

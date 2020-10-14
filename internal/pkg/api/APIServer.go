@@ -38,7 +38,8 @@ func Start(config *confTypes.Config) {
 	apiService := new(RESTService)
 	// API specific routs
 	apiRouter := router.PathPrefix("/api").Subrouter()
-	apiRouter.HandleFunc("/add", apiService.ApiPOST).Methods("POST")
+	apiRouter.HandleFunc("/addProject", apiService.ApiPOST).Methods("POST")
+	apiRouter.HandleFunc("/add", apiService.openAPIPOST).Methods("POST")
 	// TODO: Immplement
 	//Configuration specific routes
 	//configRouter := router.PathPrefix("/configs").Subrouter()
