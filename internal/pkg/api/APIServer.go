@@ -37,6 +37,7 @@ func Start(config *confTypes.Config) {
 
 	apiService := new(RESTService)
 	// API specific routs
+	//TODO: (VirajSalaka) follow ImportAPI swagger
 	apiRouter := router.PathPrefix("/api").Subrouter()
 	apiRouter.HandleFunc("/addProject", apiService.ApiPOST).Methods("POST")
 	apiRouter.HandleFunc("/add", apiService.openAPIPOST).Methods("POST")

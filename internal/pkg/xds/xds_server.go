@@ -51,6 +51,7 @@ func Init() {
 	openAPIListenersMap = make(map[string][]types.Resource)
 	openAPIClustersMap = make(map[string][]types.Resource)
 	openAPIEndpointsMap = make(map[string][]types.Resource)
+	//TODO: (VirajSalaka) Swagger or project should contain the version as a meta information
 	envoyUpdateVersionMap = make(map[string]int64)
 }
 
@@ -93,6 +94,8 @@ func UpdateEnvoyByteArr(byteArr []byte) {
 	//TODO: (VirajSalaka) Handle OpenAPIs which does not have label (Current Impl , it will be labelled as default)
 	newLabels := apiDefinition.GetXWso2Label(openAPIV3Struct.ExtensionProps)
 	openAPIEnvoyMap[apiMapKey] = newLabels
+	//TODO: (VirajSalaka) Routes populated is wrong here. It has to follow https://github.com/envoyproxy/envoy/blob/v1.16.0/api/envoy/config/route/v3/route.proto
+	//TODO: (VirajSalaka) Can bring VHDS (Delta), but since the gateway would contain only one domain, it won't have much impact.
 	listeners, clusters, routes, endpoints := oasParser.GetProductionSourcesFromByteArray(byteArr)
 	//TODO: (VirajSalaka) Decide if the routes and listeners need their own map since it is not going to be changed based on API at the moment.
 	openAPIRoutesMap[apiMapKey] = routes
@@ -177,6 +180,7 @@ func generateEnvoyResoucesForLabel(label string) ([]types.Resource, []types.Reso
 	var clusterArrays [][]types.Resource
 	var routeArrays [][]types.Resource
 	var endpointArrays [][]types.Resource
+	//TODO: (VirajSalaka) Listeners should not be repeated
 	var listenerArrays [][]types.Resource
 	for apiKey, labels := range openAPIEnvoyMap {
 		if arrayContains(labels, label) {
