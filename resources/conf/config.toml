@@ -2,6 +2,8 @@
 [server]
 ip = "localhost"
 port = "9095"
+publicKeyPath = "/Users/viraj/go/src/github.com/VirajSalaka/product-microgateway/resources/certs/MyCertificate.crt"
+privateKeyPath = "/Users/viraj/go/src/github.com/VirajSalaka/product-microgateway/resources/certs/MyKey.key"
 
 [tls]
 enabled = false

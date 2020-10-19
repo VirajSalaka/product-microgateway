@@ -19,6 +19,7 @@ package mgw
 import (
 	discoveryv3 "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
 	xdsv3 "github.com/envoyproxy/go-control-plane/pkg/server/v3"
+	"github.com/wso2/micro-gw/internal/pkg/api/restserver"
 
 	"context"
 	"flag"
@@ -31,7 +32,6 @@ import (
 	"github.com/wso2/micro-gw/configs"
 	mgwconfig "github.com/wso2/micro-gw/configs/confTypes"
 	logger "github.com/wso2/micro-gw/internal/loggers"
-	apiserver "github.com/wso2/micro-gw/internal/pkg/api"
 	xds "github.com/wso2/micro-gw/internal/pkg/xds"
 	"google.golang.org/grpc"
 )
@@ -118,7 +118,7 @@ func Run(conf *mgwconfig.Config) {
 		logger.LoggerMgw.Fatal("Error reading the api definitions.", err)
 	}
 
-	flag.Parse()
+	//flag.Parse()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -142,7 +142,8 @@ func Run(conf *mgwconfig.Config) {
 
 	// start the xDS server
 	RunManagementServer(ctx, srv, port)
-	go apiserver.Start(conf)
+	//go apiserver.Start(conf)
+	go restserver.StartRestServer(conf)
 
 	//xds.UpdateEnvoy(conf.Apis.Location)
 OUTER:

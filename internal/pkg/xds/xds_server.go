@@ -10,8 +10,10 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	cachev3 "github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	openAPI3 "github.com/getkin/kin-openapi/openapi3"
+	openAPI2 "github.com/go-openapi/spec"
 	logger "github.com/wso2/micro-gw/internal/loggers"
 	oasParser "github.com/wso2/micro-gw/internal/pkg/oasparser"
+	"github.com/wso2/micro-gw/internal/pkg/oasparser/envoyCodegen"
 	"github.com/wso2/micro-gw/internal/pkg/oasparser/models/apiDefinition"
 	swaggerOperator "github.com/wso2/micro-gw/internal/pkg/oasparser/swaggerOperator"
 )
@@ -21,13 +23,15 @@ var (
 
 	cache cachev3.SnapshotCache
 
-	openAPIMap            map[string]openAPI3.Swagger
-	openAPIEnvoyMap       map[string][]string
-	openAPIRoutesMap      map[string][]types.Resource
-	openAPIListenersMap   map[string][]types.Resource
+	openAPIV3Map     map[string]openAPI3.Swagger
+	openAPIV2Map     map[string]openAPI2.Swagger
+	openAPIEnvoyMap  map[string][]string
+	openAPIRoutesMap map[string][]types.Resource
+	//openAPIListenersMap   map[string][]types.Resource
 	openAPIClustersMap    map[string][]types.Resource
 	openAPIEndpointsMap   map[string][]types.Resource
 	envoyUpdateVersionMap map[string]int64
+	listenerEnvoyConfig   types.Resource
 )
 
 // IDHash uses ID field as the node hash.
@@ -45,10 +49,12 @@ var _ cachev3.NodeHash = IDHash{}
 
 func Init() {
 	cache = cachev3.NewSnapshotCache(false, IDHash{}, nil)
-	openAPIMap = make(map[string]openAPI3.Swagger)
+	openAPIV3Map = make(map[string]openAPI3.Swagger)
+	openAPIV2Map = make(map[string]openAPI2.Swagger)
 	openAPIEnvoyMap = make(map[string][]string)
 	openAPIRoutesMap = make(map[string][]types.Resource)
-	openAPIListenersMap = make(map[string][]types.Resource)
+	//openAPIListenersMap = make(map[string][]types.Resource)
+	listenerEnvoyConfig = envoyCodegen.CreateListenerWithRds("default")
 	openAPIClustersMap = make(map[string][]types.Resource)
 	openAPIEndpointsMap = make(map[string][]types.Resource)
 	//TODO: (VirajSalaka) Swagger or project should contain the version as a meta information
@@ -77,16 +83,17 @@ func UpdateEnvoyByteArr(byteArr []byte) {
 	if openAPIVersion == "3" {
 		openAPIV3Struct, _ = swaggerOperator.GetOpenAPIV3Struct(jsonContent)
 		apiMapKey = openAPIV3Struct.Info.Title + ":" + openAPIV3Struct.Info.Version
-		existingOpenAPI, ok := openAPIMap[apiMapKey]
+		existingOpenAPI, ok := openAPIV3Map[apiMapKey]
 		if ok {
 			if reflect.DeepEqual(openAPIV3Struct, existingOpenAPI) {
 				//Works as the openAPI already contains the label feature.
 				return
 			}
 		}
-		openAPIMap[apiMapKey] = openAPIV3Struct
+		openAPIV3Map[apiMapKey] = openAPIV3Struct
 	} else {
 		//TODO: (VirajSalaka) add openAPI v2 support
+
 		logger.LoggerMgw.Errorln("only the openapi version 3 is supported at the moment.")
 		return
 	}

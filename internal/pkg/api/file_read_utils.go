@@ -42,14 +42,19 @@ func UnzipAndApplyZippedProject(payload []byte) {
 	for _, f := range zipReader.File {
 		//TODO: (VirajSalaka) provide a proper regex to filter openAPI json
 		//TODO: (VirajSalaka) support .yaml files
-		if strings.HasSuffix(f.Name, ".json") {
+		if strings.HasSuffix(f.Name, "swagger.yaml") {
 			fmt.Println(f.Name)
 			unzippedFileBytes, err := readZipFile(f)
 			if err != nil {
 				logger.LoggerMgw.Error(err)
 				continue
 			}
-			xds.UpdateEnvoyByteArr(unzippedFileBytes)
+			apiJsn, conversionErr := utills.ToJSON(unzippedFileBytes)
+			if conversionErr != nil {
+				log.Fatal("Error converting api file to json:", err)
+				return
+			}
+			xds.UpdateEnvoyByteArr(apiJsn)
 		}
 	}
 }

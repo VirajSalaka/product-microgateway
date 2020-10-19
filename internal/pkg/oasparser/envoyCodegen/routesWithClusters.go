@@ -18,19 +18,20 @@ package envoyCodegen
 
 import (
 	clusterv3 "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
+	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	endpointv3 "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
-	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	envoy_type_matcherv3 "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3"
 
-	swag_operator "github.com/wso2/micro-gw/internal/pkg/oasparser/swaggerOperator"
+	"github.com/wso2/micro-gw/configs"
 	logger "github.com/wso2/micro-gw/internal/loggers"
 	"github.com/wso2/micro-gw/internal/pkg/oasparser/models/apiDefinition"
-	"github.com/wso2/micro-gw/configs"
+	swag_operator "github.com/wso2/micro-gw/internal/pkg/oasparser/swaggerOperator"
 
-	"github.com/golang/protobuf/ptypes"
 	"strings"
 	"time"
+
+	"github.com/golang/protobuf/ptypes"
 )
 
 /**
@@ -87,7 +88,7 @@ func CreateRoutesWithClusters(mgwSwagger apiDefinition.MgwSwagger) ([]*routev3.R
 		endpointsProd = append(endpointsProd, &apilevelAddressP)
 
 	} else {
-		logger .LoggerOasparser.Warn("API level Producton endpoints are not defined")
+		logger.LoggerOasparser.Warn("API level Producton endpoints are not defined")
 	}
 	for ind, resource := range mgwSwagger.GetResources() {
 
@@ -163,7 +164,7 @@ func createCluster(address corev3.Address, clusterName string) clusterv3.Cluster
 	h := &address
 	cluster := clusterv3.Cluster{
 		Name:                 clusterName,
-		ConnectTimeout:       ptypes.DurationProto(conf.Envoy.ClusterTimeoutInSeconds* time.Second),
+		ConnectTimeout:       ptypes.DurationProto(conf.Envoy.ClusterTimeoutInSeconds * time.Second),
 		ClusterDiscoveryType: &clusterv3.Cluster_Type{Type: clusterv3.Cluster_STRICT_DNS},
 		DnsLookupFamily:      clusterv3.Cluster_V4_ONLY,
 		LbPolicy:             clusterv3.Cluster_ROUND_ROBIN,
@@ -197,14 +198,14 @@ func createCluster(address corev3.Address, clusterName string) clusterv3.Cluster
  * @param clusterName  Name of the cluster
  * @return v2route.Route  Route instance
  */
-func createRoute(xWso2Basepath string,endpoint apiDefinition.Endpoint, resourcePath string, clusterName string) routev3.Route {
+func createRoute(xWso2Basepath string, endpoint apiDefinition.Endpoint, resourcePath string, clusterName string) routev3.Route {
 	logger.LoggerOasparser.Debug("creating a route....")
 	var (
 		router routev3.Route
 		action *routev3.Route_Route
-		match *routev3.RouteMatch
+		match  *routev3.RouteMatch
 	)
-	routePath := GenerateRoutePaths(xWso2Basepath,endpoint.GetBasepath(), resourcePath)
+	routePath := GenerateRoutePaths(xWso2Basepath, endpoint.GetBasepath(), resourcePath)
 
 	match = &routev3.RouteMatch{
 		PathSpecifier: &routev3.RouteMatch_SafeRegex{
@@ -218,7 +219,6 @@ func createRoute(xWso2Basepath string,endpoint apiDefinition.Endpoint, resourceP
 			},
 		},
 	}
-
 
 	if xWso2Basepath != "" {
 		action = &routev3.Route_Route{
@@ -243,7 +243,7 @@ func createRoute(xWso2Basepath string,endpoint apiDefinition.Endpoint, resourceP
 			},
 		}
 	} else {
-		action =  &routev3.Route_Route{
+		action = &routev3.Route_Route{
 			Route: &routev3.RouteAction{
 				HostRewriteSpecifier: &routev3.RouteAction_HostRewriteLiteral{
 					HostRewriteLiteral: endpoint.GetHost(),
@@ -256,9 +256,9 @@ func createRoute(xWso2Basepath string,endpoint apiDefinition.Endpoint, resourceP
 	}
 
 	router = routev3.Route{
-		Name: "routename",
-		Match: match,
-		Action: action,
+		Name:     "routename",
+		Match:    match,
+		Action:   action,
 		Metadata: nil,
 	}
 
