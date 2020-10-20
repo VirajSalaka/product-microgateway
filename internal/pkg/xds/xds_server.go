@@ -13,7 +13,6 @@ import (
 	openAPI2 "github.com/go-openapi/spec"
 	logger "github.com/wso2/micro-gw/internal/loggers"
 	oasParser "github.com/wso2/micro-gw/internal/pkg/oasparser"
-	"github.com/wso2/micro-gw/internal/pkg/oasparser/envoyCodegen"
 	"github.com/wso2/micro-gw/internal/pkg/oasparser/models/apiDefinition"
 	swaggerOperator "github.com/wso2/micro-gw/internal/pkg/oasparser/swaggerOperator"
 )
@@ -54,7 +53,7 @@ func Init() {
 	openAPIEnvoyMap = make(map[string][]string)
 	openAPIRoutesMap = make(map[string][]types.Resource)
 	//openAPIListenersMap = make(map[string][]types.Resource)
-	listenerEnvoyConfig = envoyCodegen.CreateListenerWithRds("default")
+	//listenerEnvoyConfig = envoyCodegen.CreateListenerWithRds("default")
 	openAPIClustersMap = make(map[string][]types.Resource)
 	openAPIEndpointsMap = make(map[string][]types.Resource)
 	//TODO: (VirajSalaka) Swagger or project should contain the version as a meta information
@@ -103,10 +102,10 @@ func UpdateEnvoyByteArr(byteArr []byte) {
 	openAPIEnvoyMap[apiMapKey] = newLabels
 	//TODO: (VirajSalaka) Routes populated is wrong here. It has to follow https://github.com/envoyproxy/envoy/blob/v1.16.0/api/envoy/config/route/v3/route.proto
 	//TODO: (VirajSalaka) Can bring VHDS (Delta), but since the gateway would contain only one domain, it won't have much impact.
-	listeners, clusters, routes, endpoints := oasParser.GetProductionSourcesFromByteArray(byteArr)
+	_, clusters, routes, endpoints := oasParser.GetProductionSourcesFromByteArray(byteArr)
 	//TODO: (VirajSalaka) Decide if the routes and listeners need their own map since it is not going to be changed based on API at the moment.
 	openAPIRoutesMap[apiMapKey] = routes
-	openAPIListenersMap[apiMapKey] = listeners
+	//openAPIListenersMap[apiMapKey] = listeners
 	openAPIClustersMap[apiMapKey] = clusters
 	openAPIEndpointsMap[apiMapKey] = endpoints
 
@@ -194,7 +193,7 @@ func generateEnvoyResoucesForLabel(label string) ([]types.Resource, []types.Reso
 			clusterArrays = append(clusterArrays, openAPIClustersMap[apiKey])
 			routeArrays = append(routeArrays, openAPIRoutesMap[apiKey])
 			endpointArrays = append(endpointArrays, openAPIEndpointsMap[apiKey])
-			listenerArrays = append(listenerArrays, openAPIListenersMap[apiKey])
+			//listenerArrays = append(listenerArrays, openAPIListenersMap[apiKey])
 		}
 	}
 	return mergeResourceArrays(endpointArrays), mergeResourceArrays(clusterArrays), mergeResourceArrays(routeArrays),

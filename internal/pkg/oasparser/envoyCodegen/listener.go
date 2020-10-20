@@ -23,7 +23,6 @@ import (
 	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	envoy_config_filter_accesslog_v3 "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/file/v3"
 	hcmv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
-	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 
 	"github.com/golang/protobuf/ptypes"
@@ -78,7 +77,7 @@ func CreateRoutesConfigForRds(vHost routev3.VirtualHost) routev3.RouteConfigurat
 	return routeConfiguration
 }
 
-func CreateListenerWithRds(listenerName string) types.Resource {
+func CreateListenerWithRds(listenerName string) listenerv3.Listener {
 	//TODO: (VirajSalaka) avoid duplicate functions
 	httpFilters := getHttpFilters()
 	accessLogs := getAccessLogConfigs()
@@ -100,6 +99,7 @@ func CreateListenerWithRds(listenerName string) types.Resource {
 					ConfigSourceSpecifier: &corev3.ConfigSource_Ads{
 						Ads: &corev3.AggregatedConfigSource{},
 					},
+					ResourceApiVersion: corev3.ApiVersion_V3,
 				},
 			},
 		},

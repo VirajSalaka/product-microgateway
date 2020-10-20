@@ -87,14 +87,17 @@ func getProductionSources(mgwSwaggers []apiDefinition.MgwSwagger) ([]types.Resou
 	if len(mgwSwaggers) > 0 {
 		vHost_NameP := "serviceProd_" + strings.Replace(mgwSwaggers[0].GetTitle(), " ", "", -1) + mgwSwaggers[0].GetVersion()
 		vHostP, _ := enovoy.CreateVirtualHost(vHost_NameP, routesP)
-		listenerNameP := "listenerProd_1"
-		routeConfigNameP := "routeProd_" + strings.Replace(mgwSwaggers[0].GetTitle(), " ", "", -1) + mgwSwaggers[0].GetVersion()
-		listnerProd := enovoy.CreateListener(listenerNameP, routeConfigNameP, vHostP)
+		// listenerNameP := "listenerProd_1"
+		// routeConfigNameP := "routeProd_" + strings.Replace(mgwSwaggers[0].GetTitle(), " ", "", -1) + mgwSwaggers[0].GetVersion()
+		// listnerProd := enovoy.CreateListener(listenerNameP, routeConfigNameP, vHostP)
+		listnerProd := enovoy.CreateListenerWithRds("default")
+		routeConfigProd := enovoy.CreateRoutesConfigForRds(vHostP)
 
 		envoyNodeProd.SetListener(&listnerProd)
 		envoyNodeProd.SetClusters(clustersP)
 		envoyNodeProd.SetRoutes(routesP)
 		envoyNodeProd.SetEndpoints(endpointsP)
+		envoyNodeProd.SetRouteConfigs(&routeConfigProd)
 
 	} else {
 		logger.LoggerOasparser.Error("No Api definitions found")
