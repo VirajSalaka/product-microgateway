@@ -6,7 +6,10 @@ import (
 	"sync"
 	"sync/atomic"
 
+	clusterv3 "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	listenerv3 "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
+	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	cachev3 "github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	openAPI3 "github.com/getkin/kin-openapi/openapi3"
@@ -25,12 +28,14 @@ var (
 	openAPIV3Map     map[string]openAPI3.Swagger
 	openAPIV2Map     map[string]openAPI2.Swagger
 	openAPIEnvoyMap  map[string][]string
-	openAPIRoutesMap map[string][]types.Resource
-	//openAPIListenersMap   map[string][]types.Resource
-	openAPIClustersMap    map[string][]types.Resource
-	openAPIEndpointsMap   map[string][]types.Resource
-	envoyUpdateVersionMap map[string]int64
-	listenerEnvoyConfig   types.Resource
+	openAPIRoutesMap map[string][]*routev3.Route
+	//openAPIListenersMap    map[string][]types.Resource
+	openAPIClustersMap     map[string][]*clusterv3.Cluster
+	openAPIEndpointsMap    map[string][]*corev3.Address
+	envoyUpdateVersionMap  map[string]int64
+	envoyListenerConfigMap map[string]*listenerv3.Listener
+	envoyRouteConfigMap    map[string]*routev3.RouteConfiguration
+	//listenerEnvoyConfig   types.Resource
 )
 
 // IDHash uses ID field as the node hash.
@@ -51,13 +56,15 @@ func Init() {
 	openAPIV3Map = make(map[string]openAPI3.Swagger)
 	openAPIV2Map = make(map[string]openAPI2.Swagger)
 	openAPIEnvoyMap = make(map[string][]string)
-	openAPIRoutesMap = make(map[string][]types.Resource)
+	openAPIRoutesMap = make(map[string][]*routev3.Route)
 	//openAPIListenersMap = make(map[string][]types.Resource)
-	//listenerEnvoyConfig = envoyCodegen.CreateListenerWithRds("default")
-	openAPIClustersMap = make(map[string][]types.Resource)
-	openAPIEndpointsMap = make(map[string][]types.Resource)
+	openAPIClustersMap = make(map[string][]*clusterv3.Cluster)
+	openAPIEndpointsMap = make(map[string][]*corev3.Address)
 	//TODO: (VirajSalaka) Swagger or project should contain the version as a meta information
 	envoyUpdateVersionMap = make(map[string]int64)
+	envoyListenerConfigMap = make(map[string]*listenerv3.Listener)
+	envoyRouteConfigMap = make(map[string]*routev3.RouteConfiguration)
+
 }
 
 func GetXdsCache() cachev3.SnapshotCache {
@@ -102,7 +109,7 @@ func UpdateEnvoyByteArr(byteArr []byte) {
 	openAPIEnvoyMap[apiMapKey] = newLabels
 	//TODO: (VirajSalaka) Routes populated is wrong here. It has to follow https://github.com/envoyproxy/envoy/blob/v1.16.0/api/envoy/config/route/v3/route.proto
 	//TODO: (VirajSalaka) Can bring VHDS (Delta), but since the gateway would contain only one domain, it won't have much impact.
-	_, clusters, routes, endpoints := oasParser.GetProductionSourcesFromByteArray(byteArr)
+	routes, clusters, endpoints := oasParser.GetProductionRoutesClustersEndpoints(byteArr)
 	//TODO: (VirajSalaka) Decide if the routes and listeners need their own map since it is not going to be changed based on API at the moment.
 	openAPIRoutesMap[apiMapKey] = routes
 	//openAPIListenersMap[apiMapKey] = listeners
@@ -171,33 +178,61 @@ func updateXdsCacheOnAPIAdd(oldLabels []string, newLabels []string) {
 	//TODO: (VirajSalaka) check possible optimizations, Since the number of labels are low by design it should not be an issue
 	for _, oldLabel := range oldLabels {
 		if !arrayContains(newLabels, oldLabel) {
-			endpoints, clusters, routes, listeners := generateEnvoyResoucesForLabel(oldLabel)
+			listeners, clusters, routes, endpoints := generateEnvoyResoucesForLabel(oldLabel)
 			updateXdsCache(oldLabel, endpoints, clusters, routes, listeners)
 		}
 	}
 
 	for _, newLabel := range newLabels {
-		endpoints, clusters, routes, listeners := generateEnvoyResoucesForLabel(newLabel)
+		listeners, clusters, routes, endpoints := generateEnvoyResoucesForLabel(newLabel)
 		updateXdsCache(newLabel, endpoints, clusters, routes, listeners)
 	}
 }
 
+// func generateEnvoyResoucesForLabel(label string) ([]types.Resource, []types.Resource, []types.Resource, []types.Resource) {
+// 	var clusterArrays [][]types.Resource
+// 	var routeArrays [][]types.Resource
+// 	var endpointArrays [][]types.Resource
+// 	//TODO: (VirajSalaka) Listeners should not be repeated
+// 	var listenerArrays [][]types.Resource
+// 	for apiKey, labels := range openAPIEnvoyMap {
+// 		if arrayContains(labels, label) {
+// 			clusterArrays = append(clusterArrays, openAPIClustersMap[apiKey])
+// 			routeArrays = append(routeArrays, openAPIRoutesMap[apiKey])
+// 			endpointArrays = append(endpointArrays, openAPIEndpointsMap[apiKey])
+// 			//listenerArrays = append(listenerArrays, openAPIListenersMap[apiKey])
+// 		}
+// 	}
+// 	return mergeResourceArrays(endpointArrays), mergeResourceArrays(clusterArrays), mergeResourceArrays(routeArrays),
+// 		mergeResourceArrays(listenerArrays)
+// }
+
+//TO
 func generateEnvoyResoucesForLabel(label string) ([]types.Resource, []types.Resource, []types.Resource, []types.Resource) {
-	var clusterArrays [][]types.Resource
-	var routeArrays [][]types.Resource
-	var endpointArrays [][]types.Resource
+	var clusterArray []*clusterv3.Cluster
+	var routeArray []*routev3.Route
+	var endpointArray []*corev3.Address
 	//TODO: (VirajSalaka) Listeners should not be repeated
-	var listenerArrays [][]types.Resource
+	//var listenerArrays [][]types.Resource
 	for apiKey, labels := range openAPIEnvoyMap {
 		if arrayContains(labels, label) {
-			clusterArrays = append(clusterArrays, openAPIClustersMap[apiKey])
-			routeArrays = append(routeArrays, openAPIRoutesMap[apiKey])
-			endpointArrays = append(endpointArrays, openAPIEndpointsMap[apiKey])
+			clusterArray = append(clusterArray, openAPIClustersMap[apiKey]...)
+			routeArray = append(routeArray, openAPIRoutesMap[apiKey]...)
+			endpointArray = append(endpointArray, openAPIEndpointsMap[apiKey]...)
 			//listenerArrays = append(listenerArrays, openAPIListenersMap[apiKey])
 		}
 	}
-	return mergeResourceArrays(endpointArrays), mergeResourceArrays(clusterArrays), mergeResourceArrays(routeArrays),
-		mergeResourceArrays(listenerArrays)
+	listener, listenerFound := envoyListenerConfigMap[label]
+	routesConfig, routesConfigFound := envoyRouteConfigMap[label]
+	if !listenerFound && !routesConfigFound {
+		listener, routesConfig = oasParser.GetProductionListenerAndRouteConfig(routeArray)
+		envoyListenerConfigMap[label] = listener
+		envoyRouteConfigMap[label] = routesConfig
+	} else {
+		//If the routesConfig exists, the listener exists too
+		oasParser.UpdateRoutesConfig(routesConfig, routeArray)
+	}
+	return oasParser.GetCacheResources(endpointArray, clusterArray, listener, routesConfig)
 }
 
 func updateXdsCache(label string, endpoints []types.Resource, clusters []types.Resource, routes []types.Resource, listeners []types.Resource) {

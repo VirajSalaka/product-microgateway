@@ -21,6 +21,7 @@ package oasparser
 import (
 	clusterv3 "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	listenerv3 "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
 	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/wso2/micro-gw/internal/pkg/oasparser/models/apiDefinition"
@@ -85,7 +86,7 @@ func getProductionSources(mgwSwaggers []apiDefinition.MgwSwagger) ([]types.Resou
 	envoyNodeProd := new(envoy.EnvoyNode)
 
 	if len(mgwSwaggers) > 0 {
-		vHost_NameP := "serviceProd_" + strings.Replace(mgwSwaggers[0].GetTitle(), " ", "", -1) + mgwSwaggers[0].GetVersion()
+		vHost_NameP := "default"
 		vHostP, _ := enovoy.CreateVirtualHost(vHost_NameP, routesP)
 		// listenerNameP := "listenerProd_1"
 		// routeConfigNameP := "routeProd_" + strings.Replace(mgwSwaggers[0].GetTitle(), " ", "", -1) + mgwSwaggers[0].GetVersion()
@@ -106,6 +107,43 @@ func getProductionSources(mgwSwaggers []apiDefinition.MgwSwagger) ([]types.Resou
 	logger.LoggerOasparser.Info(len(routesP), " routes are generated successfully")
 	logger.LoggerOasparser.Info(len(clustersP), " clusters are generated successfully")
 	logger.LoggerOasparser.Info(len(endpointsP), " endpoints are generated successfully")
+	return envoyNodeProd.GetSources()
+}
+
+func GetProductionRoutesClustersEndpoints(byteArr []byte) ([]*routev3.Route, []*clusterv3.Cluster, []*corev3.Address) {
+	var (
+		routesP    []*routev3.Route
+		clustersP  []*clusterv3.Cluster
+		endpointsP []*corev3.Address
+	)
+	mgwSwaggers := swgger.GenerateMgwSwaggerFromByteArray(byteArr)
+
+	for _, swagger := range mgwSwaggers {
+		routes, clusters, endpoints, _, _, _ := enovoy.CreateRoutesWithClusters(swagger)
+		routesP = append(routesP, routes...)
+		clustersP = append(clustersP, clusters...)
+		endpointsP = append(endpointsP, endpoints...)
+	}
+	return routesP, clustersP, endpointsP
+}
+
+func GetProductionListenerAndRouteConfig(routes []*routev3.Route) (*listenerv3.Listener, *routev3.RouteConfiguration) {
+	listnerProd := enovoy.CreateListenerWithRds("default")
+	vHost_NameP := "default"
+	vHostP, _ := enovoy.CreateVirtualHost(vHost_NameP, routes)
+	routeConfigProd := enovoy.CreateRoutesConfigForRds(vHostP)
+
+	return &listnerProd, &routeConfigProd
+}
+
+func GetCacheResources(endpoints []*corev3.Address, clusters []*clusterv3.Cluster, listener *listenerv3.Listener,
+	routeConfig *routev3.RouteConfiguration) ([]types.Resource, []types.Resource, []types.Resource, []types.Resource) {
+	envoyNodeProd := new(envoy.EnvoyNode)
+	envoyNodeProd.SetListener(listener)
+	envoyNodeProd.SetClusters(clusters)
+	envoyNodeProd.SetEndpoints(endpoints)
+	envoyNodeProd.SetRouteConfigs(routeConfig)
+
 	return envoyNodeProd.GetSources()
 }
 
@@ -158,4 +196,11 @@ func GetSandboxSources(location string) ([]types.Resource, []types.Resource, []t
 	}
 
 	return envoyNodeSand.GetSources()
+}
+
+func UpdateRoutesConfig(routeConfig *routev3.RouteConfiguration, routes []*routev3.Route) {
+	vHostName := "default"
+	vHost, _ := enovoy.CreateVirtualHost(vHostName, routes)
+	routeConfig.VirtualHosts = []*routev3.VirtualHost{&vHost}
+	//return []types.Resource{routeConfig}
 }
