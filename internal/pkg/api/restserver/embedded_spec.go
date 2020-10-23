@@ -64,10 +64,7 @@ func init() {
       "post": {
         "security": [
           {
-            "OAuth2Security": [
-              "apim:admin",
-              "apim:api_import_export"
-            ]
+            "BasicAuth": []
           }
         ],
         "description": "This operation can be used to import an API.\n",
@@ -206,36 +203,8 @@ func init() {
     }
   },
   "securityDefinitions": {
-    "OAuth2Security": {
-      "type": "oauth2",
-      "flow": "password",
-      "tokenUrl": "https://localhost:9443/oauth2/token",
-      "scopes": {
-        "apim:admin": "Manage all admin operations",
-        "apim:admin_alert_manage": "Manage admin alerts",
-        "apim:admin_operations": "Manage API categories",
-        "apim:admin_settings": "Retrieve admin settings",
-        "apim:api_import_export": "Import and export APIs related operations",
-        "apim:api_product_import_export": "Import and export API Products related operations",
-        "apim:api_workflow_approve": "Manage workflows",
-        "apim:api_workflow_view": "Retrive workflow requests",
-        "apim:app_import_export": "Import and export applications related operations",
-        "apim:app_owner_change": "Retrieve and manage applications",
-        "apim:bl_manage": "Update and delete deny policies",
-        "apim:bl_view": "View deny policies",
-        "apim:bot_data": "Retrieve bot detection data",
-        "apim:label_manage": "Manage microgateway labels",
-        "apim:label_read": "Retrieve microgateway labels",
-        "apim:mediation_policy_create": "Create and update mediation policies",
-        "apim:mediation_policy_view": "View mediation policies",
-        "apim:monetization_usage_publish": "Retrieve and publish Monetization related usage records",
-        "apim:scope_manage": "Manage scope",
-        "apim:tenantInfo": "Retrieve tenant related information",
-        "apim:tenant_theme_manage": "Manage tenant themes",
-        "apim:tier_manage": "Update and delete throttling policies",
-        "apim:tier_view": "View throttling policies",
-        "openid": "Authorize access to user details"
-      }
+    "BasicAuth": {
+      "type": "basic"
     }
   }
 }`))
@@ -271,10 +240,7 @@ func init() {
       "post": {
         "security": [
           {
-            "OAuth2Security": [
-              "apim:admin",
-              "apim:api_import_export"
-            ]
+            "BasicAuth": []
           }
         ],
         "description": "This operation can be used to import an API.\n",
@@ -413,36 +379,8 @@ func init() {
     }
   },
   "securityDefinitions": {
-    "OAuth2Security": {
-      "type": "oauth2",
-      "flow": "password",
-      "tokenUrl": "https://localhost:9443/oauth2/token",
-      "scopes": {
-        "apim:admin": "Manage all admin operations",
-        "apim:admin_alert_manage": "Manage admin alerts",
-        "apim:admin_operations": "Manage API categories",
-        "apim:admin_settings": "Retrieve admin settings",
-        "apim:api_import_export": "Import and export APIs related operations",
-        "apim:api_product_import_export": "Import and export API Products related operations",
-        "apim:api_workflow_approve": "Manage workflows",
-        "apim:api_workflow_view": "Retrive workflow requests",
-        "apim:app_import_export": "Import and export applications related operations",
-        "apim:app_owner_change": "Retrieve and manage applications",
-        "apim:bl_manage": "Update and delete deny policies",
-        "apim:bl_view": "View deny policies",
-        "apim:bot_data": "Retrieve bot detection data",
-        "apim:label_manage": "Manage microgateway labels",
-        "apim:label_read": "Retrieve microgateway labels",
-        "apim:mediation_policy_create": "Create and update mediation policies",
-        "apim:mediation_policy_view": "View mediation policies",
-        "apim:monetization_usage_publish": "Retrieve and publish Monetization related usage records",
-        "apim:scope_manage": "Manage scope",
-        "apim:tenantInfo": "Retrieve tenant related information",
-        "apim:tenant_theme_manage": "Manage tenant themes",
-        "apim:tier_manage": "Update and delete throttling policies",
-        "apim:tier_view": "View throttling policies",
-        "openid": "Authorize access to user details"
-      }
+    "BasicAuth": {
+      "type": "basic"
     }
   }
 }`))

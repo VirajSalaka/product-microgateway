@@ -65,8 +65,9 @@ func NewRestapiAPI(spec *loads.Document) *RestapiAPI {
 			return middleware.NotImplemented("operation api_individual.PostImportAPI has not yet been implemented")
 		}),
 
-		OAuth2SecurityAuth: func(token string, scopes []string) (*models.Principal, error) {
-			return nil, errors.NotImplemented("oauth2 bearer auth (OAuth2Security) has not yet been implemented")
+		// Applies when the Authorization header is set with the Basic scheme
+		BasicAuthAuth: func(user string, pass string) (*models.Principal, error) {
+			return nil, errors.NotImplemented("basic auth  (BasicAuth) has not yet been implemented")
 		},
 		// default authorizer is authorized meaning no requests are blocked
 		APIAuthorizer: security.Authorized(),
@@ -109,9 +110,9 @@ type RestapiAPI struct {
 	//   - application/json
 	JSONProducer runtime.Producer
 
-	// OAuth2SecurityAuth registers a function that takes an access token and a collection of required scopes and returns a principal
-	// it performs authentication based on an oauth2 bearer token provided in the request
-	OAuth2SecurityAuth func(string, []string) (*models.Principal, error)
+	// BasicAuthAuth registers a function that takes username and password and returns a principal
+	// it performs authentication with basic auth
+	BasicAuthAuth func(string, string) (*models.Principal, error)
 
 	// APIAuthorizer provides access control (ACL/RBAC/ABAC) by providing access to the request and authenticated principal
 	APIAuthorizer runtime.Authorizer
@@ -197,8 +198,8 @@ func (o *RestapiAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
-	if o.OAuth2SecurityAuth == nil {
-		unregistered = append(unregistered, "OAuth2SecurityAuth")
+	if o.BasicAuthAuth == nil {
+		unregistered = append(unregistered, "BasicAuthAuth")
 	}
 
 	if o.APIIndividualPostImportAPIHandler == nil {
@@ -222,9 +223,9 @@ func (o *RestapiAPI) AuthenticatorsFor(schemes map[string]spec.SecurityScheme) m
 	result := make(map[string]runtime.Authenticator)
 	for name := range schemes {
 		switch name {
-		case "OAuth2Security":
-			result[name] = o.BearerAuthenticator(name, func(token string, scopes []string) (interface{}, error) {
-				return o.OAuth2SecurityAuth(token, scopes)
+		case "BasicAuth":
+			result[name] = o.BasicAuthenticator(func(username, password string) (interface{}, error) {
+				return o.BasicAuthAuth(username, password)
 			})
 
 		}

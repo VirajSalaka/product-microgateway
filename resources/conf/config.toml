@@ -2,8 +2,8 @@
 [server]
 ip = "localhost"
 port = "9095"
-publicKeyPath = "/home/ubuntu/resources/certs/MyCertificate.crt"
-privateKeyPath = "/home/ubuntu/resources/certs/MyKey.key"
+publicKeyPath = "/Users/viraj/go/src/github.com/VirajSalaka/product-microgateway/resources/certs/localhost.pem"
+privateKeyPath = "/Users/viraj/go/src/github.com/VirajSalaka/product-microgateway/resources/certs/localhost.key"
 
 [tls]
 enabled = false

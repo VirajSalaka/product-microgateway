@@ -68,8 +68,9 @@ func configureAPI(api *operations.RestapiAPI) http.Handler {
 
 	api.JSONProducer = runtime.JSONProducer()
 
-	api.OAuth2SecurityAuth = func(token string, scopes []string) (*models.Principal, error) {
-		logger.LoggerMgw.Infof("token %v", token)
+	// Applies when the Authorization header is set with the Basic scheme
+	api.BasicAuthAuth = func(user string, pass string) (*models.Principal, error) {
+		logger.LoggerMgw.Infof("token %v", user)
 		//TODO: implement authentication
 		p := models.Principal{
 			Token:    "xxxx",
@@ -104,6 +105,7 @@ func configureTLS(tlsConfig *tls.Config) {
 	//TODO: (VirajSalaka)
 	// certArray, _ =
 	tlsConfig.Certificates, _ = getCertificates(mgwConfig.Server.PublicKeyPath, mgwConfig.Server.PrivateKeyPath)
+	// tlsConfig.Certificates = getCertificatesFromByteArr(getPrivateKeyFile(), getPublicKeyFile())
 }
 
 func getCertificates(publicKeyPath, privateKeyPath string) ([]tls.Certificate, error) {
@@ -194,7 +196,7 @@ func StartRestServer(config *confTypes.Config) {
 
 func getPrivateKeyFile() []byte {
 	var privateKeyByteArr []byte
-	f, err := os.Open("/Users/viraj/Desktop/temp/wso2am-3.2.0/repository/resources/security/wso2carbon.jks")
+	f, err := os.Open("/Users/viraj/Desktop/temp/wso2am-micro-gw-macos-3.2.0-alpha/runtime/bre/security/ballerinaKeystore.p12")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -203,7 +205,7 @@ func getPrivateKeyFile() []byte {
 	if err != nil {
 		log.Fatal(err)
 	}
-	key, ok := keyStore["wso2carbon"]
+	key, ok := keyStore["ballerina"]
 	if ok {
 		privateKey := key.(*keystore.PrivateKeyEntry)
 		privateKeyByteArr = privateKey.PrivateKey
@@ -214,7 +216,7 @@ func getPrivateKeyFile() []byte {
 
 func getPublicKeyFile() []byte {
 	var publicKeyByteArr []byte
-	f, err := os.Open("/Users/viraj/Desktop/temp/wso2am-3.2.0/repository/resources/security/client-truststore.jks")
+	f, err := os.Open("/Users/viraj/Desktop/temp/wso2am-micro-gw-macos-3.2.0-alpha/runtime/bre/security/ballerinaTruststore.p12")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -223,7 +225,7 @@ func getPublicKeyFile() []byte {
 	if err != nil {
 		log.Fatal(err)
 	}
-	key, ok := keyStore["wso2carbon"]
+	key, ok := keyStore["ballerina"]
 	if ok {
 		certEntry := key.(*keystore.TrustedCertificateEntry)
 		publicKeyByteArr = certEntry.Certificate.Content
