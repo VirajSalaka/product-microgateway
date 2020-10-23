@@ -78,7 +78,7 @@ func GetXdsCache() cachev3.SnapshotCache {
  */
 func UpdateEnvoyByteArr(byteArr []byte) {
 	var apiMapKey string
-	var openAPIV3Struct openAPI3.Swagger
+	var newLabels []string
 
 	//TODO: (VirajSalaka) Optimize locking
 	var l sync.Mutex
@@ -87,7 +87,7 @@ func UpdateEnvoyByteArr(byteArr []byte) {
 
 	openAPIVersion, jsonContent, _ := swaggerOperator.GetOpenAPIVersionAndJsonContent(byteArr)
 	if openAPIVersion == "3" {
-		openAPIV3Struct, _ = swaggerOperator.GetOpenAPIV3Struct(jsonContent)
+		openAPIV3Struct, _ := swaggerOperator.GetOpenAPIV3Struct(jsonContent)
 		apiMapKey = openAPIV3Struct.Info.Title + ":" + openAPIV3Struct.Info.Version
 		existingOpenAPI, ok := openAPIV3Map[apiMapKey]
 		if ok {
@@ -97,15 +97,22 @@ func UpdateEnvoyByteArr(byteArr []byte) {
 			}
 		}
 		openAPIV3Map[apiMapKey] = openAPIV3Struct
+		//TODO: (VirajSalaka) Handle OpenAPIs which does not have label (Current Impl , it will be labelled as default)
+		newLabels = apiDefinition.GetXWso2Label(openAPIV3Struct.ExtensionProps)
 	} else {
 		//TODO: (VirajSalaka) add openAPI v2 support
-
-		logger.LoggerMgw.Errorln("only the openapi version 3 is supported at the moment.")
-		return
+		openAPIV2Struct, _ := swaggerOperator.GetOpenAPIV2Struct(jsonContent)
+		apiMapKey = openAPIV2Struct.Info.Title + ":" + openAPIV2Struct.Info.Version
+		existingOpenAPI, ok := openAPIV2Map[apiMapKey]
+		if ok {
+			if reflect.DeepEqual(openAPIV2Struct, existingOpenAPI) {
+				//Works as the openAPI already contains the label feature.
+				return
+			}
+		}
+		newLabels = swaggerOperator.GetXWso2Labels(openAPIV2Struct.Extensions)
 	}
 	oldLabels, _ := openAPIEnvoyMap[apiMapKey]
-	//TODO: (VirajSalaka) Handle OpenAPIs which does not have label (Current Impl , it will be labelled as default)
-	newLabels := apiDefinition.GetXWso2Label(openAPIV3Struct.ExtensionProps)
 	openAPIEnvoyMap[apiMapKey] = newLabels
 	//TODO: (VirajSalaka) Routes populated is wrong here. It has to follow https://github.com/envoyproxy/envoy/blob/v1.16.0/api/envoy/config/route/v3/route.proto
 	//TODO: (VirajSalaka) Can bring VHDS (Delta), but since the gateway would contain only one domain, it won't have much impact.

@@ -149,6 +149,33 @@ func GetOpenAPIV3Struct(openAPIJson []byte) (openapi3.Swagger, error) {
 	return apiData3, nil
 }
 
+func GetOpenAPIV2Struct(openAPIJson []byte) (spec.Swagger, error) {
+	var apiData2 spec.Swagger
+	err := json.Unmarshal(openAPIJson, &apiData2)
+	if err != nil {
+		//log.Fatal("Error openAPI unmarsheliing: %v\n", err)
+		logger.LoggerOasparser.Error("Error openAPI unmarsheliing", err)
+		return apiData2, err
+	}
+	return apiData2, nil
+}
+
+//TODO: (VirajSalaka) generalize this with openAPI3 getLabels method
+func GetXWso2Labels(vendorExtensionsMap map[string]interface{}) []string {
+	var labelArray []string
+	if y, found := vendorExtensionsMap["x-wso2-label"]; found {
+		if val, ok := y.([]interface{}); ok {
+			for _, label := range val {
+				labelArray = append(labelArray, label.(string))
+			}
+			return labelArray
+		} else {
+			logger.LoggerOasparser.Errorln("Error while parsing the x-wso2-label")
+		}
+	}
+	return []string{"default"}
+}
+
 /**
  * Check availability of endpoint.
  *

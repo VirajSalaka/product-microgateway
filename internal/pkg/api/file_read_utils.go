@@ -41,8 +41,9 @@ func UnzipAndApplyZippedProject(payload []byte) {
 	//TODO: (VirajSalaka) this won't support for distributed openAPI definition
 	for _, f := range zipReader.File {
 		//TODO: (VirajSalaka) provide a proper regex to filter openAPI json
+		//TODO: (VirajSalaka) Consider if it is appropriate to extract the file and do the necessary modifications there.
 		//TODO: (VirajSalaka) support .yaml files
-		if strings.HasSuffix(f.Name, "swagger.yaml") {
+		if strings.HasSuffix(f.Name, "Meta-information/swagger.yaml") {
 			fmt.Println(f.Name)
 			unzippedFileBytes, err := readZipFile(f)
 			if err != nil {
