@@ -109,15 +109,8 @@ func RunManagementServer(ctx context.Context, server xdsv3.Server, port uint) {
 func Run(conf *mgwconfig.Config) {
 	sig := make(chan os.Signal)
 	signal.Notify(sig, os.Interrupt)
-	watcher, _ := fsnotify.NewWatcher()
-
 	xds.Init()
-	err := watcher.Add(conf.Apis.Location)
-
-	if err != nil {
-		logger.LoggerMgw.Fatal("Error reading the api definitions.", err)
-	}
-
+	//TODO: (VirajSalaka - add flags.parse in a compatible manner)
 	//flag.Parse()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -128,7 +121,7 @@ func Run(conf *mgwconfig.Config) {
 	errC := watcherLogConf.Add("resources/conf/log_config.toml")
 
 	if errC != nil {
-		logger.LoggerMgw.Fatal("Error reading the log configs. ", err)
+		logger.LoggerMgw.Fatal("Error reading the log configs. ", errC)
 	}
 
 	logger.LoggerMgw.Info("Starting control plane ....")
@@ -144,17 +137,9 @@ func Run(conf *mgwconfig.Config) {
 	RunManagementServer(ctx, srv, port)
 	//go apiserver.Start(conf)
 	go restserver.StartRestServer(conf)
-
-	//xds.UpdateEnvoy(conf.Apis.Location)
 OUTER:
 	for {
 		select {
-		case c := <-watcher.Events:
-			switch c.Op.String() {
-			case "WRITE":
-				logger.LoggerMgw.Info("Loading updated swagger definition...")
-				xds.UpdateEnvoy(conf.Apis.Location)
-			}
 		case l := <-watcherLogConf.Events:
 			switch l.Op.String() {
 			case "WRITE":

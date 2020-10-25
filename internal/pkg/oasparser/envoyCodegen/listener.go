@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package envoyCodegen
+package envoycodegen
 
 import (
 	access_logv3 "github.com/envoyproxy/go-control-plane/envoy/config/accesslog/v3"
@@ -68,6 +68,7 @@ func CreateListener(listenerName string, routeConfigName string, vHostP routev3.
 }
 
 func CreateRoutesConfigForRds(vHost routev3.VirtualHost) routev3.RouteConfiguration {
+	//TODO: (VirajSalaka) Do we need a custom config here
 	rdsConfigName := "default"
 
 	routeConfiguration := routev3.RouteConfiguration{

@@ -18,8 +18,6 @@ package swaggerOperator
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"os"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-openapi/spec"
@@ -28,60 +26,20 @@ import (
 	"github.com/wso2/micro-gw/internal/pkg/oasparser/utills"
 )
 
-//TODO: (VirajSalaka) Remove the scenario where openapis are updated from swagger location.
-/**
- * Generate mgw swagger instance.
- *
- * @param location   Swagger file location
- * @return []apiDefinition.MgwSwagger  Mgw swagger instances as a array
- * @return error  Error
- */
-func GenerateMgwSwagger(location string) ([]apiDefinition.MgwSwagger, error) {
-	var mgwSwaggers []apiDefinition.MgwSwagger
+// /**
+//  * Generate mgw swagger instance from File.
+//  *
+//  * @param location   Swagger file location
+//  * @return []apiDefinition.MgwSwagger  Mgw swagger instances as a array
+//  */
+// func GenerateMgwSwaggerFromByteArray(byteArray []byte) apiDefinition.MgwSwagger {
+// 	var mgwSwaggers []apiDefinition.MgwSwagger
+// 	//TODO: (VirajSalaka) return a single object instead of an array
+// 	mgwSwagger := GetMgwSwagger(byteArray)
+// 	mgwSwaggers = append(mgwSwaggers, mgwSwagger)
 
-	files, err := ioutil.ReadDir(location)
-	if err != nil {
-		logger.LoggerOasparser.Fatal("Error reading", location, "directory:", err)
-	}
-
-	for _, f := range files {
-
-		openApif, err := os.Open(location + f.Name())
-
-		// if we os.Open returns an error then handle it
-		if err != nil {
-			logger.LoggerOasparser.Fatal("Error opening a api yaml file:", err)
-		}
-		//fmt.Println("Successfully Opened open api file",f.Name())
-		logger.LoggerOasparser.Info("Successfully Opened open api file", f.Name())
-
-		// defer the closing of our jsonFile so that we can parse it later on
-		defer openApif.Close()
-
-		// read our opened jsonFile as a byte array.
-		jsn, _ := ioutil.ReadAll(openApif)
-
-		mgwSwagger := GetMgwSwagger(jsn)
-		mgwSwaggers = append(mgwSwaggers, mgwSwagger)
-
-	}
-	return mgwSwaggers, err
-}
-
-/**
- * Generate mgw swagger instance from File.
- *
- * @param location   Swagger file location
- * @return []apiDefinition.MgwSwagger  Mgw swagger instances as a array
- */
-func GenerateMgwSwaggerFromByteArray(byteArray []byte) []apiDefinition.MgwSwagger {
-	var mgwSwaggers []apiDefinition.MgwSwagger
-
-	mgwSwagger := GetMgwSwagger(byteArray)
-	mgwSwaggers = append(mgwSwaggers, mgwSwagger)
-
-	return mgwSwaggers
-}
+// 	return mgwSwaggers
+// }
 
 /**
  * Get mgw swagger instance.

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
-	"sync/atomic"
 
 	clusterv3 "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
@@ -57,14 +56,12 @@ func Init() {
 	openAPIV2Map = make(map[string]openAPI2.Swagger)
 	openAPIEnvoyMap = make(map[string][]string)
 	openAPIRoutesMap = make(map[string][]*routev3.Route)
-	//openAPIListenersMap = make(map[string][]types.Resource)
 	openAPIClustersMap = make(map[string][]*clusterv3.Cluster)
 	openAPIEndpointsMap = make(map[string][]*corev3.Address)
 	//TODO: (VirajSalaka) Swagger or project should contain the version as a meta information
 	envoyUpdateVersionMap = make(map[string]int64)
 	envoyListenerConfigMap = make(map[string]*listenerv3.Listener)
 	envoyRouteConfigMap = make(map[string]*routev3.RouteConfiguration)
-
 }
 
 func GetXdsCache() cachev3.SnapshotCache {
@@ -126,32 +123,6 @@ func UpdateEnvoyByteArr(byteArr []byte) {
 	updateXdsCacheOnAPIAdd(oldLabels, newLabels)
 }
 
-/**
- * Recreate the envoy instances from swaggers.
- *
- * @param location   Swagger files location
- */
-func UpdateEnvoy(location string) {
-	var nodeId string
-	//TODO: (VirajSalaka) Keep a hard coded value for the nodeID for the initial setup.
-	// if len(cache.GetStatusKeys()) > 0 {
-	// 	nodeId = cache.GetStatusKeys()[0]
-	// }
-	nodeId = "test-id"
-
-	listeners, clusters, routes, endpoints := oasParser.GetProductionSourcesFromFile(location)
-
-	atomic.AddInt32(&version, 1)
-	logger.LoggerMgw.Infof(">>>>>>>>>>>>>>>>>>> creating snapshot Version " + fmt.Sprint(version))
-	snap := cachev3.NewSnapshot(fmt.Sprint(version), endpoints, clusters, routes, listeners, nil)
-	snap.Consistent()
-
-	err := cache.SetSnapshot(nodeId, snap)
-	if err != nil {
-		logger.LoggerMgw.Error(err)
-	}
-}
-
 func arrayContains(a []string, x string) bool {
 	for _, n := range a {
 		if x == n {
@@ -196,25 +167,6 @@ func updateXdsCacheOnAPIAdd(oldLabels []string, newLabels []string) {
 	}
 }
 
-// func generateEnvoyResoucesForLabel(label string) ([]types.Resource, []types.Resource, []types.Resource, []types.Resource) {
-// 	var clusterArrays [][]types.Resource
-// 	var routeArrays [][]types.Resource
-// 	var endpointArrays [][]types.Resource
-// 	//TODO: (VirajSalaka) Listeners should not be repeated
-// 	var listenerArrays [][]types.Resource
-// 	for apiKey, labels := range openAPIEnvoyMap {
-// 		if arrayContains(labels, label) {
-// 			clusterArrays = append(clusterArrays, openAPIClustersMap[apiKey])
-// 			routeArrays = append(routeArrays, openAPIRoutesMap[apiKey])
-// 			endpointArrays = append(endpointArrays, openAPIEndpointsMap[apiKey])
-// 			//listenerArrays = append(listenerArrays, openAPIListenersMap[apiKey])
-// 		}
-// 	}
-// 	return mergeResourceArrays(endpointArrays), mergeResourceArrays(clusterArrays), mergeResourceArrays(routeArrays),
-// 		mergeResourceArrays(listenerArrays)
-// }
-
-//TO
 func generateEnvoyResoucesForLabel(label string) ([]types.Resource, []types.Resource, []types.Resource, []types.Resource) {
 	var clusterArray []*clusterv3.Cluster
 	var routeArray []*routev3.Route
@@ -261,12 +213,3 @@ func updateXdsCache(label string, endpoints []types.Resource, clusters []types.R
 	envoyUpdateVersionMap[label] = version
 	logger.LoggerMgw.Infof("New cache update for the label: " + label + " version: " + fmt.Sprint(version))
 }
-
-//TODO: (VirajSalaka) Remove
-// func checkAndUpdate(nodeId string, endpoints []types.Resource, clusters []types.Resource, routes []types.Resource,
-// 		listeners []types.Resource) bool {
-// 	snap, err := cache.GetSnapshot(nodeId)
-// 	snap.getR
-
-// 	return true
-// }

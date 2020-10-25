@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package envoyCodegen
+package envoycodegen
 
 import (
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
