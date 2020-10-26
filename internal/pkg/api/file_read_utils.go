@@ -20,12 +20,11 @@ package api
 import (
 	"archive/zip"
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"strings"
 
-	logger "github.com/wso2/micro-gw/internal/loggers"
+	"github.com/wso2/micro-gw/internal/loggers"
 	"github.com/wso2/micro-gw/internal/pkg/oasparser/utills"
 	xds "github.com/wso2/micro-gw/internal/pkg/xds"
 )
@@ -34,32 +33,34 @@ func UnzipAndApplyZippedProject(payload []byte) {
 	zipReader, err := zip.NewReader(bytes.NewReader(payload), int64(len(payload)))
 
 	if err != nil {
-		fmt.Println("Error occured in unzipping")
-		fmt.Println(err.Error())
+		loggers.LoggerApi.Errorf("Error occured while unzipping the apictl project. Error: %v", err.Error())
+		return
 	}
 
 	//TODO: (VirajSalaka) this won't support for distributed openAPI definition
-	for _, f := range zipReader.File {
+	for _, file := range zipReader.File {
 		//TODO: (VirajSalaka) provide a proper regex to filter openAPI json
 		//TODO: (VirajSalaka) Consider if it is appropriate to extract the file and do the necessary modifications there.
 		//TODO: (VirajSalaka) support .yaml files
-		if strings.HasSuffix(f.Name, "Meta-information/swagger.yaml") {
-			fmt.Println(f.Name)
-			unzippedFileBytes, err := readZipFile(f)
+		if strings.HasSuffix(file.Name, "Meta-information/swagger.yaml") {
+			loggers.LoggerApi.Debugf("openAPI file : %v", file.Name)
+			unzippedFileBytes, err := readZipFile(file)
 			if err != nil {
-				logger.LoggerMgw.Error(err)
+				loggers.LoggerApi.Errorf("Error occured while reading the openapi file. %v", err.Error())
 				continue
 			}
 			apiJsn, conversionErr := utills.ToJSON(unzippedFileBytes)
 			if conversionErr != nil {
-				log.Fatal("Error converting api file to json:", err)
+				loggers.LoggerApi.Errorf("Error converting api file to json: %v", err.Error())
 				return
+			} else {
+				xds.UpdateEnvoyByteArr(apiJsn)
 			}
-			xds.UpdateEnvoyByteArr(apiJsn)
 		}
 	}
 }
 
+//TODO: (VirajSalaka) Remove the code segment as it is not in use for the main flow.
 func ApplyOpenAPIFile(payload []byte) {
 	apiJsn, err := utills.ToJSON(payload)
 	if err != nil {

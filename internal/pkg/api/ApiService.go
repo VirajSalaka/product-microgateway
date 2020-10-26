@@ -15,6 +15,7 @@
  *
  */
 
+//TODO: (VirajSalaka) Remove the code as unused.
 package api
 
 import (

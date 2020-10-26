@@ -82,14 +82,23 @@ func UpdateEnvoyByteArr(byteArr []byte) {
 	l.Lock()
 	defer l.Unlock()
 
-	openAPIVersion, jsonContent, _ := swaggerOperator.GetOpenAPIVersionAndJsonContent(byteArr)
+	openAPIVersion, jsonContent, err := swaggerOperator.GetOpenAPIVersionAndJsonContent(byteArr)
+	if err != nil {
+		logger.LoggerXds.Error("Error while retrieving the openAPI version and Json Content from byte Array.", err)
+		return
+	}
+	logger.LoggerXds.Debugf("OpenAPI version : %v", openAPIVersion)
 	if openAPIVersion == "3" {
-		openAPIV3Struct, _ := swaggerOperator.GetOpenAPIV3Struct(jsonContent)
+		openAPIV3Struct, err := swaggerOperator.GetOpenAPIV3Struct(jsonContent)
+		if err != nil {
+			logger.LoggerXds.Error("Error while parsing to a OpenAPIv3 struct. ", err)
+		}
 		apiMapKey = openAPIV3Struct.Info.Title + ":" + openAPIV3Struct.Info.Version
 		existingOpenAPI, ok := openAPIV3Map[apiMapKey]
 		if ok {
 			if reflect.DeepEqual(openAPIV3Struct, existingOpenAPI) {
 				//Works as the openAPI already contains the label feature.
+				logger.LoggerXds.Info("No changes to apply for the OpenAPI key : %v", apiMapKey)
 				return
 			}
 		}
@@ -98,18 +107,25 @@ func UpdateEnvoyByteArr(byteArr []byte) {
 		newLabels = apiDefinition.GetXWso2Label(openAPIV3Struct.ExtensionProps)
 	} else {
 		//TODO: (VirajSalaka) add openAPI v2 support
-		openAPIV2Struct, _ := swaggerOperator.GetOpenAPIV2Struct(jsonContent)
+		openAPIV2Struct, err := swaggerOperator.GetOpenAPIV2Struct(jsonContent)
+		if err != nil {
+			logger.LoggerXds.Error("Error while parsing to a OpenAPIv3 struct. ", err)
+		}
 		apiMapKey = openAPIV2Struct.Info.Title + ":" + openAPIV2Struct.Info.Version
 		existingOpenAPI, ok := openAPIV2Map[apiMapKey]
 		if ok {
 			if reflect.DeepEqual(openAPIV2Struct, existingOpenAPI) {
 				//Works as the openAPI already contains the label feature.
+				logger.LoggerXds.Info("No changes to apply for the OpenAPI key : %v", apiMapKey)
 				return
 			}
 		}
 		newLabels = swaggerOperator.GetXWso2Labels(openAPIV2Struct.Extensions)
 	}
+	logger.LoggerXds.Infof("Added/Updated the content under OpenAPI Key : %v", apiMapKey)
+	logger.LoggerXds.Debugf("Newly added labels for the OpenAPI Key : %v are %v", apiMapKey, newLabels)
 	oldLabels, _ := openAPIEnvoyMap[apiMapKey]
+	logger.LoggerXds.Debugf("Already existing labels for the OpenAPI Key : %v are %v", apiMapKey, oldLabels)
 	openAPIEnvoyMap[apiMapKey] = newLabels
 	//TODO: (VirajSalaka) Routes populated is wrong here. It has to follow https://github.com/envoyproxy/envoy/blob/v1.16.0/api/envoy/config/route/v3/route.proto
 	//TODO: (VirajSalaka) Can bring VHDS (Delta), but since the gateway would contain only one domain, it won't have much impact.
@@ -158,12 +174,14 @@ func updateXdsCacheOnAPIAdd(oldLabels []string, newLabels []string) {
 		if !arrayContains(newLabels, oldLabel) {
 			listeners, clusters, routes, endpoints := generateEnvoyResoucesForLabel(oldLabel)
 			updateXdsCache(oldLabel, endpoints, clusters, routes, listeners)
+			logger.LoggerXds.Debugf("Xds Cache is updated for the already existing label : %v", oldLabel)
 		}
 	}
 
 	for _, newLabel := range newLabels {
 		listeners, clusters, routes, endpoints := generateEnvoyResoucesForLabel(newLabel)
 		updateXdsCache(newLabel, endpoints, clusters, routes, listeners)
+		logger.LoggerXds.Debugf("Xds Cache is updated for the newly added label : %v", newLabel)
 	}
 }
 
@@ -171,7 +189,6 @@ func generateEnvoyResoucesForLabel(label string) ([]types.Resource, []types.Reso
 	var clusterArray []*clusterv3.Cluster
 	var routeArray []*routev3.Route
 	var endpointArray []*corev3.Address
-	//TODO: (VirajSalaka) Listeners should not be repeated
 	//var listenerArrays [][]types.Resource
 	for apiKey, labels := range openAPIEnvoyMap {
 		if arrayContains(labels, label) {
@@ -199,7 +216,7 @@ func updateXdsCache(label string, endpoints []types.Resource, clusters []types.R
 	if ok {
 		version += 1
 	} else {
-		//TODO : (VirajSalaka) Fix control plane restart scenario
+		//TODO : (VirajSalaka) Fix control plane restart scenario : This is decided to be provided via the openapi file itself
 		version = 1
 	}
 	//TODO: (VirajSalaka) kept same version for all the resources as we are using simple cache implementation.

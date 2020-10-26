@@ -164,6 +164,7 @@ func StartRestServer(config *confTypes.Config) {
 	server := NewServer(api)
 	defer server.Shutdown()
 
+	//TODO: (VirajSalaka) Properly do the flag parsing process or just remove flag parsing and fix the errors
 	parser := flags.NewParser(server, flags.Default)
 	parser.ShortDescription = "WSO2 API Manager - Admin"
 	parser.LongDescription = "This document specifies a **RESTful API** for WSO2 **API Manager** - Admin Portal.\nPlease see [full swagger definition](https://raw.githubusercontent.com/wso2/carbon-apimgt/v6.5.176/components/apimgt/org.wso2.carbon.apimgt.rest.api.admin/src/main/resources/admin-api.yaml) of the API which is written using [swagger 2.0](http://swagger.io/) specification.\n"
@@ -194,6 +195,7 @@ func StartRestServer(config *confTypes.Config) {
 
 }
 
+//TODO: (VirajSalaka) Either remove the unused methods or change impl such that the code segment is used.
 func getPrivateKeyFile() []byte {
 	var privateKeyByteArr []byte
 	f, err := os.Open("/Users/viraj/Desktop/temp/wso2am-micro-gw-macos-3.2.0-alpha/runtime/bre/security/ballerinaKeystore.p12")
@@ -214,6 +216,7 @@ func getPrivateKeyFile() []byte {
 	return privateKeyByteArr
 }
 
+//TODO: (VirajSalaka) Either remove the unused methods or change impl such that the code segment is used.
 func getPublicKeyFile() []byte {
 	var publicKeyByteArr []byte
 	f, err := os.Open("/Users/viraj/Desktop/temp/wso2am-micro-gw-macos-3.2.0-alpha/runtime/bre/security/ballerinaTruststore.p12")

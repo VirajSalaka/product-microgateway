@@ -125,9 +125,7 @@ func Run(conf *mgwconfig.Config) {
 	}
 
 	logger.LoggerMgw.Info("Starting control plane ....")
-
 	cache := xds.GetXdsCache()
-
 	srv := xdsv3.NewServer(ctx, cache, nil)
 
 	//als := &myals.AccessLogService{}

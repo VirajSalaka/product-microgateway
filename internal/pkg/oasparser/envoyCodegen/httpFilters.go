@@ -40,7 +40,6 @@ func getHttpFilters() []*hcmv3.HttpFilter {
 		&extAauth,
 		&router,
 	}
-
 	return httpFilters
 }
 
