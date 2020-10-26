@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package envoycodegen
+package envoyCodegen
 
 import (
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
@@ -44,6 +44,7 @@ func getHttpFilters() []*hcmv3.HttpFilter {
 	return httpFilters
 }
 
+//TODO: (VirajSalaka) Configure Http Connection Manager
 /**
  * Get router http filter.
  *
@@ -79,6 +80,7 @@ func getRouterHttpFilter() hcmv3.HttpFilter {
 	return filter
 }
 
+//TODO: (VirajSalaka) Configure External Authz Filter
 /**
  * Get ExtAauthz http filter.
  *

@@ -15,7 +15,7 @@
  *
  */
 
-package envoycodegen
+package envoyCodegen
 
 import (
 	"strings"
@@ -62,7 +62,8 @@ func TestCreateRoute(t *testing.T) {
 		UrlType:  "http",
 		Port:     80,
 	}
-	resourcePath := "/resource"
+	resource := apiDefinition.CreateMinimalDummyResourceForTests("/resourcePath", "get", "resource_operation_id", []apiDefinition.Endpoint{},
+		[]apiDefinition.Endpoint{})
 	clusterName := "resource_operation_id"
 	hostRewriteSpecifier := &routev3.RouteAction_HostRewriteLiteral{
 		HostRewriteLiteral: "abc.com",
@@ -97,13 +98,13 @@ func TestCreateRoute(t *testing.T) {
 		},
 	}
 
-	generatedRouteWithXWso2BasePath := createRoute(xWso2BasePath, endpoint, resourcePath, clusterName)
+	generatedRouteWithXWso2BasePath := createRoute(xWso2BasePath, endpoint, resource, clusterName)
 	assert.NotNil(t, generatedRouteWithXWso2BasePath, "Route should not be null")
 
 	assert.Equal(t, generatedRouteWithXWso2BasePath.Action, expctedRouteActionWithXWso2BasePath,
 		"Route generation mismatch when xWso2BasePath option is provided")
 
-	generatedRouteWithoutXWso2BasePath := createRoute("", endpoint, resourcePath, clusterName)
+	generatedRouteWithoutXWso2BasePath := createRoute("", endpoint, resource, clusterName)
 	assert.NotNil(t, generatedRouteWithoutXWso2BasePath, "Route should not be null")
 
 	assert.Equal(t, generatedRouteWithoutXWso2BasePath.Action, expctedRouteActionWithoutXWso2BasePath,

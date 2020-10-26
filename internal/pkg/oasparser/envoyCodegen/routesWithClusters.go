@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package envoycodegen
+package envoyCodegen
 
 import (
 	"fmt"
@@ -104,7 +104,7 @@ func CreateRoutesWithClusters(mgwSwagger apiDefinition.MgwSwagger) ([]*routev3.R
 			cluster_refSand = clusterSand.GetName()
 
 			//sandbox endpoints
-			routeS := createRoute(mgwSwagger.GetXWso2Basepath(), endpointSand[0], resource.GetPath(), cluster_refSand)
+			routeS := createRoute(mgwSwagger.GetXWso2Basepath(), endpointSand[0], resource, cluster_refSand)
 			routesSand = append(routesSand, &routeS)
 			endpointsSand = append(endpointsSand, &addressSand)
 
@@ -114,7 +114,7 @@ func CreateRoutesWithClusters(mgwSwagger apiDefinition.MgwSwagger) ([]*routev3.R
 			cluster_refSand = apilevelClusterSand.GetName()
 
 			//sandbox endpoints
-			routeS := createRoute(mgwSwagger.GetXWso2Basepath(), endpointSand[0], resource.GetPath(), cluster_refSand)
+			routeS := createRoute(mgwSwagger.GetXWso2Basepath(), endpointSand[0], resource, cluster_refSand)
 			routesSand = append(routesSand, &routeS)
 
 		}
@@ -123,13 +123,14 @@ func CreateRoutesWithClusters(mgwSwagger apiDefinition.MgwSwagger) ([]*routev3.R
 		if swag_operator.IsEndpointsAvailable(resource.GetProdEndpoints()) {
 			endpointProd = resource.GetProdEndpoints()
 			addressProd := createAddress(endpointProd[0].GetHost(), endpointProd[0].GetPort())
+			//TODO: (VirajSalaka) Append the mgwswagger title and version
 			clusterNameProd := strings.TrimSpace("clusterProd_" + strings.Replace(resource.GetId(), " ", "", -1) + fmt.Sprint(ind))
 			clusterProd := createCluster(addressProd, clusterNameProd)
 			clustersProd = append(clustersProd, &clusterProd)
 			cluster_refProd = clusterProd.GetName()
 
 			//production endpoints
-			routeP := createRoute(mgwSwagger.GetXWso2Basepath(), endpointProd[0], resource.GetPath(), cluster_refProd)
+			routeP := createRoute(mgwSwagger.GetXWso2Basepath(), endpointProd[0], resource, cluster_refProd)
 			routesProd = append(routesProd, &routeP)
 			endpointsProd = append(endpointsProd, &addressProd)
 
@@ -139,7 +140,7 @@ func CreateRoutesWithClusters(mgwSwagger apiDefinition.MgwSwagger) ([]*routev3.R
 			cluster_refProd = apilevelClusterProd.GetName()
 
 			//production endpoints
-			routeP := createRoute(mgwSwagger.GetXWso2Basepath(), endpointProd[0], resource.GetPath(), cluster_refProd)
+			routeP := createRoute(mgwSwagger.GetXWso2Basepath(), endpointProd[0], resource, cluster_refProd)
 			routesProd = append(routesProd, &routeP)
 
 		} else {
@@ -187,7 +188,6 @@ func createCluster(address corev3.Address, clusterName string) clusterv3.Cluster
 			},
 		},
 	}
-	//fmt.Println(h.GetAddress())
 	return cluster
 }
 
@@ -196,18 +196,24 @@ func createCluster(address corev3.Address, clusterName string) clusterv3.Cluster
  *
  * @param xWso2Basepath   Xwso2 basepath
  * @param endpoint  Endpoint
- * @param resourcePath  Resource path
+ * @param resource  Microgateway API Resource
  * @param clusterName  Name of the cluster
  * @return v2route.Route  Route instance
  */
-func createRoute(xWso2Basepath string, endpoint apiDefinition.Endpoint, resourcePath string, clusterName string) routev3.Route {
+func createRoute(xWso2Basepath string, endpoint apiDefinition.Endpoint, resource apiDefinition.Resource, clusterName string) routev3.Route {
 	logger.LoggerOasparser.Debug("creating a route....")
 	var (
 		router routev3.Route
 		action *routev3.Route_Route
 		match  *routev3.RouteMatch
 	)
-	routePath := generateRoutePaths(xWso2Basepath, endpoint.GetBasepath(), resourcePath)
+	routePath := generateRoutePaths(xWso2Basepath, endpoint.GetBasepath(), resource.GetPath())
+	headerMatcherArray := routev3.HeaderMatcher{
+		Name: ":method",
+		HeaderMatchSpecifier: &routev3.HeaderMatcher_ExactMatch{
+			ExactMatch: strings.ToUpper(resource.GetMethod()),
+		},
+	}
 
 	match = &routev3.RouteMatch{
 		PathSpecifier: &routev3.RouteMatch_SafeRegex{
@@ -220,6 +226,7 @@ func createRoute(xWso2Basepath string, endpoint apiDefinition.Endpoint, resource
 				Regex: routePath,
 			},
 		},
+		Headers: []*routev3.HeaderMatcher{&headerMatcherArray},
 	}
 
 	hostRewriteSpecifier := &routev3.RouteAction_HostRewriteLiteral{

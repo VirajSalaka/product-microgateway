@@ -14,14 +14,14 @@
  *  limitations under the License.
  *
  */
-package envoycodegen_test
+package envoyCodegen_test
 
 import (
 	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	envoycodegen "github.com/wso2/micro-gw/internal/pkg/oasparser/envoycodegen"
+	"github.com/wso2/micro-gw/internal/pkg/oasparser/envoyCodegen"
 )
 
 func TestGenerateRegex(t *testing.T) {
@@ -84,7 +84,7 @@ func TestGenerateRegex(t *testing.T) {
 	}
 
 	for _, item := range dataItems {
-		resultPattern := envoycodegen.GenerateRegex(item.inputpath)
+		resultPattern := envoyCodegen.GenerateRegex(item.inputpath)
 		resultIsMatching, err := regexp.MatchString(resultPattern, item.userInputPath)
 
 		assert.Equal(t, item.isMatched, resultIsMatching, item.message)

@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package envoycodegen
+package envoyCodegen
 
 import (
 	access_logv3 "github.com/envoyproxy/go-control-plane/envoy/config/accesslog/v3"
@@ -205,7 +205,7 @@ func createConectionManagerFilter(vHost routev3.VirtualHost, routeConfigName str
  *
  * @param vHost_Name  Name for virtual host
  * @param routes   Routes of the virtual host
- * @return v2route.VirtualHost  Virtual host instance
+ * @return v3route.VirtualHost  Virtual host instance
  * @return error  Error
  */
 func CreateVirtualHost(vHost_Name string, routes []*routev3.Route) (routev3.VirtualHost, error) {

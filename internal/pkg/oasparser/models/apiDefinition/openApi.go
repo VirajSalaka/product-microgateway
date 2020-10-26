@@ -57,16 +57,16 @@ func (swagger *MgwSwagger) SetInfoOpenApi(swagger3 openapi3.Swagger) {
  * Set swagger3 resource path details to mgwSwagger  Instance.
  *
  * @param path  Resource path
- * @param pathtype  Path type(Get, Post ... )
+ * @param method  Path type(Get, Post ... )
  * @param operation  Operation type
  * @return Resource  MgwSwagger resource instance
  */
-func setOperationOpenApi(path string, pathtype string, operation *openapi3.Operation) Resource {
+func setOperationOpenApi(path string, method string, operation *openapi3.Operation) Resource {
 	var resource Resource
 	if operation != nil {
 		resource = Resource{
 			path:        path,
-			pathtype:    pathtype,
+			method:      method,
 			iD:          operation.OperationID,
 			summary:     operation.Summary,
 			description: operation.Description,

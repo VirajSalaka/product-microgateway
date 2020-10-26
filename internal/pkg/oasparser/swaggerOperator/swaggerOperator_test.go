@@ -81,6 +81,7 @@ servers:
 					Host:     "petstore.io",
 					Basepath: "/api/v2",
 					Port:     80,
+					UrlType:  "https",
 				},
 			},
 			resultResourceProdEndpoints: nil,
