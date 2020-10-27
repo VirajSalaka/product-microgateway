@@ -23,12 +23,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
-	flags "github.com/jessevdk/go-flags"
 
 	keystore "github.com/pavel-v-chernykh/keystore-go/v3"
 	"github.com/wso2/micro-gw/configs/confTypes"
@@ -164,31 +164,14 @@ func StartRestServer(config *confTypes.Config) {
 	server := NewServer(api)
 	defer server.Shutdown()
 
-	//TODO: (VirajSalaka) Properly do the flag parsing process or just remove flag parsing and fix the errors
-	parser := flags.NewParser(server, flags.Default)
-	parser.ShortDescription = "WSO2 API Manager - Admin"
-	parser.LongDescription = "This document specifies a **RESTful API** for WSO2 **API Manager** - Admin Portal.\nPlease see [full swagger definition](https://raw.githubusercontent.com/wso2/carbon-apimgt/v6.5.176/components/apimgt/org.wso2.carbon.apimgt.rest.api.admin/src/main/resources/admin-api.yaml) of the API which is written using [swagger 2.0](http://swagger.io/) specification.\n"
-	server.ConfigureFlags()
-	for _, optsGroup := range api.CommandLineOptionsGroups {
-		_, err := parser.AddGroup(optsGroup.ShortDescription, optsGroup.LongDescription, optsGroup.Options)
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}
-
-	if _, err := parser.Parse(); err != nil {
-		code := 1
-		if fe, ok := err.(*flags.Error); ok {
-			if fe.Type == flags.ErrHelp {
-				code = 0
-			}
-		}
-		os.Exit(code)
-	}
-
 	server.ConfigureAPI()
-	server.TLSPort = 9099
-
+	server.TLSHost = mgwConfig.Server.IP
+	port, err := strconv.Atoi(mgwConfig.Server.Port)
+	if err != nil {
+		log.Fatalf("The provided port value for the REST Api Server :%v is not an integer. %v", mgwConfig.Server.Port, err)
+		return
+	}
+	server.TLSPort = port
 	if err := server.Serve(); err != nil {
 		log.Fatalln(err)
 	}

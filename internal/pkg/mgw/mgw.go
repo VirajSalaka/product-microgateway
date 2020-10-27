@@ -110,8 +110,8 @@ func Run(conf *mgwconfig.Config) {
 	sig := make(chan os.Signal)
 	signal.Notify(sig, os.Interrupt)
 	xds.Init()
-	//TODO: (VirajSalaka - add flags.parse in a compatible manner)
-	//flag.Parse()
+	//TODO: (VirajSalaka) Support the REST API Configuration via flags only if it is a valid requirement
+	flag.Parse()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
