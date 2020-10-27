@@ -70,12 +70,14 @@ func configureAPI(api *operations.RestapiAPI) http.Handler {
 
 	// Applies when the Authorization header is set with the Basic scheme
 	api.BasicAuthAuth = func(user string, pass string) (*models.Principal, error) {
-		logger.LoggerMgw.Infof("token %v", user)
+		if user != mgwConfig.Server.Username || pass != mgwConfig.Server.Password {
+			return nil, errors.New(401, "Credentials are invalid")
+		}
 		//TODO: implement authentication
 		p := models.Principal{
 			Token:    "xxxx",
 			Tenant:   "xxxx",
-			Username: "xxx",
+			Username: user,
 		}
 		return &p, nil
 	}

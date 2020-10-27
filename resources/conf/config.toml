@@ -4,6 +4,8 @@ ip = "localhost"
 port = "9095"
 publicKeyPath = "/Users/viraj/go/src/github.com/VirajSalaka/product-microgateway/resources/certs/localhost.pem"
 privateKeyPath = "/Users/viraj/go/src/github.com/VirajSalaka/product-microgateway/resources/certs/localhost.key"
+username = "foo"
+password = "bar"
 
 [tls]
 enabled = false

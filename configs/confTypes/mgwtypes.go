@@ -65,6 +65,8 @@ type Config struct {
 		Port           string
 		PublicKeyPath  string
 		PrivateKeyPath string
+		Username       string
+		Password       string
 	}
 
 	// TLS configuration
