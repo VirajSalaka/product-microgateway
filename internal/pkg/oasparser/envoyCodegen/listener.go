@@ -23,6 +23,7 @@ import (
 	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	envoy_config_filter_accesslog_v3 "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/file/v3"
 	hcmv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
+	tlsv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 
 	"github.com/golang/protobuf/ptypes"
@@ -54,6 +55,31 @@ func CreateListener(listenerName string, routeConfigName string, vHostP routev3.
 		},
 	}
 	listenerFilters := createListenerFilters(routeConfigName, vHostP)
+	tlsCert := tlsv3.TlsCertificate{
+		PrivateKey: &corev3.DataSource{
+			Specifier: &corev3.DataSource_Filename{
+				Filename: "/home/ubuntu/resources/certs/localhost.key",
+			},
+		},
+		CertificateChain: &corev3.DataSource{
+			Specifier: &corev3.DataSource_Filename{
+				Filename: "/home/ubuntu/resources/certs/localhost.pem",
+			},
+		},
+	}
+
+	//TODO: (VirajSalaka) Make it configurable via SDS
+	tlsFilter := &tlsv3.DownstreamTlsContext{
+		CommonTlsContext: &tlsv3.CommonTlsContext{
+			//TlsCertificateSdsSecretConfigs
+			TlsCertificates: []*tlsv3.TlsCertificate{&tlsCert},
+		},
+	}
+
+	marshalledTlsFilter, err := ptypes.MarshalAny(tlsFilter)
+	if err != nil {
+		panic(err)
+	}
 
 	listener := listenerv3.Listener{
 		Name: listenerName,
@@ -61,10 +87,21 @@ func CreateListener(listenerName string, routeConfigName string, vHostP routev3.
 			Address: listenerAddress,
 		},
 		FilterChains: []*listenerv3.FilterChain{{
-			Filters: listenerFilters},
+			Filters: listenerFilters,
+			TransportSocket: &corev3.TransportSocket{
+				Name: "envoy.transport_sockets.tls",
+				ConfigType: &corev3.TransportSocket_TypedConfig{
+					TypedConfig: marshalledTlsFilter,
+				},
+			},
+		},
 		},
 	}
 	return listener
+}
+
+func createTransportSocketTLSConfig() {
+
 }
 
 func CreateRoutesConfigForRds(vHost routev3.VirtualHost) routev3.RouteConfiguration {
