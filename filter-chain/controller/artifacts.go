@@ -70,7 +70,7 @@ func ResolveBasepaths(apis []oapi3.Swagger) (map[string]string, error) {
 	apidetails := make(map[string]string)
 	for _, api := range apis {
 		server := api.Servers[0]
-		basepath := api.ExtensionProps.Extensions["x-wso2-basepath"]
+		basepath := api.ExtensionProps.Extensions["x-wso2-basePath"]
 		var context string
 		name := api.Info.Title
 

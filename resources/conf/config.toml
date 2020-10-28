@@ -2,8 +2,8 @@
 [server]
 ip = "localhost"
 port = "9095"
-publicKeyPath = "/Users/viraj/go/src/github.com/VirajSalaka/product-microgateway/resources/certs/localhost.pem"
-privateKeyPath = "/Users/viraj/go/src/github.com/VirajSalaka/product-microgateway/resources/certs/localhost.key"
+publicKeyPath = "/home/wso2/resources/certs/localhost.pem"
+privateKeyPath = "/home/wso2/resources/certs/localhost.key"
 username = "foo"
 password = "bar"
 
@@ -12,10 +12,6 @@ enabled = false
 keystore = "security/wso2carbon.jks"
 alias = "wso2carbon"
 password = "wso2carbon"
-
-[admin.user]
-username = "admin"
-password = "admin"
 
 [apis]
 location = "resources/apis/"
