@@ -4,9 +4,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
+    <groupId>org.wso2.mgw</groupId>
     <artifactId>java-filter-chain</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <name>java-filter-chain</name>
     <build>
         <plugins>
             <plugin>
@@ -46,6 +47,34 @@
                       <goal>shade</goal>
                     </goals>
                   </execution>
+                </executions>
+              </plugin>
+              <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.34.1</version>
+                <configuration>
+                    <images>
+                        <image>
+                            <alias>filter-chain</alias>
+                            <name>vsalaka/mg-filter-chain:0.0.2</name>
+                            <build>
+                                <from>adoptopenjdk:8u222-b10-jdk-hotspot</from>
+                                <assembly>
+                                    <descriptorRef>artifact-with-dependencies</descriptorRef>
+                                </assembly>
+                                <cmd>java -jar maven/${project.name}-${project.version}.jar</cmd>
+                            </build>
+                        </image>
+                    </images>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>docker-build</id>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
                 </executions>
               </plugin>
         </plugins>

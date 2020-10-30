@@ -1,0 +1,56 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <!--
+  Simple sample program including Java code.
+  This helloworld exactly has been taken over mostly from https://github.com/arun-gupta/docker-java-sample.git
+-->
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.wso2.am.microgw</groupId>
+        
+        <version>0.0.2-SNAPSHOT</version>
+    <artifactId>wso2am-micro-gw</artifactId>
+    <packaging>pom</packaging>
+    <name>Micro Gateway - Distribution </name>
+    <description>WSO2 Micro Gateway Distribution</description>
+
+  <properties>
+    <file>welcome.txt</file>
+    <base>jetty</base>
+    <project.artifactId>${project.artifactId}</project.artifactId>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.fabric8</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+        <version>0.34.1</version>
+        <configuration>
+          <images>
+            <image>
+                <alias>filter-chain</alias>
+                <name>vsalaka/mg-control-plane:0.0.2</name>
+              <build>
+                <!-- filter>@</filter-->
+                <contextDir>../../../../</contextDir>
+                <dockerFile>docker/with-external-build/control-plane/Dockerfile</dockerFile>
+               
+              </build>
+            </image>
+          </images>
+        </configuration>
+        <executions>
+            <execution>
+                <id>docker-build</id>
+                <goals>
+                    <goal>build</goal>
+                </goals>
+            </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
