@@ -26,7 +26,7 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 
 	"github.com/golang/protobuf/ptypes"
-	"github.com/wso2/micro-gw/configs"
+	"github.com/wso2/micro-gw/internal/configs"
 	logger "github.com/wso2/micro-gw/internal/loggers"
 )
 

@@ -23,7 +23,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	logger "github.com/sirupsen/logrus"
-	config "github.com/wso2/micro-gw/configs/confTypes"
+	config "github.com/wso2/micro-gw/internal/configs/confTypes"
 )
 
 var (

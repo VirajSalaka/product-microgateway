@@ -31,7 +31,7 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 
 	keystore "github.com/pavel-v-chernykh/keystore-go/v3"
-	"github.com/wso2/micro-gw/configs/confTypes"
+	"github.com/wso2/micro-gw/internal/configs/confTypes"
 	logger "github.com/wso2/micro-gw/internal/loggers"
 	apiServer "github.com/wso2/micro-gw/internal/pkg/api"
 	"github.com/wso2/micro-gw/internal/pkg/api/models"

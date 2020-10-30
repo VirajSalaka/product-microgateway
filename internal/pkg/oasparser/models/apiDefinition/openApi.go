@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/wso2/micro-gw/configs"
+	"github.com/wso2/micro-gw/internal/configs"
 	logger "github.com/wso2/micro-gw/internal/loggers"
 )
 

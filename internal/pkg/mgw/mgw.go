@@ -29,8 +29,8 @@ import (
 	"os/signal"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/wso2/micro-gw/configs"
-	mgwconfig "github.com/wso2/micro-gw/configs/confTypes"
+	"github.com/wso2/micro-gw/internal/configs"
+	mgwconfig "github.com/wso2/micro-gw/internal/configs/confTypes"
 	logger "github.com/wso2/micro-gw/internal/loggers"
 	xds "github.com/wso2/micro-gw/internal/pkg/xds"
 	"google.golang.org/grpc"

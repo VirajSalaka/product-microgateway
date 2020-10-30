@@ -2,8 +2,8 @@
 [server]
 ip = "localhost"
 port = "9095"
-publicKeyPath = "/home/wso2/resources/certs/localhost.pem"
-privateKeyPath = "/home/wso2/resources/certs/localhost.key"
+publicKeyPath = "/Users/viraj/go/src/github.com/VirajSalaka/product-microgateway/resources/certs/localhost.pem"
+privateKeyPath = "/Users/viraj/go/src/github.com/VirajSalaka/product-microgateway/resources/certs/localhost.key"
 username = "foo"
 password = "bar"
 
