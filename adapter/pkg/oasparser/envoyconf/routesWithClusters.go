@@ -27,11 +27,13 @@ import (
 	envoy_type_matcherv3 "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/golang/protobuf/ptypes/any"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/wso2/micro-gw/config"
 	logger "github.com/wso2/micro-gw/loggers"
 	"github.com/wso2/micro-gw/pkg/oasparser/model"
 
+	"regexp"
 	"strings"
 	"time"
 
@@ -68,6 +70,11 @@ func CreateRoutesWithClusters(mgwSwagger model.MgwSwagger) (routesP []*routev3.R
 		apiLevelClusterNameSand string
 		endpointsSand           []*corev3.Address
 	)
+	apiTitle := mgwSwagger.GetTitle()
+	apiVersion := mgwSwagger.GetVersion()
+	apiBasePath := mgwSwagger.GetXWso2Basepath()
+
+	envoyCorsPolicy := getCorsPolicy(mgwSwagger.GetCorsConfig())
 	// check API level sandbox endpoints availble
 	if len(mgwSwagger.GetSandEndpoints()) > 0 {
 		apiLevelEndpointSand = mgwSwagger.GetSandEndpoints()
@@ -92,10 +99,8 @@ func CreateRoutesWithClusters(mgwSwagger model.MgwSwagger) (routesP []*routev3.R
 	} else {
 		logger.LoggerOasparser.Warn("API level Producton endpoints are not defined")
 	}
+
 	for _, resource := range mgwSwagger.GetResources() {
-		apiTitle := mgwSwagger.GetTitle()
-		apiVersion := mgwSwagger.GetVersion()
-		apiBasePath := mgwSwagger.GetXWso2Basepath()
 
 		// resource level check sandbox endpoints
 		if len(resource.GetSandEndpoints()) > 0 {
@@ -109,7 +114,7 @@ func CreateRoutesWithClusters(mgwSwagger model.MgwSwagger) (routesP []*routev3.R
 			clusterRefSand := clusterSand.GetName()
 
 			// sandbox endpoints
-			routeS := createRoute(apiTitle, apiBasePath, apiVersion, endpointSand[0], resource, clusterRefSand)
+			routeS := createRoute(apiTitle, apiBasePath, apiVersion, endpointSand[0], resource, clusterRefSand, envoyCorsPolicy)
 			routesSand = append(routesSand, routeS)
 			endpointsSand = append(endpointsSand, addressSand)
 
@@ -119,7 +124,7 @@ func CreateRoutesWithClusters(mgwSwagger model.MgwSwagger) (routesP []*routev3.R
 			clusterRefSand := apilevelClusterSand.GetName()
 
 			// sandbox endpoints
-			routeS := createRoute(apiTitle, apiBasePath, apiVersion, endpointSand[0], resource, clusterRefSand)
+			routeS := createRoute(apiTitle, apiBasePath, apiVersion, endpointSand[0], resource, clusterRefSand, envoyCorsPolicy)
 			routesSand = append(routesSand, routeS)
 
 		}
@@ -136,7 +141,7 @@ func CreateRoutesWithClusters(mgwSwagger model.MgwSwagger) (routesP []*routev3.R
 			clusterRefProd := clusterProd.GetName()
 
 			// production endpoints
-			routeP := createRoute(apiTitle, apiBasePath, apiVersion, endpointProd[0], resource, clusterRefProd)
+			routeP := createRoute(apiTitle, apiBasePath, apiVersion, endpointProd[0], resource, clusterRefProd, envoyCorsPolicy)
 			routesProd = append(routesProd, routeP)
 			endpointsProd = append(endpointsProd, addressProd)
 
@@ -146,7 +151,7 @@ func CreateRoutesWithClusters(mgwSwagger model.MgwSwagger) (routesP []*routev3.R
 			clusterRefProd := apilevelClusterProd.GetName()
 
 			// production endpoints
-			routeP := createRoute(apiTitle, apiBasePath, apiVersion, endpointProd[0], resource, clusterRefProd)
+			routeP := createRoute(apiTitle, apiBasePath, apiVersion, endpointProd[0], resource, clusterRefProd, envoyCorsPolicy)
 			routesProd = append(routesProd, routeP)
 
 		} else {
@@ -219,7 +224,7 @@ func createCluster(address *corev3.Address, clusterName string, urlType string) 
 }
 
 func createRoute(title string, xWso2Basepath string, version string, endpoint model.Endpoint,
-	resource model.Resource, clusterName string) *routev3.Route {
+	resource model.Resource, clusterName string, corsPolicy *routev3.CorsPolicy) *routev3.Route {
 	logger.LoggerOasparser.Debug("creating a route....")
 	var (
 		router       routev3.Route
@@ -322,8 +327,12 @@ func createRoute(title string, xWso2Basepath string, version string, endpoint mo
 			},
 		}
 	}
-	logger.LoggerOasparser.Debug("adding route ", resourcePath)
 
+	if corsPolicy != nil {
+		action.Route.Cors = corsPolicy
+	}
+
+	logger.LoggerOasparser.Debug("adding route ", resourcePath)
 	router = routev3.Route{
 		Name:      xWso2Basepath, //Categorize routes with same base path
 		Match:     match,
@@ -387,4 +396,49 @@ func generateRegex(fullpath string) string {
 		newPath = "^" + fullpath + endRegex + "$"
 	}
 	return newPath
+}
+
+func getCorsPolicy(corsConfig *model.CorsConfig) *routev3.CorsPolicy {
+
+	if corsConfig == nil || !corsConfig.Enabled {
+		return nil
+	}
+
+	stringMatcherArray := []*envoy_type_matcherv3.StringMatcher{}
+	for _, origin := range corsConfig.AccessControlAllowOrigins {
+		regexMatcher := &envoy_type_matcherv3.StringMatcher{
+			MatchPattern: &envoy_type_matcherv3.StringMatcher_SafeRegex{
+				SafeRegex: &envoy_type_matcherv3.RegexMatcher{
+					EngineType: &envoy_type_matcherv3.RegexMatcher_GoogleRe2{
+						GoogleRe2: &envoy_type_matcherv3.RegexMatcher_GoogleRE2{
+							MaxProgramSize: nil,
+						},
+					},
+					// adds escape character when necessary
+					Regex: regexp.QuoteMeta(origin),
+				},
+			},
+		}
+		stringMatcherArray = append(stringMatcherArray, regexMatcher)
+	}
+
+	methods := strings.Join(corsConfig.AccessControlAllowMethods, ", ")
+	headers := strings.Join(corsConfig.AccessControlAllowHeaders, ", ")
+
+	corsPolicy := &routev3.CorsPolicy{
+		AllowCredentials: &wrapperspb.BoolValue{
+			Value: corsConfig.AccessControlAllowCredentials,
+		},
+	}
+
+	if len(stringMatcherArray) > 0 {
+		corsPolicy.AllowOriginStringMatch = stringMatcherArray
+	}
+	if len(methods) > 0 {
+		corsPolicy.AllowMethods = methods
+	}
+	if len(headers) > 0 {
+		corsPolicy.AllowHeaders = headers
+	}
+	return corsPolicy
 }

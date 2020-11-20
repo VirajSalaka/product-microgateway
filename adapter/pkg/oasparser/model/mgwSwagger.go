@@ -217,7 +217,6 @@ func (swagger *MgwSwagger) setXWso2Cors() {
 			corsConfig := &CorsConfig{
 				Enabled:                       true,
 				AccessControlAllowCredentials: false,
-				AccessControlAllowOrigins:     []string{"*"},
 			}
 			err := parser.Decode(parsedCors, &corsConfig)
 			if err != nil {

@@ -103,7 +103,8 @@ func TestCreateRoute(t *testing.T) {
 		},
 	}
 
-	generatedRouteWithXWso2BasePath := createRoute(title, xWso2BasePath, version, endpoint, resourceWithGet, clusterName)
+	// TODO: (VirajSalaka) Provide test cases for Cors Configuration
+	generatedRouteWithXWso2BasePath := createRoute(title, xWso2BasePath, version, endpoint, resourceWithGet, clusterName, nil)
 	assert.NotNil(t, generatedRouteWithXWso2BasePath, "Route should not be null")
 	assert.Equal(t, expectedRouteActionWithXWso2BasePath, generatedRouteWithXWso2BasePath.Action,
 		"Route generation mismatch when xWso2BasePath option is provided")
@@ -111,7 +112,8 @@ func TestCreateRoute(t *testing.T) {
 	assert.Equal(t, "^(GET)$", generatedRouteWithXWso2BasePath.GetMatch().Headers[0].GetSafeRegexMatch().Regex,
 		"Assigned HTTP Method Regex is incorrect when single method is available.")
 
-	generatedRouteWithoutXWso2BasePath := createRoute(title, "", version, endpoint, resourceWithGetPost, clusterName)
+	// TODO: (VirajSalaka) Provide test cases for Cors Configuration
+	generatedRouteWithoutXWso2BasePath := createRoute(title, "", version, endpoint, resourceWithGetPost, clusterName, nil)
 	assert.NotNil(t, generatedRouteWithoutXWso2BasePath, "Route should not be null")
 	assert.NotNil(t, generatedRouteWithoutXWso2BasePath.GetMatch().Headers, "Headers property should not be null")
 	assert.Equal(t, "^(GET|POST)$", generatedRouteWithoutXWso2BasePath.GetMatch().Headers[0].GetSafeRegexMatch().Regex,
