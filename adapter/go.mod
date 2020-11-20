@@ -19,6 +19,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.4
 	github.com/jessevdk/go-flags v1.4.0
+	github.com/mitchellh/mapstructure v1.3.3
 	github.com/pavel-v-chernykh/keystore-go/v3 v3.0.4
 	github.com/sirupsen/logrus v1.5.0
 	github.com/stretchr/testify v1.6.1
@@ -27,5 +28,6 @@ require (
 	golang.org/x/tools v0.0.0-20201116002733-ac45abd4c88c // indirect
 	google.golang.org/appengine v1.4.0
 	google.golang.org/grpc v1.29.1
+	google.golang.org/protobuf v1.23.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
