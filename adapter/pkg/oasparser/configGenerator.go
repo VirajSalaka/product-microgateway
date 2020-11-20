@@ -24,7 +24,7 @@ import (
 	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 
-	enovoy "github.com/wso2/micro-gw/pkg/oasparser/envoyconf"
+	"github.com/wso2/micro-gw/pkg/oasparser/envoyconf"
 	"github.com/wso2/micro-gw/pkg/oasparser/operator"
 )
 
@@ -32,23 +32,19 @@ import (
 // when the openAPI Json is provided.
 func GetProductionRoutesClustersEndpoints(byteArr []byte) ([]*routev3.Route, []*clusterv3.Cluster, []*corev3.Address) {
 	mgwSwagger := operator.GetMgwSwagger(byteArr)
-	routes, clusters, endpoints, _, _, _ := enovoy.CreateRoutesWithClusters(mgwSwagger)
+	vHostName := mgwSwagger.GetXWso2Host()
+	routes, clusters, endpoints, _, _, _ := envoyconf.CreateRoutesWithClusters(mgwSwagger)
+	vHostP := envoyconf.CreateVirtualHost(vHostName, routes)
+	routeConfigProd := envoyconf.CreateRoutesConfigForRds(vHostP)
 	return routes, clusters, endpoints
 }
 
 // GetProductionListenerAndRouteConfig generates the listener and routesconfiguration configurations.
 //
-// The VirtualHost is named as "default".
-// The provided set of envoy routes will be assigned under the virtual host
-//
 // The RouteConfiguration is named as "default"
-func GetProductionListenerAndRouteConfig(routes []*routev3.Route) (*listenerv3.Listener, *routev3.RouteConfiguration) {
-	listnerProd := enovoy.CreateListenerWithRds("default")
-	vHostName := "default"
-	vHostP := enovoy.CreateVirtualHost(vHostName, routes)
-	routeConfigProd := enovoy.CreateRoutesConfigForRds(vHostP)
-
-	return listnerProd, routeConfigProd
+func GetProductionListenerAndRouteConfig(routes []*routev3.Route) *listenerv3.Listener {
+	listnerProd := envoyconf.CreateListenerWithRds("default")
+	return listnerProd
 }
 
 // GetCacheResources converts the envoy endpoints, clusters, routes, and listener to
@@ -77,6 +73,6 @@ func GetCacheResources(endpoints []*corev3.Address, clusters []*clusterv3.Cluste
 //All the already existing routes (within the routeConfiguration) will be removed.
 func UpdateRoutesConfig(routeConfig *routev3.RouteConfiguration, routes []*routev3.Route) {
 	vHostName := "default"
-	vHost := enovoy.CreateVirtualHost(vHostName, routes)
+	vHost := envoyconf.CreateVirtualHost(vHostName, routes)
 	routeConfig.VirtualHosts = []*routev3.VirtualHost{vHost}
 }

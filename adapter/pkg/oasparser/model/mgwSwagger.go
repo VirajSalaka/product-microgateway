@@ -36,6 +36,7 @@ type MgwSwagger struct {
 	sandboxUrls      []Endpoint
 	resources        []Resource
 	xWso2Basepath    string
+	xWso2Host        string
 }
 
 // Endpoint represents the structure of an endpoint.
@@ -96,6 +97,11 @@ func (swagger *MgwSwagger) GetSandEndpoints() []Endpoint {
 // GetResources returns the array of resources (openAPI path level info)
 func (swagger *MgwSwagger) GetResources() []Resource {
 	return swagger.resources
+}
+
+// GetXWso2Host returns the host name assigned under x-wso2-host label.
+func (swagger *MgwSwagger) GetXWso2Host() string {
+	return swagger.xWso2Host
 }
 
 // SetXWso2Extenstions set the MgwSwagger object with the properties
@@ -186,4 +192,17 @@ func getXWso2Basepath(vendorExtensible map[string]interface{}) string {
 
 func (swagger *MgwSwagger) setXWso2Basepath() {
 	swagger.xWso2Basepath = getXWso2Basepath(swagger.vendorExtensible)
+}
+
+func (swagger *MgwSwagger) setXWso2Host() {
+	hostname := "default"
+	if host, found := swagger.vendorExtensible[xWso2Host]; found {
+		hostVal, ok := host.(string)
+		if ok {
+			hostname = hostVal
+		} else {
+			logger.LoggerOasparser.Error("Invalid String is provided under the extension : " + xWso2Host)
+		}
+	}
+	swagger.xWso2Host = hostname
 }

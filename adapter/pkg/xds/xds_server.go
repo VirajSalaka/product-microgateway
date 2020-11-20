@@ -192,19 +192,17 @@ func generateEnvoyResoucesForLabel(label string) ([]types.Resource, []types.Reso
 	var clusterArray []*clusterv3.Cluster
 	var routeArray []*routev3.Route
 	var endpointArray []*corev3.Address
-	//var listenerArrays [][]types.Resource
 	for apiKey, labels := range openAPIEnvoyMap {
 		if arrayContains(labels, label) {
 			clusterArray = append(clusterArray, openAPIClustersMap[apiKey]...)
 			routeArray = append(routeArray, openAPIRoutesMap[apiKey]...)
 			endpointArray = append(endpointArray, openAPIEndpointsMap[apiKey]...)
-			//listenerArrays = append(listenerArrays, openAPIListenersMap[apiKey])
 		}
 	}
 	listener, listenerFound := envoyListenerConfigMap[label]
 	routesConfig, routesConfigFound := envoyRouteConfigMap[label]
 	if !listenerFound && !routesConfigFound {
-		listener, routesConfig = oasParser.GetProductionListenerAndRouteConfig(routeArray)
+		listener = oasParser.GetProductionListenerAndRouteConfig(routeArray)
 		envoyListenerConfigMap[label] = listener
 		envoyRouteConfigMap[label] = routesConfig
 	} else {

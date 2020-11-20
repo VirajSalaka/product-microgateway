@@ -29,4 +29,5 @@ const (
 	sandboxEndpoints    string = "x-wso2-sandbox-endpoints"
 	xWso2BasePath       string = "x-wso2-basePath"
 	xWso2Label          string = "x-wso2-label"
+	xWso2Host           string = "x-wso2-host"
 )
