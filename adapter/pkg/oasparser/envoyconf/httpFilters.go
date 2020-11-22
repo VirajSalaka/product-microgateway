@@ -24,6 +24,7 @@ import (
 
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	ext_authv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/ext_authz/v3"
+	metadatav3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/header_to_metadata/v3"
 	routerv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/router/v3"
 	hcmv3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
@@ -36,6 +37,7 @@ import (
 func getHTTPFilters() []*hcmv3.HttpFilter {
 	extAauth := getExtAuthzHTTPFilter()
 	router := getRouterHTTPFilter()
+	headerToMetadataFilter := getHeaderToMetadataFilter()
 	cors := &hcmv3.HttpFilter{
 		Name:       wellknown.CORS,
 		ConfigType: &hcmv3.HttpFilter_TypedConfig{},
@@ -44,6 +46,7 @@ func getHTTPFilters() []*hcmv3.HttpFilter {
 	httpFilters := []*hcmv3.HttpFilter{
 		cors,
 		extAauth,
+		headerToMetadataFilter,
 		router,
 	}
 	return httpFilters
@@ -90,9 +93,9 @@ func getExtAuthzHTTPFilter() *hcmv3.HttpFilter {
 			},
 		},
 	}
-	ext, err2 := ptypes.MarshalAny(extAuthzConfig)
-	if err2 != nil {
-		logger.LoggerOasparser.Error(err2)
+	ext, err := ptypes.MarshalAny(extAuthzConfig)
+	if err != nil {
+		logger.LoggerOasparser.Error(err)
 	}
 	extAuthzFilter := hcmv3.HttpFilter{
 		Name: extAuthzFilterName,
@@ -101,4 +104,35 @@ func getExtAuthzHTTPFilter() *hcmv3.HttpFilter {
 		},
 	}
 	return &extAuthzFilter
+}
+
+func getHeaderToMetadataFilter() *hcmv3.HttpFilter {
+	requestRule := &metadatav3.Config_Rule{
+		Header: "environment",
+		OnHeaderPresent: &metadatav3.Config_KeyValuePair{
+			MetadataNamespace: "envoy.lb",
+			Key:               "environment",
+			Value:             "sandbox",
+		},
+		OnHeaderMissing: &metadatav3.Config_KeyValuePair{
+			MetadataNamespace: "envoy.lb",
+			Key:               "environment",
+			Value:             "production",
+		},
+		Remove: true,
+	}
+	config := &metadatav3.Config{
+		RequestRules: []*metadatav3.Config_Rule{requestRule},
+	}
+
+	marshalledConfig, err := ptypes.MarshalAny(config)
+	if err != nil {
+		logger.LoggerOasparser.Error(err)
+	}
+	return &hcmv3.HttpFilter{
+		Name: "envoy.filters.http.header_to_metadata",
+		ConfigType: &hcmv3.HttpFilter_TypedConfig{
+			TypedConfig: marshalledConfig,
+		},
+	}
 }

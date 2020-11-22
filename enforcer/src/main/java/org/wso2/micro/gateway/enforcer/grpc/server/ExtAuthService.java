@@ -67,8 +67,13 @@ public class ExtAuthService extends AuthorizationGrpc.AuthorizationImplBase {
                     .setDeniedResponse(DeniedHttpResponse.newBuilder().setBody(responseJson.toString())
                             .addHeaders(headerValueOption).setStatus(status).build()).build();
         } else {
+            // TODO: (VirajSalaka) Populate the header properly.
+            // This header is not propagated to backend. It is stripped within the data plane
+            HeaderValueOption headerValueOption = HeaderValueOption.newBuilder()
+                    .setHeader(HeaderValue.newBuilder().setKey("environment").setValue("sandbox").build())
+                    .build();
             return CheckResponse.newBuilder().setStatus(Status.newBuilder().setCode(Code.OK_VALUE).build())
-                    .setOkResponse(OkHttpResponse.newBuilder().build()).build();
+                    .setOkResponse(OkHttpResponse.newBuilder().addHeaders(headerValueOption).build()).build();
         }
     }
 
