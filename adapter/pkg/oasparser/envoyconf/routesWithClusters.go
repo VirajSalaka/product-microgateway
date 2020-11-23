@@ -27,6 +27,7 @@ import (
 	envoy_type_matcherv3 "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/golang/protobuf/ptypes/any"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/wso2/micro-gw/config"
@@ -40,6 +41,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 )
+
+const envoyLb = "envoy.lb"
 
 // CreateRoutesWithClusters creates envoy routes along with clusters and endpoint instances.
 // This creates routes for all the swagger resources and link to clusters.
@@ -170,12 +173,33 @@ func createCluster(address *corev3.Address, clusterName string, urlType string) 
 		logger.LoggerOasparser.Fatal("Error loading configuration. ", errReadConfig)
 	}
 
+	meta := &corev3.Metadata{
+		FilterMetadata: map[string]*structpb.Struct{},
+	}
+
+	labelsStruct := &structpb.Struct{
+		Fields: map[string]*structpb.Value{},
+	}
+
+	labelsStruct.Fields["environment"] = &structpb.Value{
+		Kind: &structpb.Value_StringValue{
+			StringValue: "production",
+		},
+	}
+	meta.FilterMetadata[envoyLb] = labelsStruct
 	cluster := clusterv3.Cluster{
 		Name:                 clusterName,
 		ConnectTimeout:       ptypes.DurationProto(conf.Envoy.ClusterTimeoutInSeconds * time.Second),
 		ClusterDiscoveryType: &clusterv3.Cluster_Type{Type: clusterv3.Cluster_STRICT_DNS},
 		DnsLookupFamily:      clusterv3.Cluster_V4_ONLY,
 		LbPolicy:             clusterv3.Cluster_ROUND_ROBIN,
+		LbSubsetConfig: &clusterv3.Cluster_LbSubsetConfig{
+			SubsetSelectors: []*clusterv3.Cluster_LbSubsetConfig_LbSubsetSelector{
+				{
+					Keys: []string{"environment"},
+				},
+			},
+		},
 		LoadAssignment: &endpointv3.ClusterLoadAssignment{
 			ClusterName: clusterName,
 			Endpoints: []*endpointv3.LocalityLbEndpoints{
@@ -187,6 +211,7 @@ func createCluster(address *corev3.Address, clusterName string, urlType string) 
 									Address: address,
 								},
 							},
+							Metadata: meta,
 						},
 					},
 				},
@@ -221,6 +246,36 @@ func createCluster(address *corev3.Address, clusterName string, urlType string) 
 		}
 	}
 	return &cluster
+}
+
+func createLBEndpoint(address *corev3.Address, isProd bool) *endpointv3.LbEndpoint {
+	meta := &corev3.Metadata{
+		FilterMetadata: map[string]*structpb.Struct{},
+	}
+
+	labelsStruct := &structpb.Struct{
+		Fields: map[string]*structpb.Value{},
+	}
+
+	environment := "production"
+	if !isProd {
+		environment = "sandbox"
+	}
+	labelsStruct.Fields["environment"] = &structpb.Value{
+		Kind: &structpb.Value_StringValue{
+			StringValue: environment,
+		},
+	}
+
+	lbEndpoint := &endpointv3.LbEndpoint{
+		HostIdentifier: &endpointv3.LbEndpoint_Endpoint{
+			Endpoint: &endpointv3.Endpoint{
+				Address: address,
+			},
+		},
+		Metadata: meta,
+	}
+	return lbEndpoint
 }
 
 func createRoute(title string, xWso2Basepath string, version string, endpoint model.Endpoint,
