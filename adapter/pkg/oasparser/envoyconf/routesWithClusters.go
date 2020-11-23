@@ -233,19 +233,19 @@ func createRoute(title string, xWso2Basepath string, version string, endpoint mo
 		decorator    *routev3.Decorator
 		resourcePath string
 	)
-	headerMatcherArray := routev3.HeaderMatcher{
-		Name: httpMethodHeader,
-		HeaderMatchSpecifier: &routev3.HeaderMatcher_SafeRegexMatch{
-			SafeRegexMatch: &envoy_type_matcherv3.RegexMatcher{
-				EngineType: &envoy_type_matcherv3.RegexMatcher_GoogleRe2{
-					GoogleRe2: &envoy_type_matcherv3.RegexMatcher_GoogleRE2{
-						MaxProgramSize: nil,
-					},
-				},
-				Regex: "^(" + strings.Join(resource.GetMethod(), "|") + ")$",
-			},
-		},
-	}
+	// headerMatcherArray := routev3.HeaderMatcher{
+	// 	Name: httpMethodHeader,
+	// 	HeaderMatchSpecifier: &routev3.HeaderMatcher_SafeRegexMatch{
+	// 		SafeRegexMatch: &envoy_type_matcherv3.RegexMatcher{
+	// 			EngineType: &envoy_type_matcherv3.RegexMatcher_GoogleRe2{
+	// 				GoogleRe2: &envoy_type_matcherv3.RegexMatcher_GoogleRE2{
+	// 					MaxProgramSize: nil,
+	// 				},
+	// 			},
+	// 			Regex: "^(" + strings.Join(resource.GetMethod(), "|") + ")$",
+	// 		},
+	// 	},
+	// }
 	resourcePath = resource.GetPath()
 	routePath := generateRoutePaths(xWso2Basepath, endpoint.Basepath, resourcePath)
 
@@ -260,7 +260,7 @@ func createRoute(title string, xWso2Basepath string, version string, endpoint mo
 				Regex: routePath,
 			},
 		},
-		Headers: []*routev3.HeaderMatcher{&headerMatcherArray},
+		// Headers: []*routev3.HeaderMatcher{&headerMatcherArray},
 	}
 
 	hostRewriteSpecifier := &routev3.RouteAction_HostRewriteLiteral{
