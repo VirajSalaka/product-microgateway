@@ -21,9 +21,9 @@ const (
 )
 
 const (
-	extAuthzFilterName string = "envoy.filters.http.ext_authz"
-	transportSocketName string = "envoy.transport_sockets.tls"
-	accessLogName       string = "envoy.access_loggers.file"
+	extAuthzFilterName        string = "envoy.filters.http.ext_authz"
+	transportSocketName       string = "envoy.transport_sockets.tls"
+	accessLogName             string = "envoy.access_loggers.file"
 	httpConManagerStartPrefix string = "ingress_http"
 )
 
@@ -34,10 +34,10 @@ const (
 	defaultCACertPath               string = "/etc/ssl/certs/ca-certificates.crt"
 )
 
-const (
-	sandClustersConfigNamePrefix string = "clusterSand_"
-	prodClustersConfigNamePrefix string = "clusterProd_"
-)
+// const (
+// 	sandClustersConfigNamePrefix string = "clusterSand_"
+// 	prodClustersConfigNamePrefix string = "clusterProd_"
+// )
 
 const (
 	httpsURLType     string = "https"
