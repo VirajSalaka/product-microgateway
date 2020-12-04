@@ -68,7 +68,11 @@ func getRouterHTTPFilter() *hcmv3.HttpFilter {
 }
 
 // getExtAuthzHTTPFilter gets ExtAauthz http filter.
-func getExtAuthzHTTPFilter() *hcmv3.HttpFilter {
+// isClearRouteCacheEnabled determines whether the clear route cache option needs to be
+// set.
+// If the production and sandbox endpoints both are applied isClearRouteCacheEnabled
+// needs to be set to true.
+func getExtAuthzHTTPFilter(isClearRouteCacheEnabled bool) *hcmv3.HttpFilter {
 	extAuthzConfig := &ext_authv3.ExtAuthz{
 		WithRequestBody: &ext_authv3.BufferSettings{
 			MaxRequestBytes:     1024,
