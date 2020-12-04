@@ -27,6 +27,7 @@ import (
 	envoy_type_matcherv3 "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/golang/protobuf/ptypes/any"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/wso2/micro-gw/config"
 	logger "github.com/wso2/micro-gw/loggers"
@@ -38,6 +39,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 )
+
+const envoyLb = "envoy.lb"
 
 // CreateRoutesWithClusters creates envoy routes along with clusters and endpoint instances.
 // This creates routes for all the swagger resources and link to clusters.
@@ -67,35 +70,41 @@ func CreateRoutesWithClusters(mgwSwagger model.MgwSwagger) (routesP []*routev3.R
 		apilevelClusterSand     *clusterv3.Cluster
 		apiLevelClusterNameSand string
 		endpointsSand           []*corev3.Address
+
+		apiLevelCluster *clusterv3.Cluster
 	)
-	// check API level sandbox endpoints availble
-	if len(mgwSwagger.GetSandEndpoints()) > 0 {
-		apiLevelEndpointSand = mgwSwagger.GetSandEndpoints()
-		apilevelAddressSand := createAddress(apiLevelEndpointSand[0].Host, apiLevelEndpointSand[0].Port)
-		apiLevelClusterNameSand = strings.TrimSpace(sandClustersConfigNamePrefix +
-			strings.Replace(mgwSwagger.GetTitle(), " ", "", -1) + mgwSwagger.GetVersion())
-		apilevelClusterSand = createCluster(apilevelAddressSand, apiLevelClusterNameSand, apiLevelEndpointSand[0].URLType)
-		clustersSand = append(clustersSand, apilevelClusterSand)
-		endpointsSand = append(endpointsSand, apilevelAddressSand)
+	apiTitle := mgwSwagger.GetTitle()
+	apiVersion := mgwSwagger.GetVersion()
+	apiBasePath := mgwSwagger.GetXWso2Basepath()
+
+	// envoyCorsPolicy := getCorsPolicy(mgwSwagger.GetCorsConfig())
+	apiLevelEndpointSand = mgwSwagger.GetSandEndpoints()
+	apiLevelEndpointProd = mgwSwagger.GetProdEndpoints()
+	if len(apiLevelEndpointProd) > 0 || len(apiLevelEndpointSand) > 0 {
+		apiLevelClusterName := strings.TrimSpace(strings.Replace(mgwSwagger.GetTitle(), " ", "", -1) +
+			mgwSwagger.GetVersion())
+		apiLevelCluster = createCluster(apiLevelEndpointProd, apiLevelEndpointSand, apiLevelClusterName)
+	} else {
+		logger.LoggerOasparser.Error("No production endpoints ")
 	}
 
 	// check API level production endpoints available
-	if len(mgwSwagger.GetProdEndpoints()) > 0 {
-		apiLevelEndpointProd = mgwSwagger.GetProdEndpoints()
-		apilevelAddressP := createAddress(apiLevelEndpointProd[0].Host, apiLevelEndpointProd[0].Port)
-		apiLevelClusterNameProd = strings.TrimSpace(prodClustersConfigNamePrefix +
-			strings.Replace(mgwSwagger.GetTitle(), " ", "", -1) + mgwSwagger.GetVersion())
-		apilevelClusterProd = createCluster(apilevelAddressP, apiLevelClusterNameProd, apiLevelEndpointProd[0].URLType)
-		clustersProd = append(clustersProd, apilevelClusterProd)
-		endpointsProd = append(endpointsProd, apilevelAddressP)
+	// if len(mgwSwagger.GetProdEndpoints()) > 0 {
+	// 	apiLevelEndpointProd = mgwSwagger.GetProdEndpoints()
+	// 	apilevelAddressP := createAddress(apiLevelEndpointProd[0].Host, apiLevelEndpointProd[0].Port)
+	// 	apiLevelClusterNameProd = strings.TrimSpace(prodClustersConfigNamePrefix +
+	// 		strings.Replace(mgwSwagger.GetTitle(), " ", "", -1) + mgwSwagger.GetVersion())
+	// 	apilevelClusterProd = createCluster(apilevelAddressP, apiLevelClusterNameProd, apiLevelEndpointProd[0].URLType)
+	// 	clustersProd = append(clustersProd, apilevelClusterProd)
+	// 	endpointsProd = append(endpointsProd, apilevelAddressP)
 
-	} else {
-		logger.LoggerOasparser.Warn("API level Producton endpoints are not defined")
-	}
+	// } else {
+	// 	logger.LoggerOasparser.Warn("API level Producton endpoints are not defined")
+	// }
 	for _, resource := range mgwSwagger.GetResources() {
-		apiTitle := mgwSwagger.GetTitle()
-		apiVersion := mgwSwagger.GetVersion()
-		apiBasePath := mgwSwagger.GetXWso2Basepath()
+		// apiTitle := mgwSwagger.GetTitle()
+		// apiVersion := mgwSwagger.GetVersion()
+		// apiBasePath := mgwSwagger.GetXWso2Basepath()
 
 		// resource level check sandbox endpoints
 		if len(resource.GetSandEndpoints()) > 0 {
@@ -104,12 +113,12 @@ func CreateRoutesWithClusters(mgwSwagger model.MgwSwagger) (routesP []*routev3.R
 			// TODO: (VirajSalaka) 0 is hardcoded as only one endpoint is supported at the moment
 			clusterNameSand := strings.TrimSpace(apiLevelClusterNameSand + "_" + strings.Replace(resource.GetID(), " ", "", -1) +
 				"0")
-			clusterSand := createCluster(addressSand, clusterNameSand, endpointSand[0].URLType)
-			clustersSand = append(clustersSand, clusterSand)
-			clusterRefSand := clusterSand.GetName()
+			// clusterSand := createCluster(addressSand, clusterNameSand, endpointSand[0].URLType)
+			// clustersSand = append(clustersSand, clusterSand)
+			// clusterRefSand := clusterSand.GetName()
 
 			// sandbox endpoints
-			routeS := createRoute(apiTitle, apiBasePath, apiVersion, endpointSand[0], resource, clusterRefSand)
+			routeS := createRoute(apiTitle, apiBasePath, apiVersion, endpointSand[0], resource, clusterNameSand)
 			routesSand = append(routesSand, routeS)
 			endpointsSand = append(endpointsSand, addressSand)
 
@@ -131,12 +140,12 @@ func CreateRoutesWithClusters(mgwSwagger model.MgwSwagger) (routesP []*routev3.R
 			// TODO: (VirajSalaka) 0 is hardcoded as only one endpoint is supported at the moment
 			clusterNameProd := strings.TrimSpace(apiLevelClusterNameProd + "_" + strings.Replace(resource.GetID(), " ", "", -1) +
 				"0")
-			clusterProd := createCluster(addressProd, clusterNameProd, endpointProd[0].URLType)
-			clustersProd = append(clustersProd, clusterProd)
-			clusterRefProd := clusterProd.GetName()
+			// clusterProd := createCluster(addressProd, clusterNameProd, endpointProd[0].URLType)
+			// clustersProd = append(clustersProd, clusterProd)
+			// clusterRefProd := clusterProd.GetName()
 
 			// production endpoints
-			routeP := createRoute(apiTitle, apiBasePath, apiVersion, endpointProd[0], resource, clusterRefProd)
+			routeP := createRoute(apiTitle, apiBasePath, apiVersion, endpointProd[0], resource, clusterNameProd)
 			routesProd = append(routesProd, routeP)
 			endpointsProd = append(endpointsProd, addressProd)
 
@@ -153,17 +162,20 @@ func CreateRoutesWithClusters(mgwSwagger model.MgwSwagger) (routesP []*routev3.R
 			logger.LoggerOasparser.Fatalf("Producton endpoints are not defined")
 		}
 	}
+	clustersP = append(clustersP, apiLevelCluster)
 	return routesProd, clustersProd, endpointsProd, routesSand, clustersSand, endpointsSand
 }
 
 // createCluster creates cluster configuration. AddressConfiguration, cluster name and
 // urlType (http or https) is required to be provided.
-func createCluster(address *corev3.Address, clusterName string, urlType string) *clusterv3.Cluster {
+func createCluster(prodEndpoints []model.Endpoint, sandEndpoints []model.Endpoint,
+	clusterName string) *clusterv3.Cluster {
 	logger.LoggerOasparser.Debug("creating a cluster....")
 	conf, errReadConfig := config.ReadConfigs()
 	if errReadConfig != nil {
 		logger.LoggerOasparser.Fatal("Error loading configuration. ", errReadConfig)
 	}
+	lbEndpointArray := []*endpointv3.LbEndpoint{}
 
 	cluster := clusterv3.Cluster{
 		Name:                 clusterName,
@@ -171,23 +183,44 @@ func createCluster(address *corev3.Address, clusterName string, urlType string) 
 		ClusterDiscoveryType: &clusterv3.Cluster_Type{Type: clusterv3.Cluster_STRICT_DNS},
 		DnsLookupFamily:      clusterv3.Cluster_V4_ONLY,
 		LbPolicy:             clusterv3.Cluster_ROUND_ROBIN,
+		LbSubsetConfig: &clusterv3.Cluster_LbSubsetConfig{
+			SubsetSelectors: []*clusterv3.Cluster_LbSubsetConfig_LbSubsetSelector{
+				{
+					Keys: []string{"environment"},
+				},
+			},
+		},
 		LoadAssignment: &endpointv3.ClusterLoadAssignment{
 			ClusterName: clusterName,
 			Endpoints: []*endpointv3.LocalityLbEndpoints{
 				{
-					LbEndpoints: []*endpointv3.LbEndpoint{
-						{
-							HostIdentifier: &endpointv3.LbEndpoint_Endpoint{
-								Endpoint: &endpointv3.Endpoint{
-									Address: address,
-								},
-							},
-						},
-					},
+					LbEndpoints: []*endpointv3.LbEndpoint{},
 				},
 			},
 		},
 	}
+
+	urlType := ""
+	if len(prodEndpoints) > 0 || len(sandEndpoints) > 0 {
+		// apiLevelClusterName := strings.TrimSpace(strings.Replace(mgwSwagger.GetTitle(), " ", "", -1) +
+		// 	mgwSwagger.GetVersion())
+
+		// It is impossible to have multiple transport socket configurations for each endpoint in cluster
+		// Hence the production endpoints are prioritized over sandbox.
+		// The first element's URL type is selected to create the transport socket configuration.
+		if len(prodEndpoints) > 0 {
+			urlType = prodEndpoints[0].URLType
+			address := createAddress(prodEndpoints[0].Host, prodEndpoints[0].Port)
+			lbEndpointArray = append(lbEndpointArray, createLBEndpoint(address, true))
+		} else if len(sandEndpoints) > 0 {
+			urlType = sandEndpoints[0].URLType
+			address := createAddress(sandEndpoints[0].Host, sandEndpoints[0].Port)
+			lbEndpointArray = append(lbEndpointArray, createLBEndpoint(address, false))
+		}
+	}
+
+	// TODO: (VirajSalaka) resolve the https story.
+
 	if strings.HasPrefix(urlType, httpsURLType) {
 		upstreamtlsContext := &tlsv3.UpstreamTlsContext{
 			CommonTlsContext: &tlsv3.CommonTlsContext{
@@ -216,6 +249,33 @@ func createCluster(address *corev3.Address, clusterName string, urlType string) 
 		}
 	}
 	return &cluster
+}
+
+func createLBEndpoint(address *corev3.Address, isProd bool) *endpointv3.LbEndpoint {
+	meta := &corev3.Metadata{
+		FilterMetadata: map[string]*structpb.Struct{},
+	}
+	labelsStruct := &structpb.Struct{
+		Fields: map[string]*structpb.Value{},
+	}
+	environment := "production"
+	if !isProd {
+		environment = "sandbox"
+	}
+	labelsStruct.Fields["environment"] = &structpb.Value{
+		Kind: &structpb.Value_StringValue{
+			StringValue: environment,
+		},
+	}
+	lbEndpoint := &endpointv3.LbEndpoint{
+		HostIdentifier: &endpointv3.LbEndpoint_Endpoint{
+			Endpoint: &endpointv3.Endpoint{
+				Address: address,
+			},
+		},
+		Metadata: meta,
+	}
+	return lbEndpoint
 }
 
 func createRoute(title string, xWso2Basepath string, version string, endpoint model.Endpoint,
