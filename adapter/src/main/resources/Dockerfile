@@ -42,6 +42,7 @@ WORKDIR ${MG_USER_HOME}
 USER ${MG_USER}
 COPY maven/security security
 COPY maven/conf conf
+COPY maven/intra-security intra-security
 COPY maven/micro-gw-ubuntu micro-gw
 
 CMD ./micro-gw

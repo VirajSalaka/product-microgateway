@@ -30,6 +30,10 @@
             <directory>../resources/conf</directory>
             <outputDirectory>conf</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>../resources/intra-security</directory>
+            <outputDirectory>intra-security</outputDirectory>
+        </fileSet>
     </fileSets>
     <files>
         <file>

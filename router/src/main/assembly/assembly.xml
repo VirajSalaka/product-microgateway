@@ -26,11 +26,19 @@
             <source>../resources/envoy.yaml</source>
             <outputDirectory></outputDirectory>
         </file>
+        <file>
+            <source>../resources/intra-security/internal.crt</source>
+            <outputDirectory>intra-security/adapter</outputDirectory>
+        </file>
     </files>
     <fileSets>
       <fileSet>
           <directory>../resources/router/security</directory>
           <outputDirectory>security</outputDirectory>
       </fileSet>
+      <fileSet>
+        <directory>../resources/intra-security</directory>
+        <outputDirectory>intra-security</outputDirectory>
+    </fileSet>
     </fileSets>
 </assembly>

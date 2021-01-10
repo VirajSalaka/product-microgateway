@@ -19,6 +19,8 @@
 package mgw
 
 import (
+	"crypto/tls"
+
 	discoveryv3 "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
 	xdsv3 "github.com/envoyproxy/go-control-plane/pkg/server/v3"
 	"github.com/wso2/micro-gw/pkg/api/restserver"
@@ -35,6 +37,7 @@ import (
 	logger "github.com/wso2/micro-gw/loggers"
 	xds "github.com/wso2/micro-gw/pkg/xds"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 var (
@@ -48,6 +51,10 @@ var (
 	alsPort     uint
 
 	mode string
+
+	crtFile string
+	keyFile string
+	caFile  string
 )
 
 const (
@@ -68,7 +75,21 @@ const grpcMaxConcurrentStreams = 1000000
 func runManagementServer(server xdsv3.Server, port uint) {
 	var grpcOptions []grpc.ServerOption
 	grpcOptions = append(grpcOptions, grpc.MaxConcurrentStreams(grpcMaxConcurrentStreams))
-	grpcServer := grpc.NewServer()
+
+	var (
+		crtFile = "/home/wso2/intra-security/internal.crt"
+		keyFile = "/home/wso2/intra-security/internal.key"
+	)
+	certs, certReadErr := getCertificates(crtFile, keyFile)
+	if certReadErr != nil {
+		return
+	}
+	grpcOptions = append(grpcOptions, grpc.Creds(
+		credentials.NewTLS(&tls.Config{
+			Certificates: certs,
+		}),
+	))
+	grpcServer := grpc.NewServer(grpcOptions...)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
@@ -130,4 +151,17 @@ OUTER:
 		}
 	}
 	logger.LoggerMgw.Info("Bye!")
+}
+
+func getCertificates(publicKeyPath, privateKeyPath string) ([]tls.Certificate, error) {
+	certificates := make([]tls.Certificate, 1)
+	tlsCertificate := publicKeyPath
+	tlsCertificateKey := privateKeyPath
+	certificate, err := tls.LoadX509KeyPair(string(tlsCertificate), string(tlsCertificateKey))
+	if err != nil {
+		logger.LoggerAPI.Fatal("Error while loading the tls keypair.", err)
+		return certificates, err
+	}
+	certificates[0] = certificate
+	return certificates, nil
 }
