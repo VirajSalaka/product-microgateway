@@ -32,11 +32,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.wso2.micro.gateway.enforcer.exception.MGWException;
 import org.wso2.micro.gateway.enforcer.util.FilterUtils;
+import org.wso2.micro.gateway.enforcer.util.TLSUtils;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPublicKey;
 
 /**
@@ -100,18 +103,19 @@ public class JWTUtil {
      * Verify the JWT token signature.
      *
      * @param jwt   SignedJwt Token
-     * @param alias public certificate keystore alias
+     * @param filePath public certificate filePath
      * @return whether the signature is verified or or not
      * @throws MGWException in case of signature verification failure
      */
-    public static boolean verifyTokenSignature(SignedJWT jwt, String alias) throws MGWException {
+    public static boolean verifyTokenSignature(SignedJWT jwt, String filePath) throws MGWException {
 
         Certificate publicCert = null;
-        //Read the client-truststore.jks into a KeyStore
         try {
-            publicCert = FilterUtils.getCertificateFromTrustStore(alias);
-        } catch (MGWException e) {
-            throw new MGWException("Error retrieving certificate from truststore ", e);
+            publicCert = TLSUtils.getCertificateFromFile(filePath);
+        } catch (CertificateException e) {
+            throw new MGWException("Provided Certificate is not a valid PEM file.", e);
+        } catch (FileNotFoundException e) {
+            throw new MGWException("Provided Certificate is not available within the enforcer.", e);
         }
 
         if (publicCert != null) {
@@ -124,9 +128,9 @@ public class JWTUtil {
                 throw new MGWException("Public key is not RSA");
             }
         } else {
-            log.error("Couldn't find a public certificate with alias " + alias + " to verify the signature");
-            throw new MGWException(
-                    "Couldn't find a public certificate with alias " + alias + " to verify the signature");
+            //TODO: (VirajSalaka) Check if this exception is required
+            log.error("Couldn't find a public certificate to verify the signature");
+            throw new MGWException("Couldn't find a public certificate to verify the signature");
         }
     }
 

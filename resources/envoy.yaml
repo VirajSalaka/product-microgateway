@@ -30,6 +30,22 @@ static_resources:
             address: adapter
             port_value: 18000
       http2_protocol_options: {}
+      transport_socket:
+        name: "envoy.transport_sockets.tls"
+        typed_config: 
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+          common_tls_context:
+            tls_params:
+              tls_minimum_protocol_version: TLSv1_2
+              tls_maximum_protocol_version: TLSv1_2
+            tls_certificates:
+              private_key:  
+                filename: "/home/wso2/intra-security/internal.key"
+              certificate_chain:
+                filename: "/home/wso2/intra-security/internal.crt"
+            validation_context:
+              trusted_ca:
+                filename: "/home/wso2/intra-security/adapter/internal.crt"
     - name: ext-authz
       type: STRICT_DNS
       connect_timeout: 20s
@@ -42,4 +58,17 @@ static_resources:
               address:
                 socket_address:
                   address: enforcer
-                  port_value: 8081    
+                  port_value: 8081  
+      # transport_socket:
+      #   name: "envoy.transport_sockets.tls"
+      #   typed_config: 
+      #     "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+      #     common_tls_context:
+      #       tls_certificates:
+      #         private_key:  
+      #           filename: "/home/wso2/intra-security/internal.key"
+      #         certificate_chain:
+      #           filename: "/home/wso2/intra-security/internal.crt"
+      #       validation_context:
+      #         trusted_ca:
+      #           filename: "/home/wso2/intra-security/enforcer/internal.crt"

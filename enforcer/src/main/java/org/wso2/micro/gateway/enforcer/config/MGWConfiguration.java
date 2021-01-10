@@ -27,11 +27,11 @@ import org.wso2.micro.gateway.enforcer.dto.EventHubConfigurationDto;
 import org.wso2.micro.gateway.enforcer.dto.JWKSConfigurationDTO;
 import org.wso2.micro.gateway.enforcer.dto.TokenIssuerDto;
 import org.wso2.micro.gateway.enforcer.exception.MGWException;
+import org.wso2.micro.gateway.enforcer.util.TLSUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -58,8 +58,10 @@ public class MGWConfiguration {
     private MGWConfiguration() throws MGWException {
         try {
             init();
-        } catch (KeyStoreException e) {
-            throw new MGWException("Error while loading configuration from file", e);
+        } catch (CertificateException e) {
+            throw new MGWException("Provided Certificate is not a valid PEM file.", e);
+        } catch (FileNotFoundException e) {
+            throw new MGWException("Provided Certificate is not available within the enforcer.", e);
         }
     }
 
@@ -75,7 +77,7 @@ public class MGWConfiguration {
     /**
      * Initialize the configuration provider class by reading the Mgw Configuration file.
      */
-    private void init() throws KeyStoreException {
+    private void init() throws CertificateException, FileNotFoundException {
         String home = System.getenv(ConfigConstants.ENFORCER_HOME);
         File file = new File(home + File.separator + ConfigConstants.CONF_DIR + File.separator + "config.toml");
         configToml = new Toml().read(file).getTable(ConfigConstants.CONF_FILTER_TABLE);
@@ -89,7 +91,7 @@ public class MGWConfiguration {
         populateEventHubConfiguration();
     }
 
-    private void populateJWTIssuerConfiguration() throws KeyStoreException {
+    private void populateJWTIssuerConfiguration() throws CertificateException, FileNotFoundException {
         issuersMap = new HashMap<>();
         List<Object> jwtIssuers = configToml.getList(ConfigConstants.JWT_TOKEN_CONFIG);
         for (Object jwtIssuer : jwtIssuers) {
@@ -102,11 +104,15 @@ public class MGWConfiguration {
             jwksConfigurationDTO.setUrl((String) issuer.get(ConfigConstants.JWT_TOKEN_JWKS_URL));
             issuerDto.setJwksConfigurationDTO(jwksConfigurationDTO);
 
+            // TODO: (VirajSalaka) Remove alias
             String certificateAlias = (String) issuer.get(ConfigConstants.JWT_TOKEN_CERTIFICATE_ALIAS);
-            if (trustStore.getCertificate(certificateAlias) != null) {
-                Certificate issuerCertificate = trustStore.getCertificate(certificateAlias);
-                issuerDto.setCertificate(issuerCertificate);
-            }
+
+            issuerDto.setCertificate(TLSUtils.getCertificateFromFile("/home/wso2/mg/security/wso2carbon.crt.pem"));
+
+//            if (trustStore.getCertificate(certificateAlias) != null) {
+//                Certificate issuerCertificate = trustStore.getCertificate(certificateAlias);
+//                issuerDto.setCertificate(issuerCertificate);
+//            }
 
             issuerDto.setName((String) issuer.get(ConfigConstants.JWT_TOKEN_ISSUER_NAME));
             issuerDto.setConsumerKeyClaim((String) issuer.get(ConfigConstants.JWT_TOKEN_CONSUMER_KEY_CLAIM));
@@ -131,23 +137,41 @@ public class MGWConfiguration {
     }
 
     private void loadTrustStore() {
-        String trustStoreLocation = configToml.getString(ConfigConstants.MGW_TRUST_STORE_LOCATION);
-        String trustStorePassword = configToml.getString(ConfigConstants.MGW_TRUST_STORE_PASSWORD);;
-        if (trustStoreLocation != null && trustStorePassword != null) {
-            try {
-                InputStream inputStream = new FileInputStream(new File(trustStoreLocation));
-                trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-                trustStore.load(inputStream, trustStorePassword.toCharArray());
-            } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException e) {
-                logger.error("Error in loading trust store.", e);
-            }
-        } else {
-            logger.error("Error in loading trust store. Configurations are not set.");
+//        String trustStoreLocation = configToml.getString(ConfigConstants.MGW_TRUST_STORE_LOCATION);
+//        String trustStorePassword = configToml.getString(ConfigConstants.MGW_TRUST_STORE_PASSWORD);
+        ;
+//        if (trustStoreLocation != null && trustStorePassword != null) {
+//            try {
+//                InputStream inputStream = new FileInputStream(new File(trustStoreLocation));
+//                trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+//                trustStore.load(inputStream, trustStorePassword.toCharArray());
+//            } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException e) {
+//                logger.error("Error in loading trust store.", e);
+//            }
+//        } else {
+//            logger.error("Error in loading trust store. Configurations are not set.");
+//        }
+//        try {
+//            Certificate certificate =
+//                    TLSUtils.getCertificateFromFile("/home/wso2/mg/security/wso2carbon.crt.pem");
+//            trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+//            trustStore.load(null);
+//            trustStore.setCertificateEntry("wso2carbon2", certificate);
+//        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException e) {
+//            logger.error("Error in loading certs to the trust store.", e);
+//        }
+        try {
+            trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            trustStore.load(null);
+            TLSUtils.addCertsToTruststore(trustStore, "/home/wso2/mg/security");
+        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException e) {
+            logger.error("Error in loading certs to the trust store.", e);
         }
     }
 
     /**
      * Get the issuer configuration for the provided issuer. Returns null if the config not found.
+     *
      * @return : JWTIssuerConfig object.
      */
     public Map<String, TokenIssuerDto> getJWTIssuers() {
