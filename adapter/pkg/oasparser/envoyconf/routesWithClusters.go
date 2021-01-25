@@ -330,19 +330,26 @@ func createRoute(title string, apiType string, xWso2Basepath string, version str
 		decorator    *routev3.Decorator
 		resourcePath string
 	)
-	// headerMatcherArray := routev3.HeaderMatcher{
-	// 	Name: httpMethodHeader,
-	// 	HeaderMatchSpecifier: &routev3.HeaderMatcher_SafeRegexMatch{
-	// 		SafeRegexMatch: &envoy_type_matcherv3.RegexMatcher{
-	// 			EngineType: &envoy_type_matcherv3.RegexMatcher_GoogleRe2{
-	// 				GoogleRe2: &envoy_type_matcherv3.RegexMatcher_GoogleRE2{
-	// 					MaxProgramSize: nil,
-	// 				},
-	// 			},
-	// 			Regex: "^(" + strings.Join(resourceMethods, "|") + ")$",
-	// 		},
-	// 	},
-	// }
+
+    // OPTIONS is always added even if it is not listed under resources
+    // This is required to handle CORS preflight request fail scenario
+	methodRegex := strings.Join(resourceMethods, "|")
+	if !strings.Contains(methodRegex, "OPTIONS") {
+		methodRegex = methodRegex + "|OPTIONS"
+	}
+	headerMatcherArray := routev3.HeaderMatcher{
+		Name: httpMethodHeader,
+		HeaderMatchSpecifier: &routev3.HeaderMatcher_SafeRegexMatch{
+			SafeRegexMatch: &envoy_type_matcherv3.RegexMatcher{
+				EngineType: &envoy_type_matcherv3.RegexMatcher_GoogleRe2{
+					GoogleRe2: &envoy_type_matcherv3.RegexMatcher_GoogleRE2{
+						MaxProgramSize: nil,
+					},
+				},
+				Regex: "^(" + methodRegex + ")$",
+			},
+		},
+	}
 	resourcePath = resourcePathParam
 	routePath := generateRoutePaths(xWso2Basepath, endpointBasepath, resourcePath)
 
@@ -357,7 +364,7 @@ func createRoute(title string, apiType string, xWso2Basepath string, version str
 				Regex: routePath,
 			},
 		},
-		// Headers: []*routev3.HeaderMatcher{&headerMatcherArray},
+		Headers: []*routev3.HeaderMatcher{&headerMatcherArray},
 	}
 
 	hostRewriteSpecifier := &routev3.RouteAction_AutoHostRewrite{
