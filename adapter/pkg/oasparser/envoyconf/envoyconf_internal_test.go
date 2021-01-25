@@ -388,3 +388,54 @@ func TestCreateUpstreamTLSContext(t *testing.T) {
 	assert.Equal(t, "abc.com", upstreamTLSContextWithCerts.CommonTlsContext.GetValidationContext().GetMatchSubjectAltNames()[0].GetExact(),
 		"Upstream SAN mismatch.")
 }
+
+func TestGetCorsPolicy(t *testing.T) {
+
+	corsConfigModel1 := &model.CorsConfig{
+		Enabled: false,
+	}
+
+	corsConfigModel2 := &model.CorsConfig{
+		Enabled:                       true,
+		AccessControlAllowMethods:     []string{"GET", "POST"},
+		AccessControlAllowHeaders:     []string{"X-TEST-HEADER1", "X-TEST-HEADER2"},
+		AccessControlAllowOrigins:     []string{"http://test.com"},
+		AccessControlAllowCredentials: true,
+	}
+
+	corsConfigModel3 := &model.CorsConfig{
+		Enabled:                   true,
+		AccessControlAllowMethods: []string{"GET"},
+		AccessControlAllowOrigins: []string{"http://test1.com", "http://test2.com"},
+	}
+
+	// Test the configuration when cors is disabled.
+	corsPolicy1 := getCorsPolicy(corsConfigModel1)
+	assert.Nil(t, corsPolicy1, "Cors Policy should be null.")
+
+	// Test configuration when all the fields are provided.
+	corsPolicy2 := getCorsPolicy(corsConfigModel2)
+	assert.NotNil(t, corsPolicy2, "Cors Policy should not be null.")
+	assert.NotEmpty(t, corsPolicy2.GetAllowOriginStringMatch(), "Cors Allowded Origins should not be null.")
+	assert.Equal(t, regexp.QuoteMeta("http://test.com"),
+		corsPolicy2.GetAllowOriginStringMatch()[0].GetSafeRegex().GetRegex(),
+		"Cors Allowed Origin Header mismatch")
+	assert.NotNil(t, corsPolicy2.GetAllowMethods())
+	assert.Equal(t, "GET, POST", corsPolicy2.GetAllowMethods(), "Cors allow methods mismatch.")
+	assert.NotNil(t, corsPolicy2.GetAllowHeaders(), "Cors Allowed headers should not be null.")
+	assert.Equal(t, "X-TEST-HEADER1, X-TEST-HEADER2", corsPolicy2.GetAllowHeaders(), "Cors Allow headers mismatch")
+	assert.True(t, corsPolicy2.GetAllowCredentials().GetValue(), "Cors Access Allow Credentials should be true")
+
+	// Test the configuration when few configurations are added.
+	corsPolicy3 := getCorsPolicy(corsConfigModel3)
+	assert.NotNil(t, corsPolicy3, "Cors Policy should not be null.")
+	assert.Empty(t, corsPolicy3.GetAllowHeaders(), "Cors Allow headers should be null.")
+	assert.NotEmpty(t, corsPolicy3.GetAllowOriginStringMatch(), "Cors Allowded Origins should not be null.")
+	assert.Equal(t, regexp.QuoteMeta("http://test1.com"),
+		corsPolicy3.GetAllowOriginStringMatch()[0].GetSafeRegex().GetRegex(),
+		"Cors Allowed Origin Header mismatch")
+	assert.Equal(t, regexp.QuoteMeta("http://test2.com"),
+		corsPolicy3.GetAllowOriginStringMatch()[1].GetSafeRegex().GetRegex(),
+		"Cors Allowed Origin Header mismatch")
+	assert.Empty(t, corsPolicy3.GetAllowCredentials(), "Allow Credential property should not be assigned.")
+}

@@ -62,7 +62,7 @@ type Endpoint struct {
 // CorsConfig represents the API level Cors Configuration
 type CorsConfig struct {
 	Enabled                       bool     `mapstructure:"corsConfigurationEnabled"`
-	AccessControlAllowCredentials bool     `mapstructure:"accessControlAllowCredentials"`
+	AccessControlAllowCredentials bool     `mapstructure:"accessControlAllowCredentials,omitempty"`
 	AccessControlAllowHeaders     []string `mapstructure:"accessControlAllowHeaders"`
 	AccessControlAllowMethods     []string `mapstructure:"accessControlAllowMethods"`
 	AccessControlAllowOrigins     []string `mapstructure:"accessControlAllowOrigins"`
@@ -211,8 +211,7 @@ func (swagger *MgwSwagger) setXWso2Cors() {
 		if parsedCors, parsedCorsOk := cors.(map[string]interface{}); parsedCorsOk {
 			//Default CorsConfiguration
 			corsConfig := &CorsConfig{
-				Enabled:                       true,
-				AccessControlAllowCredentials: false,
+				Enabled: true,
 			}
 			err := parser.Decode(parsedCors, &corsConfig)
 			if err != nil {
