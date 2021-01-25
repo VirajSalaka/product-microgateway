@@ -55,12 +55,13 @@ public class ExtAuthService extends AuthorizationGrpc.AuthorizationImplBase {
         DeniedHttpResponse.Builder responseBuilder = DeniedHttpResponse.newBuilder();
         HttpStatus status = HttpStatus.newBuilder().setCodeValue(responseObject.getStatusCode()).build();
         if (responseObject.isDirectResponse()) {
-            if (responseObject.getHeaderMap() != null) {
+            // To handle options request
+            if (responseObject.getStatusCode() == 204) {
                 responseObject.getHeaderMap().forEach((key, value) -> {
-                    HeaderValueOption headerValueOption = HeaderValueOption.newBuilder()
+                            HeaderValueOption headerValueOption = HeaderValueOption.newBuilder()
                                     .setHeader(HeaderValue.newBuilder().setKey(key).setValue(value).build())
                                     .build();
-                           responseBuilder.addHeaders(headerValueOption);
+                            responseBuilder.addHeaders(headerValueOption);
                         }
                 );
                 return CheckResponse.newBuilder()
@@ -68,6 +69,7 @@ public class ExtAuthService extends AuthorizationGrpc.AuthorizationImplBase {
                         .setDeniedResponse(responseBuilder.setStatus(status).build())
                         .build();
             }
+            // Error handling
             String errorCode = responseObject.getErrorCode();
             String errorDescription = responseObject.getErrorDescription();
             JSONObject responseJson = new JSONObject();

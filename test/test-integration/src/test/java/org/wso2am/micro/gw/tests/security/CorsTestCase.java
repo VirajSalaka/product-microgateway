@@ -193,7 +193,7 @@ public class CorsTestCase extends BaseTestCase {
         Assert.assertNotNull(response.getAllHeaders());
         Header accessControlAllowMethods = pickHeader(response.getAllHeaders(), ACCESS_CONTROL_ALLOW_METHODS_HEADER);
         Assert.assertTrue(accessControlAllowMethods == null ||
-                !accessControlAllowMethods.getValue().toLowerCase().contains("delete"),
+                !accessControlAllowMethods.getValue().contains("DELETE"),
                 "AccessControlRequestMethod is not validated properly.");
     }
 

@@ -68,8 +68,7 @@ public class RestAPI implements API {
         } else {
             // If a filter chain stops with a false, it will be passed directly to the client.
             responseObject.setDirectResponse(true);
-            responseObject.setStatusCode(Integer.parseInt(requestContext.getProperties().get("code")
-                    .toString()));
+            responseObject.setStatusCode(Integer.parseInt(requestContext.getProperties().get("code").toString()));
             if (requestContext.getProperties().get("error_code") != null) {
                 responseObject.setErrorCode(requestContext.getProperties().get("error_code").toString());
             }
@@ -77,7 +76,7 @@ public class RestAPI implements API {
                 responseObject.setErrorDescription(requestContext.getProperties()
                         .get("error_description").toString());
             }
-            if(requestContext.getResponseHeaders() != null && requestContext.getResponseHeaders().size() > 0) {
+            if (requestContext.getResponseHeaders() != null && requestContext.getResponseHeaders().size() > 0) {
                 responseObject.setHeaderMap(requestContext.getResponseHeaders());
             }
         }
