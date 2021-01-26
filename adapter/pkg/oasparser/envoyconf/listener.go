@@ -194,15 +194,19 @@ func createAddress(remoteHost string, port uint32) *corev3.Address {
 
 // getAccessLogConfigs provides access log configurations for envoy
 func getAccessLogConfigs() *access_logv3.AccessLog {
-	var logFormat *envoy_config_filter_accesslog_v3.FileAccessLog_Format
+	var logFormat *envoy_config_filter_accesslog_v3.FileAccessLog_LogFormat
 	logpath := defaultAccessLogPath //default access log path
 
 	logConf, errReadConfig := config.ReadLogConfigs()
 	if errReadConfig != nil {
 		logger.LoggerOasparser.Error("Error loading configuration. ", errReadConfig)
 	} else {
-		logFormat = &envoy_config_filter_accesslog_v3.FileAccessLog_Format{
-			Format: logConf.AccessLogs.Format,
+		logFormat = &envoy_config_filter_accesslog_v3.FileAccessLog_LogFormat{
+			LogFormat: &corev3.SubstitutionFormatString{
+				Format: &corev3.SubstitutionFormatString_TextFormat{
+					TextFormat: logConf.AccessLogs.Format,
+				},
+			},
 		}
 		logpath = logConf.AccessLogs.LogFile
 	}
