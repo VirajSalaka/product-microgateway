@@ -112,6 +112,7 @@ public class JWTValidator {
 
     protected boolean validateSignature(SignedJWT signedJWT) throws MGWException {
 
+        //TODO: (VirajSalaka) Recheck the logic here.
         String certificateAlias = APIConstants.GATEWAY_PUBLIC_CERTIFICATE_ALIAS;
         try {
             String keyID = signedJWT.getHeader().getKeyID();
@@ -139,10 +140,11 @@ public class JWTValidator {
                     RSAPublicKey rsaPublicKey = (RSAPublicKey) tokenIssuer.getCertificate().getPublicKey();;
                     return JWTUtil.verifyTokenSignature(signedJWT, rsaPublicKey);
                 } else {
+                    // TODO: (VirajSalaka) discuss the usage of this. Under the current impl, this fails.
                     return JWTUtil.verifyTokenSignature(signedJWT, keyID);
                 }
             }
-            return JWTUtil.verifyTokenSignature(signedJWT, certificateAlias);
+            return JWTUtil.verifyTokenSignature(signedJWT, "/home/wso2/mg/security/wso2carbon.crt.pem");
         } catch (ParseException | JOSEException | IOException e) {
             logger.error("Error while parsing JWT", e);
         }
