@@ -151,12 +151,19 @@ public class MGWConfiguration {
 //        } else {
 //            logger.error("Error in loading trust store. Configurations are not set.");
 //        }
+//        try {
+//            Certificate certificate =
+//                    TLSUtils.getCertificateFromFile("/home/wso2/mg/security/wso2carbon.crt.pem");
+//            trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+//            trustStore.load(null);
+//            trustStore.setCertificateEntry("wso2carbon2", certificate);
+//        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException e) {
+//            logger.error("Error in loading certs to the trust store.", e);
+//        }
         try {
-            Certificate certificate =
-                    TLSUtils.getCertificateFromFile("/home/wso2/mg/security/wso2carbon.crt.pem");
             trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
             trustStore.load(null);
-            trustStore.setCertificateEntry("wso2carbon2", certificate);
+            TLSUtils.addCertsToTruststore(trustStore, "/home/wso2/mg/security");
         } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException e) {
             logger.error("Error in loading certs to the trust store.", e);
         }
