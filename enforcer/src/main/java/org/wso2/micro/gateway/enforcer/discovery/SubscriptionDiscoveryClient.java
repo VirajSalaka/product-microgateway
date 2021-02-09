@@ -31,6 +31,7 @@ import org.wso2.gateway.discovery.service.subscription.SubscriptionDiscoveryServ
 import org.wso2.gateway.discovery.subscription.Subscription;
 import org.wso2.gateway.discovery.subscription.SubscriptionList;
 import org.wso2.micro.gateway.enforcer.config.ConfigHolder;
+import org.wso2.micro.gateway.enforcer.constants.AdapterConstants;
 import org.wso2.micro.gateway.enforcer.constants.Constants;
 import org.wso2.micro.gateway.enforcer.subscription.SubscriptionDataStoreImpl;
 import org.wso2.micro.gateway.enforcer.util.GRPCUtils;
@@ -125,7 +126,7 @@ public class SubscriptionDiscoveryClient {
 
         try {
             DiscoveryRequest req = DiscoveryRequest.newBuilder()
-                    .setNode(Node.newBuilder().setId(nodeId).build())
+                    .setNode(Node.newBuilder().setId(AdapterConstants.COMMON_ENFORCER_LABEL).build())
                     .setVersionInfo(latestACKed.getVersionInfo())
                     .setTypeUrl(Constants.SUBSCRIPTION_LIST_TYPE_URL).build();
             reqObserver.onNext(req);

@@ -30,6 +30,7 @@ import org.apache.logging.log4j.Logger;
 import org.wso2.gateway.discovery.config.enforcer.Config;
 import org.wso2.gateway.discovery.service.config.ConfigDiscoveryServiceGrpc;
 import org.wso2.micro.gateway.enforcer.config.EnvVarConfig;
+import org.wso2.micro.gateway.enforcer.constants.AdapterConstants;
 import org.wso2.micro.gateway.enforcer.constants.Constants;
 import org.wso2.micro.gateway.enforcer.exception.DiscoveryException;
 
@@ -74,7 +75,7 @@ public class ConfigDiscoveryClient {
 
     public Config requestInitConfig() throws DiscoveryException {
         DiscoveryRequest req = DiscoveryRequest.newBuilder()
-                .setNode(Node.newBuilder().setId(nodeId).build())
+                .setNode(Node.newBuilder().setId(AdapterConstants.COMMON_ENFORCER_LABEL).build())
                 .setTypeUrl(Constants.CONFIG_TYPE_URL).build();
         DiscoveryResponse res = DiscoveryResponse.getDefaultInstance();
         try {

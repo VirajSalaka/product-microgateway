@@ -31,6 +31,7 @@ import org.wso2.gateway.discovery.service.subscription.ApplicationPolicyDiscover
 import org.wso2.gateway.discovery.subscription.ApplicationPolicy;
 import org.wso2.gateway.discovery.subscription.ApplicationPolicyList;
 import org.wso2.micro.gateway.enforcer.config.ConfigHolder;
+import org.wso2.micro.gateway.enforcer.constants.AdapterConstants;
 import org.wso2.micro.gateway.enforcer.constants.Constants;
 import org.wso2.micro.gateway.enforcer.subscription.SubscriptionDataStoreImpl;
 import org.wso2.micro.gateway.enforcer.util.GRPCUtils;
@@ -124,7 +125,7 @@ public class ApplicationPolicyDiscoveryClient {
 
         try {
             DiscoveryRequest req = DiscoveryRequest.newBuilder()
-                    .setNode(Node.newBuilder().setId(nodeId).build())
+                    .setNode(Node.newBuilder().setId(AdapterConstants.COMMON_ENFORCER_LABEL).build())
                     .setVersionInfo(latestACKed.getVersionInfo())
                     .setTypeUrl(Constants.APPLICATION_POLICY_LIST_TYPE_URL).build();
             reqObserver.onNext(req);
