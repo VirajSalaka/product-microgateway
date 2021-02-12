@@ -20,6 +20,8 @@ github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tN
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV/sSk/8dngufqelfh6jnri85riMAaF/M=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
+github.com/VirajSalaka/go-control-plane v0.9.8-0.20210210045046-b2212e058634 h1:ffHf7JNzkH8XWgpFAqisway8KukiCJy31M33l6kBNSE=
+github.com/VirajSalaka/go-control-plane v0.9.8-0.20210210045046-b2212e058634/go.mod h1:UvAd1/goQ1lmaTmD3+Zu91IuX3UyKLaKfzL1fuGE+W0=
 github.com/agnivade/levenshtein v1.0.1/go.mod h1:CURSv5d9Uaml+FovSIICkLbAUZ9S4RqaHDIsdSBg7lM=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
@@ -344,6 +346,8 @@ github.com/praminda/go-control-plane v0.9.8-0.20210126114758-e471c7023312 h1:uyF
 github.com/praminda/go-control-plane v0.9.8-0.20210126114758-e471c7023312/go.mod h1:UvAd1/goQ1lmaTmD3+Zu91IuX3UyKLaKfzL1fuGE+W0=
 github.com/praminda/go-control-plane v0.9.8-0.20210202103443-f343d358b2cf h1:EJ0vnMdReYHNZRrUKKLPpIILt5KV4ttG1qE9U/8Sfaw=
 github.com/praminda/go-control-plane v0.9.8-0.20210202103443-f343d358b2cf/go.mod h1:UvAd1/goQ1lmaTmD3+Zu91IuX3UyKLaKfzL1fuGE+W0=
+github.com/praminda/go-control-plane v0.9.8-0.20210209060902-697112f3afbc h1:3af0Herm0MbD8Qr1NMOzFJYJ6lQtFBG7DqJLz3DBDU8=
+github.com/praminda/go-control-plane v0.9.8-0.20210209060902-697112f3afbc/go.mod h1:UvAd1/goQ1lmaTmD3+Zu91IuX3UyKLaKfzL1fuGE+W0=
 github.com/prometheus/client_golang v0.9.1/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
 github.com/prometheus/client_golang v0.9.3/go.mod h1:/TN21ttK/J9q6uSwhBd54HahCDft0ttaMvbicHlPoso=
 github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910/go.mod h1:MbSGuTsp3dbXC40dX6PRTWyKYBIrTGTE9sqQNg2J8bo=

@@ -281,29 +281,31 @@ func updateXdsCacheOnAPIAdd(oldLabels []string, newLabels []string) {
 	// TODO: (VirajSalaka) check possible optimizations, Since the number of labels are low by design it should not be an issue
 	for _, oldLabel := range oldLabels {
 		if !arrayContains(newLabels, oldLabel) {
-			listeners, clusters, routes, endpoints := generateEnvoyResoucesForLabel(oldLabel)
-			updateXdsCacheWithLock(oldLabel, endpoints, clusters, routes, listeners)
+			listeners, clusters, routes, endpoints, apis := generateEnvoyResoucesForLabel(oldLabel)
+			updateXdsCacheWithLock(oldLabel, endpoints, clusters, routes, listeners, apis)
 			logger.LoggerXds.Debugf("Xds Cache is updated for the already existing label : %v", oldLabel)
 		}
 	}
 
 	for _, newLabel := range newLabels {
-		listeners, clusters, routes, endpoints := generateEnvoyResoucesForLabel(newLabel)
-		updateXdsCacheWithLock(newLabel, endpoints, clusters, routes, listeners)
+		listeners, clusters, routes, endpoints, apis := generateEnvoyResoucesForLabel(newLabel)
+		updateXdsCacheWithLock(newLabel, endpoints, clusters, routes, listeners, apis)
 		logger.LoggerXds.Debugf("Xds Cache is updated for the newly added label : %v", newLabel)
 	}
 }
 
-func generateEnvoyResoucesForLabel(label string) ([]types.Resource, []types.Resource, []types.Resource, []types.Resource) {
+func generateEnvoyResoucesForLabel(label string) ([]types.Resource, []types.Resource, []types.Resource, []types.Resource, []types.Resource) {
 	var clusterArray []*clusterv3.Cluster
 	var routeArray []*routev3.Route
 	var endpointArray []*corev3.Address
+	var apiArray []types.Resource
 	// var listenerArrays [][]types.Resource
 	for apiKey, labels := range openAPIEnvoyMap {
 		if arrayContains(labels, label) {
 			clusterArray = append(clusterArray, openAPIClustersMap[apiKey]...)
 			routeArray = append(routeArray, openAPIRoutesMap[apiKey]...)
 			endpointArray = append(endpointArray, openAPIEndpointsMap[apiKey]...)
+			apiArray = append(apiArray, oasParser.GetEnforcerAPI(apiMgwSwaggerMap[apiKey]))
 			// listenerArrays = append(listenerArrays, openAPIListenersMap[apiKey])
 		}
 	}
@@ -317,7 +319,9 @@ func generateEnvoyResoucesForLabel(label string) ([]types.Resource, []types.Reso
 		// If the routesConfig exists, the listener exists too
 		oasParser.UpdateRoutesConfig(routesConfig, routeArray)
 	}
-	return oasParser.GetCacheResources(endpointArray, clusterArray, listener, routesConfig)
+	wrappedEndpoints, wrappedClusters, wrappedListener, wrappedRoutesConfig := oasParser.GetCacheResources(endpointArray,
+		clusterArray, listener, routesConfig)
+	return wrappedEndpoints, wrappedClusters, wrappedListener, wrappedRoutesConfig, apiArray
 }
 
 func generateEnforcerConfigs(config *config.Config) *enforcer.Config {
@@ -366,7 +370,8 @@ func generateEnforcerConfigs(config *config.Config) *enforcer.Config {
 }
 
 //use updateXdsCacheWithLock to avoid race conditions
-func updateXdsCache(label string, endpoints []types.Resource, clusters []types.Resource, routes []types.Resource, listeners []types.Resource) {
+func updateXdsCache(label string, endpoints []types.Resource, clusters []types.Resource, routes []types.Resource, listeners []types.Resource,
+	apis []types.Resource) {
 	version, ok := envoyUpdateVersionMap[label]
 	if ok {
 		version++
@@ -376,11 +381,21 @@ func updateXdsCache(label string, endpoints []types.Resource, clusters []types.R
 	}
 	// TODO: (VirajSalaka) kept same version for all the resources as we are using simple cache implementation.
 	// Will be updated once decide to move to incremental XDS
-	snap := cachev3.NewSnapshot(fmt.Sprint(version), endpoints, clusters, routes, listeners, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-	snap.Consistent()
-	err := cache.SetSnapshot(label, snap)
-	if err != nil {
-		logger.LoggerXds.Error(err)
+	envoySnap := cachev3.NewSnapshot(fmt.Sprint(version), endpoints, clusters, routes, listeners, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	envoySnap.Consistent()
+
+	apiSnap := cachev3.NewSnapshot(
+		fmt.Sprint(version), nil, nil, nil, nil, nil, nil, nil, apis, nil, nil, nil, nil, nil, nil)
+	apiSnap.Consistent()
+
+	envoyCacheErr := cache.SetSnapshot(label, envoySnap)
+	if envoyCacheErr != nil {
+		logger.LoggerXds.Error(envoyCacheErr)
+	}
+
+	apiCacheArr := enforcerAPICache.SetSnapshot(label, apiSnap)
+	if apiCacheArr != nil {
+		logger.LoggerXds.Error(apiCacheArr)
 	}
 	envoyUpdateVersionMap[label] = version
 	logger.LoggerXds.Infof("New cache update for the label: " + label + " version: " + fmt.Sprint(version))
@@ -417,9 +432,7 @@ func UpdateEnforcerConfig(configFile *config.Config) {
 // UpdateEnforcerApis Sets new update to the enforcer's Apis
 func UpdateEnforcerApis(api *api.Api) {
 	//TODO: (Praminda) Use same cache and the version for both API and envoy xds resources
-	label := "enforcer"
-	apis := enforcerApisMap[label]
-	apis = append(apis, api)
+	label := commonEnforcerLabel
 	version, ok := enforcerCacheVersionMap[label]
 	if ok {
 		version++
@@ -429,7 +442,7 @@ func UpdateEnforcerApis(api *api.Api) {
 	configs := enforcerConfigMap[label]
 
 	snap := cachev3.NewSnapshot(
-		fmt.Sprint(version), nil, nil, nil, nil, nil, nil, configs, apis, nil, nil, nil, nil, nil, nil)
+		fmt.Sprint(version), nil, nil, nil, nil, nil, nil, configs, nil, nil, nil, nil, nil, nil, nil)
 	snap.Consistent()
 
 	err := enforcerCache.SetSnapshot(label, snap)
@@ -438,7 +451,6 @@ func UpdateEnforcerApis(api *api.Api) {
 	}
 
 	enforcerCacheVersionMap[label] = version
-	enforcerApisMap[label] = apis
 	logger.LoggerXds.Infof("New cache update for the label: " + label + " version: " + fmt.Sprint(version))
 }
 
@@ -492,28 +504,28 @@ func GenerateApplicationList(appList *resourceTypes.ApplicationList) *subscripti
 	}
 }
 
-// GenerateAPIList converts the data into APIList proto type
-func GenerateAPIList(apiList *resourceTypes.APIList) *subscription.APIList {
-	apis := []*subscription.APIs{}
+// // GenerateAPIList converts the data into APIList proto type
+// func GenerateAPIList(apiList *resourceTypes.APIList) *subscription.APIList {
+// 	apis := []*subscription.APIs{}
 
-	for _, api := range apiList.List {
-		newAPI := &subscription.APIs{
-			ApiId:            api.APIID,
-			Name:             api.Name,
-			Provider:         api.Provider,
-			Version:          api.Version,
-			Context:          api.Context,
-			Policy:           api.Policy,
-			ApiType:          api.APIType,
-			IsDefaultVersion: api.IsDefaultVersion,
-		}
-		apis = append(apis, newAPI)
-	}
+// 	for _, api := range apiList.List {
+// 		newAPI := &subscription.APIs{
+// 			ApiId:            api.APIID,
+// 			Name:             api.Name,
+// 			Provider:         api.Provider,
+// 			Version:          api.Version,
+// 			Context:          api.Context,
+// 			Policy:           api.Policy,
+// 			ApiType:          api.APIType,
+// 			IsDefaultVersion: api.IsDefaultVersion,
+// 		}
+// 		apis = append(apis, newAPI)
+// 	}
 
-	return &subscription.APIList{
-		List: apis,
-	}
-}
+// 	return &subscription.APIList{
+// 		List: apis,
+// 	}
+// }
 
 // GenerateApplicationPolicyList converts the data into ApplicationPolicyList proto type
 func GenerateApplicationPolicyList(appPolicyList *resourceTypes.ApplicationPolicyList) *subscription.ApplicationPolicyList {
@@ -625,11 +637,12 @@ func UpdateEnforcerApplications(applications *subscription.ApplicationList) {
 	} else {
 		version = 1
 	}
-
+	logger.LoggerXds.Infof("appp list   ::  %v", applicationList)
 	snap := cachev3.NewSnapshot(fmt.Sprint(version), nil, nil, nil, nil, nil, nil, nil, nil, nil, applicationList, nil, nil, nil, nil)
 	snap.Consistent()
 
 	err := enforcerApplicationCache.SetSnapshot(label, snap)
+	logger.LoggerXds.Infof("enforcer cache   ---  %v", enforcerApplicationCache)
 	if err != nil {
 		logger.LoggerXds.Error(err)
 	}
@@ -638,32 +651,32 @@ func UpdateEnforcerApplications(applications *subscription.ApplicationList) {
 	logger.LoggerXds.Infof("New cache update for the label: " + label + " version: " + fmt.Sprint(version))
 }
 
-// UpdateEnforcerAPIList sets new update to the enforcer's Apis
-func UpdateEnforcerAPIList(apis *subscription.APIList) {
-	logger.LoggerXds.Debug("Updating Enforcer API Cache")
-	label := commonEnforcerLabel
-	apiList := enforcerAPIListMap[label]
-	apiList = append(apiList, apis)
+// // UpdateEnforcerAPIList sets new update to the enforcer's Apis
+// func UpdateEnforcerAPIList(apis *subscription.APIList) {
+// 	logger.LoggerXds.Debug("Updating Enforcer API Cache")
+// 	label := commonEnforcerLabel
+// 	apiList := enforcerAPIListMap[label]
+// 	apiList = append(apiList, apis)
 
-	version, ok := enforcerAPICacheVersionMap[label]
+// 	version, ok := enforcerAPICacheVersionMap[label]
 
-	if ok {
-		version++
-	} else {
-		version = 1
-	}
+// 	if ok {
+// 		version++
+// 	} else {
+// 		version = 1
+// 	}
 
-	snap := cachev3.NewSnapshot(fmt.Sprint(version), nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, apiList, nil, nil, nil)
-	snap.Consistent()
+// 	snap := cachev3.NewSnapshot(fmt.Sprint(version), nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, apiList, nil, nil, nil)
+// 	snap.Consistent()
 
-	err := enforcerAPICache.SetSnapshot(label, snap)
-	if err != nil {
-		logger.LoggerXds.Error(err)
-	}
-	enforcerAPICacheVersionMap[label] = version
-	enforcerAPIListMap[label] = apiList
-	logger.LoggerXds.Infof("New cache update for the label: " + label + " version: " + fmt.Sprint(version))
-}
+// 	err := enforcerAPICache.SetSnapshot(label, snap)
+// 	if err != nil {
+// 		logger.LoggerXds.Error(err)
+// 	}
+// 	enforcerAPICacheVersionMap[label] = version
+// 	enforcerAPIListMap[label] = apiList
+// 	logger.LoggerXds.Infof("New cache update for the label: " + label + " version: " + fmt.Sprint(version))
+// }
 
 // UpdateEnforcerApplicationPolicies sets new update to the enforcer's Application Policies
 func UpdateEnforcerApplicationPolicies(applicationPolicies *subscription.ApplicationPolicyList) {
@@ -748,10 +761,10 @@ func UpdateEnforcerApplicationKeyMappings(applicationKeyMappings *subscription.A
 
 //different go routines could update XDS at the same time. To avoid this we use a mutex and lock
 func updateXdsCacheWithLock(label string, endpoints []types.Resource, clusters []types.Resource, routes []types.Resource,
-	listeners []types.Resource) {
+	listeners []types.Resource, apis []types.Resource) {
 	mutexForXdsUpdate.Lock()
 	defer mutexForXdsUpdate.Unlock()
-	updateXdsCache(label, endpoints, clusters, routes, listeners)
+	updateXdsCache(label, endpoints, clusters, routes, listeners, apis)
 }
 
 func startConsulServiceDiscovery() {
@@ -841,8 +854,8 @@ func updateXDSRouteCacheForServiceDiscovery(apiKey string) {
 	for key, envoyLabelList := range openAPIEnvoyMap {
 		if key == apiKey {
 			for _, label := range envoyLabelList {
-				listeners, clusters, routes, endpoints := generateEnvoyResoucesForLabel(label)
-				updateXdsCacheWithLock(label, endpoints, clusters, routes, listeners)
+				listeners, clusters, routes, endpoints, apis := generateEnvoyResoucesForLabel(label)
+				updateXdsCacheWithLock(label, endpoints, clusters, routes, listeners, apis)
 				logger.LoggerXds.Info("Updated XDS cache by consul service discovery")
 			}
 		}

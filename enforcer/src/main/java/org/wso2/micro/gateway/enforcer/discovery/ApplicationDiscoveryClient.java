@@ -77,7 +77,7 @@ public class ApplicationDiscoveryClient {
         this.subscriptionDataStore = SubscriptionDataStoreImpl.getInstance();
         this.channel = GRPCUtils.createSecuredChannel(logger, host, port);
         this.stub = ApplicationDiscoveryServiceGrpc.newStub(channel);
-        this.nodeId = ConfigHolder.getInstance().getEnvVarConfig().getEnforcerLabel();
+        this.nodeId = AdapterConstants.COMMON_ENFORCER_LABEL;
         this.latestACKed = DiscoveryResponse.getDefaultInstance();
     }
 
@@ -91,50 +91,50 @@ public class ApplicationDiscoveryClient {
     }
 
     public void watchApplications() {
-        // TODO: (Praminda) implement a deadline with retries
-        reqObserver = stub.streamApplications(new StreamObserver<DiscoveryResponse>() {
-            @Override
-            public void onNext(DiscoveryResponse response) {
-                logger.debug("Received Application discovery response " + response);
-                latestReceived = response;
-                try {
-                    List<Application> applicationList = new ArrayList<>();
-                    for (Any res : response.getResourcesList()) {
-                        applicationList.addAll(res.unpack(ApplicationList.class).getListList());
-                    }
-                    subscriptionDataStore.addApplications(applicationList);
-                    ack();
-                } catch (Exception e) {
-                    // catching generic error here to wrap any grpc communication errors in the runtime
-                    onError(e);
-                }
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-                logger.error("Error occurred during Application discovery", throwable);
-                // TODO: (Praminda) if adapter is unavailable keep retrying
-                nack(throwable);
-            }
-
-            @Override
-            public void onCompleted() {
-                logger.info("Completed receiving Application data");
-            }
-        });
-
-        try {
-            DiscoveryRequest req = DiscoveryRequest.newBuilder()
-                    .setNode(Node.newBuilder().setId(AdapterConstants.COMMON_ENFORCER_LABEL).build())
-                    .setVersionInfo(latestACKed.getVersionInfo())
-                    .setTypeUrl(Constants.APPLICATION_LIST_TYPE_URL).build();
-            reqObserver.onNext(req);
-            logger.debug("Sent Discovery request for type url: " + Constants.APPLICATION_LIST_TYPE_URL);
-
-        } catch (Exception e) {
-            logger.error("Unexpected error occurred in Application discovery service", e);
-            reqObserver.onError(e);
-        }
+//        // TODO: (Praminda) implement a deadline with retries
+//        reqObserver = stub.streamApplications(new StreamObserver<DiscoveryResponse>() {
+//            @Override
+//            public void onNext(DiscoveryResponse response) {
+//                logger.debug("Received Application discovery response " + response);
+//                latestReceived = response;
+//                try {
+//                    List<Application> applicationList = new ArrayList<>();
+//                    for (Any res : response.getResourcesList()) {
+//                        applicationList.addAll(res.unpack(ApplicationList.class).getListList());
+//                    }
+//                    subscriptionDataStore.addApplications(applicationList);
+//                    ack();
+//                } catch (Exception e) {
+//                    // catching generic error here to wrap any grpc communication errors in the runtime
+//                    onError(e);
+//                }
+//            }
+//
+//            @Override
+//            public void onError(Throwable throwable) {
+//                logger.error("Error occurred during Application discovery", throwable);
+//                // TODO: (Praminda) if adapter is unavailable keep retrying
+//                nack(throwable);
+//            }
+//
+//            @Override
+//            public void onCompleted() {
+//                logger.info("Completed receiving Application data");
+//            }
+//        });
+//
+//        try {
+//            DiscoveryRequest req = DiscoveryRequest.newBuilder()
+//                    .setNode(Node.newBuilder().setId(nodeId).build())
+//                    .setVersionInfo(latestACKed.getVersionInfo())
+//                    .setTypeUrl(Constants.APPLICATION_LIST_TYPE_URL).build();
+//            reqObserver.onNext(req);
+//            logger.debug("Sent Discovery request for type url: " + Constants.APPLICATION_LIST_TYPE_URL);
+//
+//        } catch (Exception e) {
+//            logger.error("Unexpected error occurred in Application discovery service", e);
+//            reqObserver.onError(e);
+//        }
     }
 
     /**

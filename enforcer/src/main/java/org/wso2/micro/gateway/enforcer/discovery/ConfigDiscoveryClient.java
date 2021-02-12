@@ -70,12 +70,12 @@ public class ConfigDiscoveryClient {
                 .overrideAuthority(envVarConfig.getAdapterHostName())
                 .build();
         this.blockingStub = ConfigDiscoveryServiceGrpc.newBlockingStub(channel);
-        nodeId = envVarConfig.getEnforcerLabel();
+        nodeId = AdapterConstants.COMMON_ENFORCER_LABEL;
     }
 
     public Config requestInitConfig() throws DiscoveryException {
         DiscoveryRequest req = DiscoveryRequest.newBuilder()
-                .setNode(Node.newBuilder().setId(AdapterConstants.COMMON_ENFORCER_LABEL).build())
+                .setNode(Node.newBuilder().setId(nodeId).build())
                 .setTypeUrl(Constants.CONFIG_TYPE_URL).build();
         DiscoveryResponse res = DiscoveryResponse.getDefaultInstance();
         try {

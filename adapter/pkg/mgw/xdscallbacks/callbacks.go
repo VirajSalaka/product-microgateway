@@ -50,7 +50,7 @@ func (cb *Callbacks) OnStreamRequest(id int64, request *discovery.DiscoveryReque
 
 // OnStreamResponse prints debug logs
 func (cb *Callbacks) OnStreamResponse(id int64, request *discovery.DiscoveryRequest, response *discovery.DiscoveryResponse) {
-	logger.LoggerXdsCallbacks.Debugf("stream request on stream id: %d Response: %v", id, response)
+	logger.LoggerXdsCallbacks.Debugf("stream response on stream id: %d Response: %v", id, response)
 }
 
 // OnFetchRequest prints debug logs

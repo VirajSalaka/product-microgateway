@@ -122,9 +122,10 @@ func LoadSubscriptionData(configFile *config.Config) {
 					appList = newResponse.(*resourceTypes.ApplicationList)
 					xds.UpdateEnforcerApplications(xds.GenerateApplicationList(appList))
 				case *resourceTypes.APIList:
-					logger.LoggerSubscription.Debug("Received API information.")
-					apiList = newResponse.(*resourceTypes.APIList)
-					xds.UpdateEnforcerAPIList(xds.GenerateAPIList(apiList))
+					// TODO: (VirajSalaka) Remove APIList retrieval completely.
+					logger.LoggerSubscription.Debug("Received API information. Not applied.")
+					// apiList = newResponse.(*resourceTypes.APIList)
+					// xds.UpdateEnforcerAPIList(xds.GenerateAPIList(apiList))
 				case *resourceTypes.ApplicationPolicyList:
 					logger.LoggerSubscription.Debug("Received Application Policy information.")
 					appPolicyList = newResponse.(*resourceTypes.ApplicationPolicyList)

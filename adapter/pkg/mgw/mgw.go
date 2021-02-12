@@ -77,8 +77,8 @@ func init() {
 
 const grpcMaxConcurrentStreams = 1000000
 
-func runManagementServer(server xdsv3.Server, enforcerServer xdsv3.Server, enforcerSdsServer xdsv3.Server,
-	enforcerAppDsSrv xdsv3.Server, enforcerAPIDsSrv xdsv3.Server, enforcerAppPolicyDsSrv xdsv3.Server,
+func runManagementServer(server xdsv3.Server, enforcerServer xdsv3.Server, enforcerAPIDsSrv xdsv3.Server,
+	enforcerSdsServer xdsv3.Server, enforcerAppDsSrv xdsv3.Server, enforcerAppPolicyDsSrv xdsv3.Server,
 	enforcerSubPolicyDsSrv xdsv3.Server, enforcerAppKeyMappingDsSrv xdsv3.Server, port uint) {
 	var grpcOptions []grpc.ServerOption
 	grpcOptions = append(grpcOptions, grpc.MaxConcurrentStreams(grpcMaxConcurrentStreams))
@@ -109,9 +109,10 @@ func runManagementServer(server xdsv3.Server, enforcerServer xdsv3.Server, enfor
 	// register services
 	discoveryv3.RegisterAggregatedDiscoveryServiceServer(grpcServer, server)
 	configservice.RegisterConfigDiscoveryServiceServer(grpcServer, enforcerServer)
-	apiservice.RegisterApiDiscoveryServiceServer(grpcServer, enforcerServer)
+	apiservice.RegisterApiDiscoveryServiceServer(grpcServer, enforcerAPIDsSrv)
 	subscriptionservice.RegisterSubscriptionDiscoveryServiceServer(grpcServer, enforcerSdsServer)
 	subscriptionservice.RegisterApplicationDiscoveryServiceServer(grpcServer, enforcerAppDsSrv)
+	// TODO: (VirajSalaka) Removes
 	subscriptionservice.RegisterApiListDiscoveryServiceServer(grpcServer, enforcerAPIDsSrv)
 	subscriptionservice.RegisterApplicationPolicyDiscoveryServiceServer(grpcServer, enforcerAppPolicyDsSrv)
 	subscriptionservice.RegisterSubscriptionPolicyDiscoveryServiceServer(grpcServer, enforcerSubPolicyDsSrv)
@@ -138,7 +139,7 @@ func Run(conf *config.Config) {
 	// log config watcher
 	// TODO: (VirajSalaka) Implement a rest endpoint to apply configurations
 	watcherLogConf, _ := fsnotify.NewWatcher()
-	errC := watcherLogConf.Add("conf/log_config.toml")
+	errC := watcherLogConf.Add("/Users/viraj/go/src/github.com/VirajSalaka/product-microgateway/distribution/target/wso2am-micro-gw-4.0.0-m6-SNAPSHOT/resources/conf/log_config.toml")
 
 	if errC != nil {
 		logger.LoggerMgw.Fatal("Error reading the log configs. ", errC)

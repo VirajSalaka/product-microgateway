@@ -77,7 +77,7 @@ public class SubscriptionDiscoveryClient {
         this.subscriptionDataStore = SubscriptionDataStoreImpl.getInstance();
         this.channel = GRPCUtils.createSecuredChannel(logger, host, port);
         this.stub = SubscriptionDiscoveryServiceGrpc.newStub(channel);
-        this.nodeId = ConfigHolder.getInstance().getEnvVarConfig().getEnforcerLabel();
+        this.nodeId = AdapterConstants.COMMON_ENFORCER_LABEL;
         this.latestACKed = DiscoveryResponse.getDefaultInstance();
     }
 
@@ -126,7 +126,7 @@ public class SubscriptionDiscoveryClient {
 
         try {
             DiscoveryRequest req = DiscoveryRequest.newBuilder()
-                    .setNode(Node.newBuilder().setId(AdapterConstants.COMMON_ENFORCER_LABEL).build())
+                    .setNode(Node.newBuilder().setId(nodeId).build())
                     .setVersionInfo(latestACKed.getVersionInfo())
                     .setTypeUrl(Constants.SUBSCRIPTION_LIST_TYPE_URL).build();
             reqObserver.onNext(req);

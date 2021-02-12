@@ -111,45 +111,45 @@ public class ApiDiscoveryClient {
 
     public void watchApis() {
         // TODO: (Praminda) implement a deadline with retries
-        reqObserver = stub.streamApis(new StreamObserver<DiscoveryResponse>() {
-                    @Override
-                    public void onNext(DiscoveryResponse response) {
-                        logger.debug("Received API discovery response " + response);
-                        latestReceived = response;
-                        try {
-                            List<Api> apis = handleResponse(response);
-                            apiFactory.addApis(apis);
-                            // TODO: (Praminda) fix recursive ack on ack failure
-                            ack();
-                        } catch (Exception e) {
-                            // catching generic error here to wrap any grpc communication errors in the runtime
-                            onError(e);
-                        }
-                    }
-
-                    @Override
-                    public void onError(Throwable throwable) {
-                        logger.error("Error occurred during API discovery", throwable);
-                        // TODO: (Praminda) if adapter is unavailable keep retrying
-                        nack(throwable);
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        logger.info("Completed receiving APIs");
-                    }
-                });
-
-        try {
-            DiscoveryRequest req = DiscoveryRequest.newBuilder()
-                    .setNode(Node.newBuilder().setId(nodeId).build())
-                    .setVersionInfo(latestACKed.getVersionInfo())
-                    .setTypeUrl(Constants.API_TYPE_URL).build();
-            reqObserver.onNext(req);
-        } catch (Exception e) {
-            logger.error("Unexpected error occurred in API discovery service", e);
-            reqObserver.onError(e);
-        }
+//        reqObserver = stub.streamApis(new StreamObserver<DiscoveryResponse>() {
+//                    @Override
+//                    public void onNext(DiscoveryResponse response) {
+//                        logger.debug("Received API discovery response " + response);
+//                        latestReceived = response;
+//                        try {
+//                            List<Api> apis = handleResponse(response);
+//                            apiFactory.addApis(apis);
+//                            // TODO: (Praminda) fix recursive ack on ack failure
+//                            ack();
+//                        } catch (Exception e) {
+//                            // catching generic error here to wrap any grpc communication errors in the runtime
+//                            onError(e);
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onError(Throwable throwable) {
+//                        logger.error("Error occurred during API discovery", throwable);
+//                        // TODO: (Praminda) if adapter is unavailable keep retrying
+//                        nack(throwable);
+//                    }
+//
+//                    @Override
+//                    public void onCompleted() {
+//                        logger.info("Completed receiving APIs");
+//                    }
+//                });
+//
+//        try {
+//            DiscoveryRequest req = DiscoveryRequest.newBuilder()
+//                    .setNode(Node.newBuilder().setId(nodeId).build())
+//                    .setVersionInfo(latestACKed.getVersionInfo())
+//                    .setTypeUrl(Constants.API_TYPE_URL).build();
+//            reqObserver.onNext(req);
+//        } catch (Exception e) {
+//            logger.error("Unexpected error occurred in API discovery service", e);
+//            reqObserver.onError(e);
+//        }
     }
 
     /**

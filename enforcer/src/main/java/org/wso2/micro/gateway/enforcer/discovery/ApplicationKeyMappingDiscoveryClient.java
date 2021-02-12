@@ -77,7 +77,7 @@ public class ApplicationKeyMappingDiscoveryClient {
         this.subscriptionDataStore = SubscriptionDataStoreImpl.getInstance();
         this.channel = GRPCUtils.createSecuredChannel(logger, host, port);
         this.stub = ApplicationKeyMappingDiscoveryServiceGrpc.newStub(channel);
-        this.nodeId = ConfigHolder.getInstance().getEnvVarConfig().getEnforcerLabel();
+        this.nodeId = AdapterConstants.COMMON_ENFORCER_LABEL;
         this.latestACKed = DiscoveryResponse.getDefaultInstance();
     }
 
@@ -91,50 +91,50 @@ public class ApplicationKeyMappingDiscoveryClient {
     }
 
     public void watchApplicationKeyMappings() {
-        // TODO: (Praminda) implement a deadline with retries
-        reqObserver = stub.streamApplicationKeyMappings(new StreamObserver<DiscoveryResponse>() {
-            @Override
-            public void onNext(DiscoveryResponse response) {
-                logger.debug("Received Application Key Mapping discovery response " + response);
-                latestReceived = response;
-                try {
-                    List<ApplicationKeyMapping> applicationKeyMappingLis = new ArrayList<>();
-                    for (Any res : response.getResourcesList()) {
-                        applicationKeyMappingLis.addAll(res.unpack(ApplicationKeyMappingList.class).getListList());
-                    }
-                    subscriptionDataStore.addApplicationKeyMappings(applicationKeyMappingLis);
-                    ack();
-                } catch (Exception e) {
-                    // catching generic error here to wrap any grpc communication errors in the runtime
-                    onError(e);
-                }
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-                logger.error("Error occurred during SubApplication Key Mappingscription discovery", throwable);
-                // TODO: (Praminda) if adapter is unavailable keep retrying
-                nack(throwable);
-            }
-
-            @Override
-            public void onCompleted() {
-                logger.info("Completed receiving Application Key Mapping data");
-            }
-        });
-
-        try {
-            DiscoveryRequest req = DiscoveryRequest.newBuilder()
-                    .setNode(Node.newBuilder().setId(AdapterConstants.COMMON_ENFORCER_LABEL).build())
-                    .setVersionInfo(latestACKed.getVersionInfo())
-                    .setTypeUrl(Constants.APPLICATION_KEY_MAPPING_LIST_TYPE_URL).build();
-            reqObserver.onNext(req);
-            logger.debug("Sent Discovery request for type url: " + Constants.APPLICATION_KEY_MAPPING_LIST_TYPE_URL);
-
-        } catch (Exception e) {
-            logger.error("Unexpected error occurred in Application Key Mapping discovery service", e);
-            reqObserver.onError(e);
-        }
+//        // TODO: (Praminda) implement a deadline with retries
+//        reqObserver = stub.streamApplicationKeyMappings(new StreamObserver<DiscoveryResponse>() {
+//            @Override
+//            public void onNext(DiscoveryResponse response) {
+//                logger.debug("Received Application Key Mapping discovery response " + response);
+//                latestReceived = response;
+//                try {
+//                    List<ApplicationKeyMapping> applicationKeyMappingLis = new ArrayList<>();
+//                    for (Any res : response.getResourcesList()) {
+//                        applicationKeyMappingLis.addAll(res.unpack(ApplicationKeyMappingList.class).getListList());
+//                    }
+//                    subscriptionDataStore.addApplicationKeyMappings(applicationKeyMappingLis);
+//                    ack();
+//                } catch (Exception e) {
+//                    // catching generic error here to wrap any grpc communication errors in the runtime
+//                    onError(e);
+//                }
+//            }
+//
+//            @Override
+//            public void onError(Throwable throwable) {
+//                logger.error("Error occurred during SubApplication Key Mappingscription discovery", throwable);
+//                // TODO: (Praminda) if adapter is unavailable keep retrying
+//                nack(throwable);
+//            }
+//
+//            @Override
+//            public void onCompleted() {
+//                logger.info("Completed receiving Application Key Mapping data");
+//            }
+//        });
+//
+//        try {
+//            DiscoveryRequest req = DiscoveryRequest.newBuilder()
+//                    .setNode(Node.newBuilder().setId(nodeId).build())
+//                    .setVersionInfo(latestACKed.getVersionInfo())
+//                    .setTypeUrl(Constants.APPLICATION_KEY_MAPPING_LIST_TYPE_URL).build();
+//            reqObserver.onNext(req);
+//            logger.debug("Sent Discovery request for type url: " + Constants.APPLICATION_KEY_MAPPING_LIST_TYPE_URL);
+//
+//        } catch (Exception e) {
+//            logger.error("Unexpected error occurred in Application Key Mapping discovery service", e);
+//            reqObserver.onError(e);
+//        }
     }
 
     /**
