@@ -42,18 +42,18 @@ const (
 
 var (
 	// SubList contains the Subscription list
-	SubList           *resourceTypes.SubscriptionList
+	SubList *resourceTypes.SubscriptionList
 	// AppList contains the Application list
-	AppList           *resourceTypes.ApplicationList
+	AppList *resourceTypes.ApplicationList
 	// AppKeyMappingList contains the Application key mapping list
 	AppKeyMappingList *resourceTypes.ApplicationKeyMappingList
 	// APIList contains the Api list
-	APIList           *resourceTypes.APIList
+	APIList *resourceTypes.APIList
 	// AppPolicyList contains the Application policy list
-	AppPolicyList     *resourceTypes.ApplicationPolicyList
+	AppPolicyList *resourceTypes.ApplicationPolicyList
 	// SubPolicyList contains the Subscription policy list
-	SubPolicyList     *resourceTypes.SubscriptionPolicyList
-	resources = []resource{
+	SubPolicyList *resourceTypes.SubscriptionPolicyList
+	resources     = []resource{
 		{
 			endpoint:     "subscriptions",
 			responseType: SubList,
@@ -67,7 +67,7 @@ var (
 			responseType: AppKeyMappingList,
 		},
 		{
-			endpoint:     "apis",
+			endpoint:     "apis?gatewayLabel=Production%20and%20Sandbox",
 			responseType: APIList,
 		},
 		{

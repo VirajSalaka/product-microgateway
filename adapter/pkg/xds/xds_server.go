@@ -583,7 +583,7 @@ func UpdateEnforcerApplications(applications *subscription.ApplicationList) {
 // UpdateEnforcerAPIList sets new update to the enforcer's Apis
 func UpdateEnforcerAPIList(apis *subscription.APIList) {
 	logger.LoggerXds.Debug("Updating Enforcer API Cache")
-	label := commonEnforcerLabel
+	label := "Production and Sandbox"
 	apiList := enforcerAPIListMap[label]
 	apiList = append(apiList, apis)
 
