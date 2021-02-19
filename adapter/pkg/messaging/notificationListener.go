@@ -100,7 +100,6 @@ func handleAPIEvents(data []byte, eventType string) {
 	json.Unmarshal([]byte(string(data)), &apiEvent)
 	timeStampList := APIListTimeStamp
 	for apiID, timeStamp := range timeStampList {
-		fmt.Println(apiID, " timeStamp value is", timeStamp)
 		if apiEvent.APIID == apiID {
 			oldTimeStamp = timeStamp
 		}
@@ -116,34 +115,24 @@ func handleAPIEvents(data []byte, eventType string) {
 		}
 	}
 
-	logger.LoggerMsg.Infof("oldTimeStamp: %v , newTimeStamp: %v", oldTimeStamp, newTimeStamp)
 	if isFound && oldTimeStamp < newTimeStamp && strings.EqualFold(removeAPIFromGateway, apiEvent.Event.Type) {
 		deleteAPIFromList(indexOfAPI, apiEvent.APIID)
 	} else if strings.EqualFold(deployAPIToGateway, apiEvent.Event.Type) {
-		// pull API details
-		// ID := apiEvent.APIID
-		// api := resourceTypes.API{APIID: ID, UUID: apiEvent.UUID,
-		// 	Provider: apiEvent.APIProvider, Name: apiEvent.APIName,
-		// 	Version: apiEvent.APIVersion, Context: apiEvent.APIContext, APIType: apiEvent.APIType,
-		// 	APIStatus: apiEvent.APIStatus, IsDefaultVersion: true, TenantID: apiEvent.TenantID,
-		// 	TenantDomain: apiEvent.Event.TenantDomain, TimeStamp: apiEvent.Event.TimeStamp}
-
 		conf, _ := config.ReadConfigs()
 		for _, env := range apiEvent.GatewayLabels {
 			for _, configuredEnv := range conf.ControlPlane.EventHub.EnvironmentLabels {
 				if configuredEnv == env {
 					queryParamMap := make(map[string]string, 1)
-					queryParamMap["gatewayLabel"] = configuredEnv
-					go subscription.InvokeService("apis", subscription.APIList, queryParamMap, subscription.APIListChannel, 0)
-					// xds.UpdateEnforcerAPIList(env, xds.GenerateAPIList(subscription.APIList))
-					// logger.LoggerMsg.Infof("API %s is added/updated to APIList under environment : %s", apiEvent.UUID, env)
-					// logger.LoggerMsg.Infof("API List %v", subscription.APIList.List)
+					queryParamMap[subscription.GatewayLabelParam] = configuredEnv
+					queryParamMap[subscription.ContextParam] = apiEvent.Context
+					queryParamMap[subscription.VersionParam] = apiEvent.Version
+					// TODO: (VirajSalaka) Fix the REST API call once the APIM Event hub implementation is fixed.
+					go subscription.InvokeService(subscription.ApisEndpoint, subscription.APIList, queryParamMap,
+						subscription.APIListChannel, 0)
 				}
 			}
 		}
-
 		go synchronizer.FetchAPIsFromControlPlane(apiEvent.UUID, apiEvent.GatewayLabels)
-
 	}
 	fmt.Println(APIList)
 }
@@ -196,15 +185,14 @@ func handleSubscriptionEvents(data []byte, eventType string) {
 	sub := resourceTypes.Subscription{SubscriptionID: subscriptionEvent.SubscriptionID, PolicyID: subscriptionEvent.PolicyID,
 		APIID: subscriptionEvent.APIID, AppID: subscriptionEvent.ApplicationID, SubscriptionState: subscriptionEvent.SubscriptionState,
 		TenantID: subscriptionEvent.TenantID, TenantDomain: subscriptionEvent.TenantDomain, TimeStamp: subscriptionEvent.TimeStamp}
-	subscription.SubList.List = append(subscription.SubList.List, sub)
-	// if subscriptionEvent.Event.Type == "SUBSCRIPTIONS_CREATE" {
-	// 	subscription.SubList.List = append(subscription.SubList.List, sub)
-	// } else if subscriptionEvent.Event.Type == "SUBSCRIPTIONS_UPDATE" {
-	// 	subscription.SubList.List = removeSubscription(subscription.SubList.List, subscriptionEvent.SubscriptionID)
-	// 	subscription.SubList.List = append(subscription.SubList.List, sub)
-	// } else if subscriptionEvent.Event.Type == "SUBSCRIPTIONS_DELETE" {
-	// 	subscription.SubList.List = removeSubscription(subscription.SubList.List, subscriptionEvent.SubscriptionID)
-	// }
+	if subscriptionEvent.Event.Type == "SUBSCRIPTIONS_CREATE" {
+		subscription.SubList.List = append(subscription.SubList.List, sub)
+	} else if subscriptionEvent.Event.Type == "SUBSCRIPTIONS_UPDATE" {
+		subscription.SubList.List = removeSubscription(subscription.SubList.List, subscriptionEvent.SubscriptionID)
+		subscription.SubList.List = append(subscription.SubList.List, sub)
+	} else if subscriptionEvent.Event.Type == "SUBSCRIPTIONS_DELETE" {
+		subscription.SubList.List = removeSubscription(subscription.SubList.List, subscriptionEvent.SubscriptionID)
+	}
 	xds.UpdateEnforcerSubscriptions(xds.GenerateSubscriptionList(subscription.SubList))
 	// EventTypes: SUBSCRIPTIONS_CREATE, SUBSCRIPTIONS_UPDATE, SUBSCRIPTIONS_DELETE
 }

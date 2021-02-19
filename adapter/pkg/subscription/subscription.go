@@ -38,6 +38,14 @@ const (
 	authorizationBasic         string = "Basic "
 	authorizationHeaderDefault string = "Authorization"
 	internalWebAppEP           string = "internal/data/v1/"
+	// ContextParam is required to call /apis endpoint
+	ContextParam string = "context"
+	// VersionParam is trequired to call /apis endpoint
+	VersionParam string = "version"
+	// GatewayLabelParam is trequired to call /apis endpoint
+	GatewayLabelParam string = "gatewayLabel"
+	// ApisEndpoint is the resource path of /apis endpoint
+	ApisEndpoint string = "apis"
 )
 
 var (
@@ -82,21 +90,17 @@ var (
 )
 
 type response struct {
-	Error    error
-	Payload  []byte
-	Endpoint string
-	Type     interface{}
+	Error        error
+	Payload      []byte
+	Endpoint     string
+	GatewayLabel string
+	Type         interface{}
 }
 
 type resource struct {
 	endpoint     string
 	responseType interface{}
 }
-
-const (
-	gatewayLabelParam    string = "gatewayLabel"
-	apisResourceEndpoint string = "apis"
-)
 
 func init() {
 	APIListChannel = make(chan response)
@@ -118,35 +122,12 @@ func LoadSubscriptionData(configFile *config.Config) {
 	if len(configuredEnvs) > 0 {
 		for _, configuredEnv := range configuredEnvs {
 			queryParamMap := make(map[string]string, 1)
-			queryParamMap[gatewayLabelParam] = configuredEnv
-			go InvokeService(apisResourceEndpoint, APIList, queryParamMap, APIListChannel, 0)
+			queryParamMap[GatewayLabelParam] = configuredEnv
+			go InvokeService(ApisEndpoint, APIList, queryParamMap, APIListChannel, 0)
 		}
 	}
 
 	var response response
-	// for _, env := range configuredEnvs {
-	// 	response = <-apiListChannel
-
-	// 	responseType := reflect.TypeOf(response.Type).Elem()
-	// 	newResponse := reflect.New(responseType).Interface()
-
-	// 	if response.Error == nil && response.Payload != nil {
-	// 		err := json.Unmarshal(response.Payload, &newResponse)
-
-	// 		if err != nil {
-	// 			logger.LoggerSubscription.Errorf("Error occurred while unmarshalling the APIList response received for: "+response.Endpoint, err)
-	// 		} else {
-	// 			switch t := newResponse.(type) {
-	// 			case *resourceTypes.APIList:
-	// 				logger.LoggerSubscription.Debug("Received API information.")
-	// 				APIList = newResponse.(*resourceTypes.APIList)
-	// 				xds.UpdateEnforcerAPIList(env, xds.GenerateAPIList(APIList))
-	// 			default:
-	// 				logger.LoggerSubscription.Debugf("Unknown type %T", t)
-	// 			}
-	// 		}
-	// 	}
-	// }
 	go retrieveSubscriptionsFromChannel(APIListChannel)
 
 	for i := 1; i <= len(resources); i++ {
@@ -196,7 +177,11 @@ func InvokeService(endpoint string, responseType interface{}, queryParamMap map[
 	serviceURL := conf.ControlPlane.EventHub.ServiceURL + internalWebAppEP + endpoint
 	// Create the request
 	req, err := http.NewRequest("GET", serviceURL, nil)
-
+	// gatewayLabel will only be required for apis endpoint
+	gatewayLabel, ok := queryParamMap[GatewayLabelParam]
+	if !ok {
+		gatewayLabel = ""
+	}
 	if queryParamMap != nil && len(queryParamMap) > 0 {
 		q := req.URL.Query()
 		// Making necessary query parameters for the request
@@ -206,7 +191,7 @@ func InvokeService(endpoint string, responseType interface{}, queryParamMap map[
 		req.URL.RawQuery = q.Encode()
 	}
 	if err != nil {
-		c <- response{err, nil, endpoint, responseType}
+		c <- response{err, nil, endpoint, gatewayLabel, responseType}
 		logger.LoggerSubscription.Errorf("Error occurred while creating an HTTP request for serviceURL: "+serviceURL, err)
 		return
 	}
@@ -239,7 +224,7 @@ func InvokeService(endpoint string, responseType interface{}, queryParamMap map[
 	resp, err := client.Do(req)
 
 	if err != nil {
-		c <- response{err, nil, endpoint, responseType}
+		c <- response{err, nil, endpoint, gatewayLabel, responseType}
 		logger.LoggerSubscription.Errorf("Error occurred while calling the REST API: "+serviceURL, err)
 		return
 	}
@@ -247,14 +232,14 @@ func InvokeService(endpoint string, responseType interface{}, queryParamMap map[
 	responseBytes, err := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode == http.StatusOK {
 		if err != nil {
-			c <- response{err, nil, endpoint, responseType}
+			c <- response{err, nil, endpoint, gatewayLabel, responseType}
 			logger.LoggerSubscription.Errorf("Error occurred while reading the response received for: "+serviceURL, err)
 			return
 		}
-		c <- response{nil, responseBytes, endpoint, responseType}
+		c <- response{nil, responseBytes, endpoint, gatewayLabel, responseType}
 
 	} else {
-		c <- response{errors.New(string(responseBytes)), nil, endpoint, responseType}
+		c <- response{errors.New(string(responseBytes)), nil, endpoint, gatewayLabel, responseType}
 		logger.LoggerSubscription.Errorf("Failed to fetch data! "+serviceURL+" responded with "+strconv.Itoa(resp.StatusCode), err)
 	}
 }
@@ -272,7 +257,7 @@ func retrieveSubscriptionsFromChannel(c chan response) {
 			} else {
 				switch t := newResponse.(type) {
 				case *resourceTypes.APIList:
-					logger.LoggerSubscription.Debug("Received API information.")
+					logger.LoggerSubscription.Debug("Received API List information.")
 					APIList = newResponse.(*resourceTypes.APIList)
 					xds.UpdateEnforcerAPIList("Production and Sandbox", xds.GenerateAPIList(APIList))
 				default:

@@ -23,7 +23,6 @@ import org.apache.logging.log4j.Logger;
 import org.wso2.micro.gateway.enforcer.api.config.ResourceConfig;
 import org.wso2.micro.gateway.enforcer.constants.APIConstants;
 import org.wso2.micro.gateway.enforcer.dto.APIKeyValidationInfoDTO;
-import org.wso2.micro.gateway.enforcer.exception.DataLoadingException;
 import org.wso2.micro.gateway.enforcer.exception.MGWException;
 import org.wso2.micro.gateway.enforcer.models.API;
 import org.wso2.micro.gateway.enforcer.models.ApiPolicy;
@@ -34,7 +33,6 @@ import org.wso2.micro.gateway.enforcer.models.Subscription;
 import org.wso2.micro.gateway.enforcer.models.SubscriptionPolicy;
 import org.wso2.micro.gateway.enforcer.models.URLMapping;
 import org.wso2.micro.gateway.enforcer.subscription.SubscriptionDataHolder;
-import org.wso2.micro.gateway.enforcer.subscription.SubscriptionDataLoaderImpl;
 import org.wso2.micro.gateway.enforcer.subscription.SubscriptionDataStore;
 import org.wso2.micro.gateway.enforcer.util.FilterUtils;
 
@@ -257,23 +255,24 @@ public class KeyValidator {
         String subscriberTenant = "carbon.super"; //TODO : get correct tenant domain
 
         ApplicationPolicy appPolicy = datastore.getApplicationPolicyByName(app.getPolicy(), tenantId);
-        if (appPolicy == null) {
-            try {
-                appPolicy = new SubscriptionDataLoaderImpl().getApplicationPolicy(app.getPolicy(), apiTenantDomain);
-                datastore.addOrUpdateApplicationPolicy(appPolicy);
-            } catch (DataLoadingException e) {
-                log.error("Error while loading ApplicationPolicy");
-            }
-        }
+//        if (appPolicy == null) {
+//            try {
+//                appPolicy = new SubscriptionDataLoaderImpl().getApplicationPolicy(app.getPolicy(), apiTenantDomain);
+//                datastore.addOrUpdateApplicationPolicy(appPolicy);
+//            } catch (DataLoadingException e) {
+//                log.error("Error while loading ApplicationPolicy");
+//            }
+//        }
         SubscriptionPolicy subPolicy = datastore.getSubscriptionPolicyByName(sub.getPolicyId(), tenantId);
-        if (subPolicy == null) {
-            try {
-                subPolicy = new SubscriptionDataLoaderImpl().getSubscriptionPolicy(sub.getPolicyId(), apiTenantDomain);
-                datastore.addOrUpdateSubscriptionPolicy(subPolicy);
-            } catch (DataLoadingException e) {
-                log.error("Error while loading SubscriptionPolicy");
-            }
-        }
+//        if (subPolicy == null) {
+//            try {
+//                subPolicy = new SubscriptionDataLoaderImpl().getSubscriptionPolicy(sub.getPolicyId(),
+//                apiTenantDomain);
+//                datastore.addOrUpdateSubscriptionPolicy(subPolicy);
+//            } catch (DataLoadingException e) {
+//                log.error("Error while loading SubscriptionPolicy");
+//            }
+//        }
         ApiPolicy apiPolicy = datastore.getApiPolicyByName(api.getApiTier(), tenantId);
 
         boolean isContentAware = false;
