@@ -56,7 +56,7 @@ var (
 	// AppKeyMappingList contains the Application key mapping list
 	AppKeyMappingList *resourceTypes.ApplicationKeyMappingList
 	// APIList contains the Api list
-	APIList *resourceTypes.APIList
+	APIList map[string]*resourceTypes.APIList
 	// AppPolicyList contains the Application policy list
 	AppPolicyList *resourceTypes.ApplicationPolicyList
 	// SubPolicyList contains the Subscription policy list
@@ -128,7 +128,7 @@ func LoadSubscriptionData(configFile *config.Config) {
 	}
 
 	var response response
-	go retrieveSubscriptionsFromChannel(APIListChannel)
+	go retrieveAPIListFromChannel(APIListChannel)
 
 	for i := 1; i <= len(resources); i++ {
 		response = <-responseChannel
@@ -244,7 +244,7 @@ func InvokeService(endpoint string, responseType interface{}, queryParamMap map[
 	}
 }
 
-func retrieveSubscriptionsFromChannel(c chan response) {
+func retrieveAPIListFromChannel(c chan response) {
 	for response := range c {
 		responseType := reflect.TypeOf(response.Type).Elem()
 		newResponse := reflect.New(responseType).Interface()
@@ -258,8 +258,8 @@ func retrieveSubscriptionsFromChannel(c chan response) {
 				switch t := newResponse.(type) {
 				case *resourceTypes.APIList:
 					logger.LoggerSubscription.Debug("Received API List information.")
-					APIList = newResponse.(*resourceTypes.APIList)
-					xds.UpdateEnforcerAPIList("Production and Sandbox", xds.GenerateAPIList(APIList))
+					APIList[response.GatewayLabel] = newResponse.(*resourceTypes.APIList)
+					xds.UpdateEnforcerAPIList(response.GatewayLabel, xds.GenerateAPIList(APIList[response.GatewayLabel]))
 				default:
 					logger.LoggerSubscription.Debugf("Unknown type %T", t)
 				}

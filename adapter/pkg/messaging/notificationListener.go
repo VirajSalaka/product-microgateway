@@ -67,7 +67,7 @@ func handleNotification(deliveries <-chan amqp.Delivery, done chan error) {
 			}
 			panic(err)
 		}
-		logger.LoggerMsg.Infof("\n\n[%s]", decodedByte)
+		logger.LoggerMsg.Debugf("\n\n[%s]", decodedByte)
 		eventType = notification.Event.PayloadData.EventType
 
 		if strings.Contains(eventType, apiEventType) {
