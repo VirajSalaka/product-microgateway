@@ -21,7 +21,6 @@ package messaging
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/streadway/amqp"
@@ -48,10 +47,11 @@ const (
 
 // var variables
 var (
-	APIList                  = make([]resourceTypes.API, 0)
-	ScopeList                = make([]resourceTypes.Scope, 0)
-	APIListTimeStamp         = make(map[int]int64, 0)
-	ApplicationListTimeStamp = make(map[string]int64, 0)
+	APIList                   = make([]resourceTypes.API, 0)
+	ScopeList                 = make([]resourceTypes.Scope, 0)
+	APIListTimeStamp          = make(map[string]int64, 0)
+	SubsriptionsListTimeStamp = make(map[int]int64, 0)
+	ApplicationListTimeStamp  = make(map[string]int64, 0)
 )
 
 // handleNotification to process
@@ -90,59 +90,93 @@ func handleNotification(deliveries <-chan amqp.Delivery, done chan error) {
 // handleAPIEvents to process api related data
 func handleAPIEvents(data []byte, eventType string) {
 	var (
-		apiEvent     APIEvent
-		oldTimeStamp int64
-		indexOfAPI   int
-		isFound      bool
-		newTimeStamp int64 = apiEvent.Event.TimeStamp
+		apiEvent         APIEvent
+		currentTimeStamp int64 = apiEvent.Event.TimeStamp
 	)
 
 	json.Unmarshal([]byte(string(data)), &apiEvent)
-	timeStampList := APIListTimeStamp
-	for apiID, timeStamp := range timeStampList {
-		if apiEvent.APIID == apiID {
-			oldTimeStamp = timeStamp
-		}
+	// Per each revision, synchronization should happen.
+	if strings.EqualFold(deployAPIToGateway, apiEvent.Event.Type) {
+		go synchronizer.FetchAPIsFromControlPlane(apiEvent.UUID, apiEvent.GatewayLabels)
 	}
 
-	APIListTimeStamp[apiEvent.APIID] = newTimeStamp
-
-	for i := range APIList {
-		if apiEvent.APIID == APIList[i].APIID {
-			isFound = true
-			indexOfAPI = i
-			break
-		}
-	}
-
-	if isFound && oldTimeStamp < newTimeStamp && strings.EqualFold(removeAPIFromGateway, apiEvent.Event.Type) {
-		deleteAPIFromList(indexOfAPI, apiEvent.APIID)
-	} else if strings.EqualFold(deployAPIToGateway, apiEvent.Event.Type) {
-		conf, _ := config.ReadConfigs()
+	// TODO: (VirajSalaka) Handle API Blocked event
+	if len(apiEvent.GatewayLabels) > 0 {
 		for _, env := range apiEvent.GatewayLabels {
-			for _, configuredEnv := range conf.ControlPlane.EventHub.EnvironmentLabels {
-				if configuredEnv == env {
-					queryParamMap := make(map[string]string, 1)
-					queryParamMap[subscription.GatewayLabelParam] = configuredEnv
-					queryParamMap[subscription.ContextParam] = apiEvent.Context
-					queryParamMap[subscription.VersionParam] = apiEvent.Version
-					// TODO: (VirajSalaka) Fix the REST API call once the APIM Event hub implementation is fixed.
-					go subscription.InvokeService(subscription.ApisEndpoint, subscription.APIList, queryParamMap,
-						subscription.APIListChannel, 0)
+			// TODO: (VirajSalaka) This stores unnecessary keyvalue pairs as well.
+			if timeStamp, ok := APIListTimeStamp[apiEvent.UUID+":"+env]; ok {
+				APIListTimeStamp[apiEvent.UUID+":"+env] = currentTimeStamp
+				if timeStamp > currentTimeStamp {
+					return
+				}
+			}
+			if strings.EqualFold(deployAPIToGateway, apiEvent.Event.Type) {
+				conf, _ := config.ReadConfigs()
+				for _, configuredEnv := range conf.ControlPlane.EventHub.EnvironmentLabels {
+					if configuredEnv == env {
+						if _, ok := subscription.APIList[env]; ok {
+							apiListOfEnv := subscription.APIList[env].List
+							for i := range apiListOfEnv {
+								// If API is already found, it is a new revision deployement.
+								// Subscription relates details of an API does not change between new revisions
+								if apiEvent.APIID == apiListOfEnv[i].APIID {
+									logger.LoggerMsg.Debugf("APIList for apiIId: %s is not updated as it already exists", apiEvent.UUID)
+									return
+								}
+							}
+						}
+						queryParamMap := make(map[string]string, 3)
+						queryParamMap[subscription.GatewayLabelParam] = configuredEnv
+						queryParamMap[subscription.ContextParam] = apiEvent.Context
+						queryParamMap[subscription.VersionParam] = apiEvent.Version
+						// TODO: (VirajSalaka) Fix the REST API call once the APIM Event hub implementation is fixed.
+						go subscription.InvokeService(subscription.ApisEndpoint, subscription.APIList, queryParamMap,
+							subscription.APIListChannel, 0)
+					}
+				}
+			} else {
+				if _, ok := subscription.APIList[env]; ok {
+					apiListOfEnv := subscription.APIList[env].List
+					for i := range apiListOfEnv {
+						if apiEvent.APIID == apiListOfEnv[i].APIID {
+							subscription.APIList[env].List = deleteAPIFromList(apiListOfEnv, i, apiEvent.APIID)
+							break
+						}
+					}
 				}
 			}
 		}
-		go synchronizer.FetchAPIsFromControlPlane(apiEvent.UUID, apiEvent.GatewayLabels)
 	}
-	fmt.Println(APIList)
+	// if isFound && oldTimeStamp < newTimeStamp && strings.EqualFold(removeAPIFromGateway, apiEvent.Event.Type) {
+	// 	deleteAPIFromList(indexOfAPI, apiEvent.APIID)
+	// } else if strings.EqualFold(deployAPIToGateway, apiEvent.Event.Type) {
+	// 	conf, _ := config.ReadConfigs()
+	// 	for _, env := range apiEvent.GatewayLabels {
+	// 		for _, configuredEnv := range conf.ControlPlane.EventHub.EnvironmentLabels {
+	// 			if configuredEnv == env {
+	// 				queryParamMap := make(map[string]string, 3)
+	// 				queryParamMap[subscription.GatewayLabelParam] = configuredEnv
+	// 				queryParamMap[subscription.ContextParam] = apiEvent.Context
+	// 				queryParamMap[subscription.VersionParam] = apiEvent.Version
+	// 				// TODO: (VirajSalaka) Fix the REST API call once the APIM Event hub implementation is fixed.
+	// 				go subscription.InvokeService(subscription.ApisEndpoint, subscription.APIList, queryParamMap,
+	// 					subscription.APIListChannel, 0)
+	// 			}
+	// 		}
+	// 	}
+	// 	go synchronizer.FetchAPIsFromControlPlane(apiEvent.UUID, apiEvent.GatewayLabels)
+	// }
 }
 
 // deleteAPIFromList when remove API From Gateway event happens
-func deleteAPIFromList(indexToBeDeleted int, apiID int) {
-	copy(APIList[indexToBeDeleted:], APIList[indexToBeDeleted+1:])
-	APIList[len(APIList)-1] = resourceTypes.API{}
-	APIList = APIList[:len(APIList)-1]
+func deleteAPIFromList(apiList []resourceTypes.API, indexToBeDeleted int, apiID int) []resourceTypes.API {
+	// copy(apiList[indexToBeDeleted:], apiList[indexToBeDeleted+1:])
+	// apiList[len(apiList)-1] = resourceTypes.API{}
+	apiList[indexToBeDeleted] = apiList[len(apiList)-1]
+
+	//apiList = apiList[:len(apiList)-1]
 	logger.LoggerMsg.Infof("API %d is deleted from APIList", apiID)
+	return apiList
 }
 
 // handleApplicationEvents to process application related events
@@ -304,13 +338,13 @@ func removeSubPolicy(subPolicies []resourceTypes.SubscriptionPolicy, id int32) [
 	return subPolicies[:index]
 }
 
-func removeAPI(apis []resourceTypes.API, id int) []resourceTypes.API {
-	index := 0
-	for _, i := range apis {
-		if i.APIID != id {
-			apis[index] = i
-			index++
-		}
-	}
-	return apis[:index]
-}
+// func removeAPI(apis []resourceTypes.API, id int) []resourceTypes.API {
+// 	index := 0
+// 	for _, i := range apis {
+// 		if i.APIID != id {
+// 			apis[index] = i
+// 			index++
+// 		}
+// 	}
+// 	return apis[:index]
+// }
