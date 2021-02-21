@@ -242,10 +242,10 @@ func handleSubscriptionEvents(data []byte, eventType string) {
 		return
 	}
 	if subscriptionEvent.Event.Type == subscriptionCreate {
-		subscription.SubList.List = append(subscription.SubList.List, sub)
+		updateSubscription(subscriptionEvent.SubscriptionID, sub)
 	} else if subscriptionEvent.Event.Type == subscriptionUpdate {
 		subscription.SubList.List = removeSubscription(subscription.SubList.List, subscriptionEvent.SubscriptionID)
-		subscription.SubList.List = append(subscription.SubList.List, sub)
+		updateSubscription(subscriptionEvent.SubscriptionID, sub)
 	} else if subscriptionEvent.Event.Type == subscriptionDelete {
 		subscription.SubList.List = removeSubscription(subscription.SubList.List, subscriptionEvent.SubscriptionID)
 	}
@@ -336,23 +336,37 @@ func removeApplication(applications []resourceTypes.Application, id int32) []res
 
 func removeSubscription(subscriptions []resourceTypes.Subscription, id int32) []resourceTypes.Subscription {
 	deleteIndex := -1
-	occurances := 0
 	// multiple events are sent in subscription scenario
 	for index, sub := range subscriptions {
 		if sub.SubscriptionID == id {
 			deleteIndex = index
-			occurances++
-			subscriptions[deleteIndex] = subscriptions[len(subscriptions)-occurances]
-		}
-		if occurances == 2 {
-			break
 		}
 	}
 	if deleteIndex == -1 {
 		logger.LoggerMsg.Debugf("Subscription under id: %d is not available", id)
 		return nil
 	}
-	return subscriptions[:len(subscriptions)-occurances]
+	subscriptions[deleteIndex] = subscriptions[len(subscriptions)-1]
+	return subscriptions[:len(subscriptions)-1]
+}
+
+func updateSubscription(id int32, sub resourceTypes.Subscription) {
+	// var l sync.Mutex
+	// l.Lock()
+	// defer l.Unlock()
+	// TODO: (VirajSalaka) Iterate in reverse
+	updateIndex := -1
+	for index, sub := range subscription.SubList.List {
+		if sub.SubscriptionID == id {
+			updateIndex = index
+			break
+		}
+	}
+	if updateIndex == -1 {
+		subscription.SubList.List = append(subscription.SubList.List, sub)
+		return
+	}
+	subscription.SubList.List[updateIndex] = sub
 }
 
 func removeAppPolicy(appPolicies []resourceTypes.ApplicationPolicy, id int32) []resourceTypes.ApplicationPolicy {
