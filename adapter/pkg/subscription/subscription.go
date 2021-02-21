@@ -104,6 +104,7 @@ type resource struct {
 
 func init() {
 	APIListChannel = make(chan response)
+	APIList = make(map[string]*resourceTypes.APIList)
 }
 
 // LoadSubscriptionData loads subscription data from control-plane
@@ -123,7 +124,7 @@ func LoadSubscriptionData(configFile *config.Config) {
 		for _, configuredEnv := range configuredEnvs {
 			queryParamMap := make(map[string]string, 1)
 			queryParamMap[GatewayLabelParam] = configuredEnv
-			go InvokeService(ApisEndpoint, APIList, queryParamMap, APIListChannel, 0)
+			go InvokeService(ApisEndpoint, APIList[configuredEnv], queryParamMap, APIListChannel, 0)
 		}
 	}
 
@@ -236,8 +237,8 @@ func InvokeService(endpoint string, responseType interface{}, queryParamMap map[
 			logger.LoggerSubscription.Errorf("Error occurred while reading the response received for: "+serviceURL, err)
 			return
 		}
+		logger.LoggerSubscription.Debug("the request to the control plane over the REST API: " + serviceURL + " is successful.")
 		c <- response{nil, responseBytes, endpoint, gatewayLabel, responseType}
-
 	} else {
 		c <- response{errors.New(string(responseBytes)), nil, endpoint, gatewayLabel, responseType}
 		logger.LoggerSubscription.Errorf("Failed to fetch data! "+serviceURL+" responded with "+strconv.Itoa(resp.StatusCode), err)
@@ -258,7 +259,16 @@ func retrieveAPIListFromChannel(c chan response) {
 				switch t := newResponse.(type) {
 				case *resourceTypes.APIList:
 					logger.LoggerSubscription.Debug("Received API List information.")
-					APIList[response.GatewayLabel] = newResponse.(*resourceTypes.APIList)
+					apiListResponse := newResponse.(*resourceTypes.APIList)
+					if _, ok := APIList[response.GatewayLabel]; !ok {
+						// During the startup
+						APIList[response.GatewayLabel] = newResponse.(*resourceTypes.APIList)
+					} else {
+						// API Details retrieved after startup contains single API per response.
+						if len(apiListResponse.List) == 1 {
+							APIList[response.GatewayLabel].List = append(APIList[response.GatewayLabel].List, apiListResponse.List[0])
+						}
+					}
 					xds.UpdateEnforcerAPIList(response.GatewayLabel, xds.GenerateAPIList(APIList[response.GatewayLabel]))
 				default:
 					logger.LoggerSubscription.Debugf("Unknown type %T", t)

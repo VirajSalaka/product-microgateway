@@ -21,6 +21,7 @@ package messaging
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/streadway/amqp"
@@ -43,15 +44,24 @@ const (
 	applicationRegistration     = "APPLICATION_REGISTRATION_CREATE"
 	removeApplicationKeyMapping = "REMOVE_APPLICATION_KEYMAPPING"
 	apiLifeCycleChange          = "API_LIFECYCLE_CHANGE"
+	applicationCreate           = "APPLICATION_CREATE"
+	applicationUpdate           = "APPLICATION_UPDATE"
+	applicationDelete           = "APPLICATION_DELETE"
+	subscriptionCreate          = "SUBSCRIPTIONS_CREATE"
+	subscriptionUpdate          = "SUBSCRIPTIONS_UPDATE"
+	subscriptionDelete          = "SUBSCRIPTIONS_DELETE"
+	policyCreate                = "POLICY_CREATE"
+	policyUpdate                = "POLICY_UPDATE"
+	policyDelete                = "POLICY_DELETE"
 )
 
 // var variables
 var (
-	APIList                   = make([]resourceTypes.API, 0)
-	ScopeList                 = make([]resourceTypes.Scope, 0)
-	APIListTimeStamp          = make(map[string]int64, 0)
-	SubsriptionsListTimeStamp = make(map[int]int64, 0)
-	ApplicationListTimeStamp  = make(map[string]int64, 0)
+	ScopeList                         = make([]resourceTypes.Scope, 0)
+	apiListTimeStampMap               = make(map[string]int64, 0)
+	subsriptionsListTimeStampMap      = make(map[string]int64, 0)
+	ApplicationKeyMappingTimeStampMap = make(map[string]int64, 0)
+	ApplicationListTimeStampMap       = make(map[string]int64, 0)
 )
 
 // handleNotification to process
@@ -104,11 +114,8 @@ func handleAPIEvents(data []byte, eventType string) {
 	if len(apiEvent.GatewayLabels) > 0 {
 		for _, env := range apiEvent.GatewayLabels {
 			// TODO: (VirajSalaka) This stores unnecessary keyvalue pairs as well.
-			if timeStamp, ok := APIListTimeStamp[apiEvent.UUID+":"+env]; ok {
-				APIListTimeStamp[apiEvent.UUID+":"+env] = currentTimeStamp
-				if timeStamp > currentTimeStamp {
-					return
-				}
+			if isLaterEvent(apiListTimeStampMap, apiEvent.UUID+":"+env, currentTimeStamp) {
+				return
 			}
 			if strings.EqualFold(deployAPIToGateway, apiEvent.Event.Type) {
 				conf, _ := config.ReadConfigs()
@@ -119,27 +126,29 @@ func handleAPIEvents(data []byte, eventType string) {
 							for i := range apiListOfEnv {
 								// If API is already found, it is a new revision deployement.
 								// Subscription relates details of an API does not change between new revisions
-								if apiEvent.APIID == apiListOfEnv[i].APIID {
+								if apiEvent.Context == apiListOfEnv[i].Context && apiEvent.Version == apiListOfEnv[i].Version {
 									logger.LoggerMsg.Debugf("APIList for apiIId: %s is not updated as it already exists", apiEvent.UUID)
 									return
 								}
 							}
+							queryParamMap := make(map[string]string, 3)
+							queryParamMap[subscription.GatewayLabelParam] = configuredEnv
+							queryParamMap[subscription.ContextParam] = apiEvent.Context
+							queryParamMap[subscription.VersionParam] = apiEvent.Version
+							// TODO: (VirajSalaka) Fix the REST API call once the APIM Event hub implementation is fixed.
+							go subscription.InvokeService(subscription.ApisEndpoint, subscription.APIList[env], queryParamMap,
+								subscription.APIListChannel, 0)
 						}
-						queryParamMap := make(map[string]string, 3)
-						queryParamMap[subscription.GatewayLabelParam] = configuredEnv
-						queryParamMap[subscription.ContextParam] = apiEvent.Context
-						queryParamMap[subscription.VersionParam] = apiEvent.Version
-						// TODO: (VirajSalaka) Fix the REST API call once the APIM Event hub implementation is fixed.
-						go subscription.InvokeService(subscription.ApisEndpoint, subscription.APIList, queryParamMap,
-							subscription.APIListChannel, 0)
 					}
 				}
-			} else {
+			} else if strings.EqualFold(removeAPIFromGateway, apiEvent.Event.Type) {
 				if _, ok := subscription.APIList[env]; ok {
 					apiListOfEnv := subscription.APIList[env].List
 					for i := range apiListOfEnv {
-						if apiEvent.APIID == apiListOfEnv[i].APIID {
-							subscription.APIList[env].List = deleteAPIFromList(apiListOfEnv, i, apiEvent.APIID)
+						// TODO: (VirajSalaka) Use APIId once it is fixed from control plane
+						if apiEvent.Context == apiListOfEnv[i].Context && apiEvent.Version == apiListOfEnv[i].Version {
+							subscription.APIList[env].List = deleteAPIFromList(apiListOfEnv, i, apiEvent.UUID, env)
+							xds.UpdateEnforcerAPIList(env, xds.GenerateAPIList(subscription.APIList[env]))
 							break
 						}
 					}
@@ -169,14 +178,14 @@ func handleAPIEvents(data []byte, eventType string) {
 }
 
 // deleteAPIFromList when remove API From Gateway event happens
-func deleteAPIFromList(apiList []resourceTypes.API, indexToBeDeleted int, apiID int) []resourceTypes.API {
+func deleteAPIFromList(apiList []resourceTypes.API, indexToBeDeleted int, apiUUID string, label string) []resourceTypes.API {
 	// copy(apiList[indexToBeDeleted:], apiList[indexToBeDeleted+1:])
 	// apiList[len(apiList)-1] = resourceTypes.API{}
 	apiList[indexToBeDeleted] = apiList[len(apiList)-1]
 
 	//apiList = apiList[:len(apiList)-1]
-	logger.LoggerMsg.Infof("API %d is deleted from APIList", apiID)
-	return apiList
+	logger.LoggerMsg.Infof("API %s is deleted from APIList under Label %s", apiUUID, label)
+	return apiList[:len(apiList)-1]
 }
 
 // handleApplicationEvents to process application related events
@@ -191,6 +200,11 @@ func handleApplicationEvents(data []byte, eventType string) {
 			KeyManager: applicationRegistrationEvent.KeyManager, TenantID: -1, TenantDomain: applicationRegistrationEvent.TenantDomain,
 			TimeStamp: applicationRegistrationEvent.TimeStamp}
 
+		if isLaterEvent(ApplicationKeyMappingTimeStampMap, fmt.Sprint(applicationRegistrationEvent.ApplicationID),
+			applicationRegistrationEvent.TimeStamp) {
+			return
+		}
+
 		subscription.AppKeyMappingList.List = append(subscription.AppKeyMappingList.List, applicationKeyMapping)
 		xds.UpdateEnforcerApplicationKeyMappings(xds.GenerateApplicationKeyMappingList(subscription.AppKeyMappingList))
 	} else {
@@ -200,12 +214,16 @@ func handleApplicationEvents(data []byte, eventType string) {
 			Name: applicationEvent.ApplicationName, SubName: applicationEvent.Subscriber, Policy: applicationEvent.ApplicationPolicy, TokenType: applicationEvent.TokenType, GroupIds: applicationEvent.GroupID, Attributes: nil,
 			TenantID: -1, TenantDomain: applicationEvent.TenantDomain, TimeStamp: applicationEvent.TimeStamp}
 
-		if applicationEvent.Event.Type == "APPLICATION_CREATE" {
+		if isLaterEvent(ApplicationListTimeStampMap, fmt.Sprint(applicationEvent.ApplicationID), applicationEvent.TimeStamp) {
+			return
+		}
+
+		if applicationEvent.Event.Type == applicationCreate {
 			subscription.AppList.List = append(subscription.AppList.List, application)
-		} else if applicationEvent.Event.Type == "APPLICATION_UPDATE" {
+		} else if applicationEvent.Event.Type == applicationUpdate {
 			subscription.AppList.List = removeApplication(subscription.AppList.List, applicationEvent.ApplicationID)
 			subscription.AppList.List = append(subscription.AppList.List, application)
-		} else if applicationEvent.Event.Type == "APPLICATION_DELETE" {
+		} else if applicationEvent.Event.Type == applicationDelete {
 			subscription.AppList.List = removeApplication(subscription.AppList.List, applicationEvent.ApplicationID)
 		}
 		xds.UpdateEnforcerApplications(xds.GenerateApplicationList(subscription.AppList))
@@ -219,12 +237,16 @@ func handleSubscriptionEvents(data []byte, eventType string) {
 	sub := resourceTypes.Subscription{SubscriptionID: subscriptionEvent.SubscriptionID, PolicyID: subscriptionEvent.PolicyID,
 		APIID: subscriptionEvent.APIID, AppID: subscriptionEvent.ApplicationID, SubscriptionState: subscriptionEvent.SubscriptionState,
 		TenantID: subscriptionEvent.TenantID, TenantDomain: subscriptionEvent.TenantDomain, TimeStamp: subscriptionEvent.TimeStamp}
-	if subscriptionEvent.Event.Type == "SUBSCRIPTIONS_CREATE" {
+
+	if isLaterEvent(subsriptionsListTimeStampMap, fmt.Sprint(subscriptionEvent.SubscriptionID), subscriptionEvent.TimeStamp) {
+		return
+	}
+	if subscriptionEvent.Event.Type == subscriptionCreate {
 		subscription.SubList.List = append(subscription.SubList.List, sub)
-	} else if subscriptionEvent.Event.Type == "SUBSCRIPTIONS_UPDATE" {
+	} else if subscriptionEvent.Event.Type == subscriptionUpdate {
 		subscription.SubList.List = removeSubscription(subscription.SubList.List, subscriptionEvent.SubscriptionID)
 		subscription.SubList.List = append(subscription.SubList.List, sub)
-	} else if subscriptionEvent.Event.Type == "SUBSCRIPTIONS_DELETE" {
+	} else if subscriptionEvent.Event.Type == subscriptionDelete {
 		subscription.SubList.List = removeSubscription(subscription.SubList.List, subscriptionEvent.SubscriptionID)
 	}
 	xds.UpdateEnforcerSubscriptions(xds.GenerateSubscriptionList(subscription.SubList))
@@ -233,6 +255,7 @@ func handleSubscriptionEvents(data []byte, eventType string) {
 
 // handleScopeRelatedEvents to process scope related events
 func handleScopeEvents(data []byte, eventType string) {
+	// TODO: (VirajSalaka) Decide the usage
 	var scopeEvent ScopeEvent
 	json.Unmarshal([]byte(string(data)), &scopeEvent)
 	scope := resourceTypes.Scope{Name: scopeEvent.Name, DisplayName: scopeEvent.DisplayName, ApplicationName: scopeEvent.ApplicationName}
@@ -246,27 +269,28 @@ func handlePolicyEvents(data []byte, eventType string) {
 	json.Unmarshal([]byte(string(data)), &policyEvent)
 
 	// TODO: Handle policy events
-	if strings.EqualFold(eventType, "POLICY_CREATE") {
+	if strings.EqualFold(eventType, policyCreate) {
 		logger.LoggerMsg.Infof("Policy: %s for policy type: %s", policyEvent.PolicyName, policyEvent.PolicyType)
-	} else if strings.EqualFold(eventType, "POLICY_UPDATE") {
+	} else if strings.EqualFold(eventType, policyUpdate) {
 		logger.LoggerMsg.Infof("Policy: %s for policy type: %s", policyEvent.PolicyName, policyEvent.PolicyType)
-	} else if strings.EqualFold(eventType, "POLICY_DELETE") {
+	} else if strings.EqualFold(eventType, policyDelete) {
 		logger.LoggerMsg.Infof("Policy: %s for policy type: %s", policyEvent.PolicyName, policyEvent.PolicyType)
 	}
 
-	if strings.EqualFold(apiEventType, policyEvent.PolicyType) {
-		var apiPolicyEvent APIPolicyEvent
-		json.Unmarshal([]byte(string(data)), &apiPolicyEvent)
-	} else if strings.EqualFold(applicationEventType, policyEvent.PolicyType) {
+	// if strings.EqualFold(apiEventType, policyEvent.PolicyType) {
+	// 	var apiPolicyEvent APIPolicyEvent
+	// 	json.Unmarshal([]byte(string(data)), &apiPolicyEvent)
+	// } else
+	if strings.EqualFold(applicationEventType, policyEvent.PolicyType) {
 		applicationPolicy := resourceTypes.ApplicationPolicy{ID: policyEvent.PolicyID, TenantID: -1, Name: policyEvent.PolicyName,
 			QuotaType: policyEvent.QuotaType}
 
-		if policyEvent.Event.Type == "POLICY_CREATE" {
+		if policyEvent.Event.Type == policyCreate {
 			subscription.AppPolicyList.List = append(subscription.AppPolicyList.List, applicationPolicy)
-		} else if policyEvent.Event.Type == "POLICY_UPDATE" {
+		} else if policyEvent.Event.Type == policyUpdate {
 			subscription.AppPolicyList.List = removeAppPolicy(subscription.AppPolicyList.List, policyEvent.PolicyID)
 			subscription.AppPolicyList.List = append(subscription.AppPolicyList.List, applicationPolicy)
-		} else if policyEvent.Event.Type == "POLICY_DELETE" {
+		} else if policyEvent.Event.Type == policyDelete {
 			subscription.AppPolicyList.List = removeAppPolicy(subscription.AppPolicyList.List, policyEvent.PolicyID)
 		}
 		xds.UpdateEnforcerApplicationPolicies(xds.GenerateApplicationPolicyList(subscription.AppPolicyList))
@@ -282,12 +306,12 @@ func handlePolicyEvents(data []byte, eventType string) {
 			RateLimitTimeUnit: subscriptionPolicyEvent.RateLimitTimeUnit, StopOnQuotaReach: subscriptionPolicyEvent.StopOnQuotaReach,
 			TenantDomain: subscriptionPolicyEvent.TenantDomain, TimeStamp: subscriptionPolicyEvent.TimeStamp}
 
-		if subscriptionPolicyEvent.Event.Type == "POLICY_CREATE" {
+		if subscriptionPolicyEvent.Event.Type == policyCreate {
 			subscription.SubPolicyList.List = append(subscription.SubPolicyList.List, subscriptionPolicy)
-		} else if subscriptionPolicyEvent.Event.Type == "POLICY_UPDATE" {
+		} else if subscriptionPolicyEvent.Event.Type == policyUpdate {
 			subscription.SubPolicyList.List = removeSubPolicy(subscription.SubPolicyList.List, subscriptionPolicyEvent.PolicyID)
 			subscription.SubPolicyList.List = append(subscription.SubPolicyList.List, subscriptionPolicy)
-		} else if subscriptionPolicyEvent.Event.Type == "POLICY_DELETE" {
+		} else if subscriptionPolicyEvent.Event.Type == policyDelete {
 			subscription.SubPolicyList.List = removeSubPolicy(subscription.SubPolicyList.List, subscriptionPolicyEvent.PolicyID)
 		}
 		xds.UpdateEnforcerSubscriptionPolicies(xds.GenerateSubscriptionPolicyList(subscription.SubPolicyList))
@@ -295,47 +319,82 @@ func handlePolicyEvents(data []byte, eventType string) {
 }
 
 func removeApplication(applications []resourceTypes.Application, id int32) []resourceTypes.Application {
-	index := 0
-	for _, i := range applications {
-		if i.ID != id {
-			applications[index] = i
-			index++
+	deleteIndex := -1
+	for index, app := range applications {
+		if app.ID == id {
+			deleteIndex = index
+			break
 		}
 	}
-	return applications[:index]
+	if deleteIndex == -1 {
+		logger.LoggerMsg.Debugf("Application under id: %d is not available", id)
+		return nil
+	}
+	applications[deleteIndex] = applications[len(applications)-1]
+	return applications[:len(applications)-1]
 }
 
 func removeSubscription(subscriptions []resourceTypes.Subscription, id int32) []resourceTypes.Subscription {
-	index := 0
-	for _, i := range subscriptions {
-		if i.SubscriptionID != id {
-			subscriptions[index] = i
-			index++
+	deleteIndex := -1
+	occurances := 0
+	// multiple events are sent in subscription scenario
+	for index, sub := range subscriptions {
+		if sub.SubscriptionID == id {
+			deleteIndex = index
+			occurances++
+			subscriptions[deleteIndex] = subscriptions[len(subscriptions)-occurances]
+		}
+		if occurances == 2 {
+			break
 		}
 	}
-	return subscriptions[:index]
+	if deleteIndex == -1 {
+		logger.LoggerMsg.Debugf("Subscription under id: %d is not available", id)
+		return nil
+	}
+	return subscriptions[:len(subscriptions)-occurances]
 }
 
 func removeAppPolicy(appPolicies []resourceTypes.ApplicationPolicy, id int32) []resourceTypes.ApplicationPolicy {
-	index := 0
-	for _, i := range appPolicies {
-		if i.ID != id {
-			appPolicies[index] = i
-			index++
+	deleteIndex := -1
+	for index, policy := range appPolicies {
+		if policy.ID == id {
+			deleteIndex = index
+			break
 		}
 	}
-	return appPolicies[:index]
+	if deleteIndex == -1 {
+		logger.LoggerMsg.Debugf("Application Policy under id: %d is not available", id)
+		return nil
+	}
+	appPolicies[deleteIndex] = appPolicies[len(appPolicies)-1]
+	return appPolicies[:len(appPolicies)-1]
 }
 
 func removeSubPolicy(subPolicies []resourceTypes.SubscriptionPolicy, id int32) []resourceTypes.SubscriptionPolicy {
-	index := 0
-	for _, i := range subPolicies {
-		if i.ID != id {
-			subPolicies[index] = i
-			index++
+	deleteIndex := -1
+	for index, policy := range subPolicies {
+		if policy.ID == id {
+			deleteIndex = index
+			break
 		}
 	}
-	return subPolicies[:index]
+	if deleteIndex == -1 {
+		logger.LoggerMsg.Debugf("Subscription Policy under id: %d is not available", id)
+		return nil
+	}
+	subPolicies[deleteIndex] = subPolicies[len(subPolicies)-1]
+	return subPolicies[:len(subPolicies)-1]
+}
+
+func isLaterEvent(timeStampMap map[string]int64, mapKey string, currentTimeStamp int64) bool {
+	if timeStamp, ok := timeStampMap[mapKey]; ok {
+		if timeStamp > currentTimeStamp {
+			return true
+		}
+	}
+	timeStampMap[mapKey] = currentTimeStamp
+	return false
 }
 
 // func removeAPI(apis []resourceTypes.API, id int) []resourceTypes.API {
