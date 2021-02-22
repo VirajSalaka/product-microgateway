@@ -156,34 +156,11 @@ func handleAPIEvents(data []byte, eventType string) {
 			}
 		}
 	}
-	// if isFound && oldTimeStamp < newTimeStamp && strings.EqualFold(removeAPIFromGateway, apiEvent.Event.Type) {
-	// 	deleteAPIFromList(indexOfAPI, apiEvent.APIID)
-	// } else if strings.EqualFold(deployAPIToGateway, apiEvent.Event.Type) {
-	// 	conf, _ := config.ReadConfigs()
-	// 	for _, env := range apiEvent.GatewayLabels {
-	// 		for _, configuredEnv := range conf.ControlPlane.EventHub.EnvironmentLabels {
-	// 			if configuredEnv == env {
-	// 				queryParamMap := make(map[string]string, 3)
-	// 				queryParamMap[subscription.GatewayLabelParam] = configuredEnv
-	// 				queryParamMap[subscription.ContextParam] = apiEvent.Context
-	// 				queryParamMap[subscription.VersionParam] = apiEvent.Version
-	// 				// TODO: (VirajSalaka) Fix the REST API call once the APIM Event hub implementation is fixed.
-	// 				go subscription.InvokeService(subscription.ApisEndpoint, subscription.APIList, queryParamMap,
-	// 					subscription.APIListChannel, 0)
-	// 			}
-	// 		}
-	// 	}
-	// 	go synchronizer.FetchAPIsFromControlPlane(apiEvent.UUID, apiEvent.GatewayLabels)
-	// }
 }
 
 // deleteAPIFromList when remove API From Gateway event happens
 func deleteAPIFromList(apiList []resourceTypes.API, indexToBeDeleted int, apiUUID string, label string) []resourceTypes.API {
-	// copy(apiList[indexToBeDeleted:], apiList[indexToBeDeleted+1:])
-	// apiList[len(apiList)-1] = resourceTypes.API{}
 	apiList[indexToBeDeleted] = apiList[len(apiList)-1]
-
-	//apiList = apiList[:len(apiList)-1]
 	logger.LoggerMsg.Infof("API %s is deleted from APIList under Label %s", apiUUID, label)
 	return apiList[:len(apiList)-1]
 }
@@ -277,6 +254,7 @@ func handlePolicyEvents(data []byte, eventType string) {
 		logger.LoggerMsg.Infof("Policy: %s for policy type: %s", policyEvent.PolicyName, policyEvent.PolicyType)
 	}
 
+	// TODO: (VirajSalaka) Decide if it is required to have API Level Policies
 	// if strings.EqualFold(apiEventType, policyEvent.PolicyType) {
 	// 	var apiPolicyEvent APIPolicyEvent
 	// 	json.Unmarshal([]byte(string(data)), &apiPolicyEvent)
@@ -351,9 +329,6 @@ func removeSubscription(subscriptions []resourceTypes.Subscription, id int32) []
 }
 
 func updateSubscription(id int32, sub resourceTypes.Subscription) {
-	// var l sync.Mutex
-	// l.Lock()
-	// defer l.Unlock()
 	// TODO: (VirajSalaka) Iterate in reverse
 	updateIndex := -1
 	for index, sub := range subscription.SubList.List {
@@ -410,14 +385,3 @@ func isLaterEvent(timeStampMap map[string]int64, mapKey string, currentTimeStamp
 	timeStampMap[mapKey] = currentTimeStamp
 	return false
 }
-
-// func removeAPI(apis []resourceTypes.API, id int) []resourceTypes.API {
-// 	index := 0
-// 	for _, i := range apis {
-// 		if i.APIID != id {
-// 			apis[index] = i
-// 			index++
-// 		}
-// 	}
-// 	return apis[:index]
-// }
