@@ -98,6 +98,9 @@ func createListener(conf *config.Config, listenerName string) *listenerv3.Listen
 		},
 		HttpFilters: httpFilters,
 		AccessLog:   []*access_logv3.AccessLog{accessLogs},
+		LocalReplyConfig: &hcmv3.LocalReplyConfig{
+			Mappers: []*hcmv3.ResponseMapper{},
+		},
 	}
 
 	pbst, err := ptypes.MarshalAny(manager)
