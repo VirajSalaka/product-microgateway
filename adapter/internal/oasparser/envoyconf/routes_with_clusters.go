@@ -35,9 +35,9 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/wso2/micro-gw/config"
-	logger "github.com/wso2/micro-gw/loggers"
 	"github.com/wso2/micro-gw/internal/oasparser/model"
 	"github.com/wso2/micro-gw/internal/svcdiscovery"
+	logger "github.com/wso2/micro-gw/loggers"
 
 	"strings"
 	"time"
@@ -443,10 +443,8 @@ func createRoute(params *routeCreateParams) *routev3.Route {
 	contextExtensions["sandClusterName"] = sandClusterName
 
 	perFilterConfig := extAuthService.ExtAuthzPerRoute{
-		Override: &extAuthService.ExtAuthzPerRoute_CheckSettings{
-			CheckSettings: &extAuthService.CheckSettings{
-				ContextExtensions: contextExtensions,
-			},
+		Override: &extAuthService.ExtAuthzPerRoute_Disabled{
+			Disabled: true,
 		},
 	}
 
@@ -527,10 +525,10 @@ func createRoute(params *routeCreateParams) *routev3.Route {
 // CreateTokenRoute generates a route for the jwt /testkey endpoint
 func CreateTokenRoute() *routev3.Route {
 	var (
-		router routev3.Route
-		action       *routev3.Route_Route
-		match        *routev3.RouteMatch
-		decorator    *routev3.Decorator
+		router    routev3.Route
+		action    *routev3.Route_Route
+		match     *routev3.RouteMatch
+		decorator *routev3.Decorator
 	)
 
 	match = &routev3.RouteMatch{
@@ -581,7 +579,7 @@ func CreateTokenRoute() *routev3.Route {
 							MaxProgramSize: nil,
 						},
 					},
-				Regex: "/testkey",
+					Regex: "/testkey",
 				},
 				Substitution: "/",
 			},
