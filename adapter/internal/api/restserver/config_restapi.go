@@ -134,6 +134,7 @@ func configureAPI(api *operations.RestapiAPI) http.Handler {
 		jsonByteArray, _ := ioutil.ReadAll(params.File)
 		err := apiServer.ApplyAPIProjectWithOverwrite(jsonByteArray, []string{}, params.Override)
 		if err != nil {
+			logger.LoggerAPI.Error("Error while applying API Project.", err)
 			switch err.Error() {
 			case constants.AlreadyExists:
 				return api_individual.NewPostApisConflict()

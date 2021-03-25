@@ -78,7 +78,7 @@
                   <images>
                     <image>
                         <alias>mg-adapter</alias>
-                        <name>wso2/mg-adapter:${project.version}</name>
+                        <name>vsalaka/mg-adapter-fix:${project.version}</name>
                       <build>
                         <contextDir>${project.basedir}/src/main/resources</contextDir>
                         <assembly>

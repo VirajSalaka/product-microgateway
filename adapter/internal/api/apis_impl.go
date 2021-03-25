@@ -124,6 +124,10 @@ func extractAPIProject(payload []byte) (apiProject ProjectAPI, err error) {
 			apiType, lifeCycleStatus, productionEndpoint, sandboxEndpoint, endpointImplementationType, err :=
 				extractAPIInformation(apiJsn)
 
+			if err != nil {
+				return apiProject, err
+			}
+
 			if endpointImplementationType == "INLINE" {
 				errMsg := "Inline endpointImplementationType is not currently supported with WSO2 micro-gateway"
 				loggers.LoggerAPI.Infof(errMsg)
@@ -228,20 +232,50 @@ func extractAPIInformation(apiJsn []byte) (apiType, apiLifeCycleStatus, producti
 		loggers.LoggerAPI.Errorf("Error occured while parsing api.yaml %v", unmarshalErr.Error())
 		return "", "", "", "", "", unmarshalErr
 	}
-	data := apiDef["data"].(map[string]interface{})
-	apiType = strings.ToUpper(data[apiTypeYamlKey].(string))
-	apiLifeCycleStatus = strings.ToUpper(data[lifeCycleStatus].(string))
-	apiEndpointImplementationType = data[endpointImplementationType].(string)
-	endpointConfig := data["endpointConfig"].(map[string]interface{})
+	apiName := "unknown"
+	apiVersion := "unknown"
 
-	if endpointConfig["sandbox_endpoints"] != nil {
-		sandboxEndpoints := endpointConfig["sandbox_endpoints"].(map[string]interface{})
-		sandboxEndpoint = sandboxEndpoints["url"].(string)
+	if data, ok := apiDef["data"].(map[string]interface{}); ok {
+		apiName, _ = data["name"].(string)
+		apiVersion, _ = data["version"].(string)
+		if apiTypeString, ok := data[apiTypeYamlKey].(string); ok {
+			apiType = strings.ToUpper(apiTypeString)
+		} else {
+			return "", "", "", "", "", errors.New("APIType field is not present within api.json. API: " +
+				apiName + ":" + apiVersion)
+		}
+
+		if apiLifeCycleStatusString, ok := data[lifeCycleStatus].(string); ok {
+			apiLifeCycleStatus = strings.ToUpper(apiLifeCycleStatusString)
+		} else {
+			return "", "", "", "", "", errors.New("apiLifeCycleStatus field is not present within api.json. API: " +
+				apiName + ":" + apiVersion)
+		}
+
+		if apiEndpointImplementationType, ok = data[endpointImplementationType].(string); !ok {
+			return "", "", "", "", "", errors.New("apiEndpointImplementationType field is not present within api.json. API: " +
+				apiName + ":" + apiVersion)
+		}
+
+		if endpointConfig, ok := data["endpointConfig"].(map[string]interface{}); ok {
+			if endpointConfig["sandbox_endpoints"] != nil {
+				if sandboxEndpoints, ok := endpointConfig["sandbox_endpoints"].(map[string]interface{}); ok {
+					sandboxEndpoint = sandboxEndpoints["url"].(string)
+				}
+
+			}
+			if endpointConfig["production_endpoints"] != nil {
+				if productionEndpoints, ok := endpointConfig["production_endpoints"].(map[string]interface{}); ok {
+					productionEndpoint = productionEndpoints["url"].(string)
+				}
+			}
+		} else {
+			return "", "", "", "", "", errors.New("Endpoint field is not present within api.json. API: " + apiName + ":" + apiVersion)
+		}
+	} else {
+		return "", "", "", "", "", errors.New("Data field is not present within api.json. API: " + apiName + ":" + apiVersion)
 	}
-	if endpointConfig["production_endpoints"] != nil {
-		productionEndpoints := endpointConfig["production_endpoints"].(map[string]interface{})
-		productionEndpoint = productionEndpoints["url"].(string)
-	}
+
 	return apiType, apiLifeCycleStatus, productionEndpoint, sandboxEndpoint, apiEndpointImplementationType, nil
 }
 
