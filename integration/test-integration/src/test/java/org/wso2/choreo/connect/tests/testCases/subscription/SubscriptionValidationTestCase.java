@@ -29,11 +29,11 @@ import org.wso2.carbon.automation.test.utils.http.client.HttpResponse;
 import org.wso2.choreo.connect.mockbackend.ResponseConstants;
 import org.wso2.choreo.connect.tests.apim.APIMLifecycleBaseTest;
 import org.wso2.choreo.connect.tests.context.MicroGWTestException;
+import org.wso2.choreo.connect.tests.util.AnalyticsUtils;
 import org.wso2.choreo.connect.tests.util.HttpClientRequest;
 import org.wso2.choreo.connect.tests.util.HttpsClientRequest;
 import org.wso2.choreo.connect.tests.util.TestConstant;
 import org.wso2.choreo.connect.tests.util.Utils;
-import org.wso2.choreo.connect.tests.utils.HttpClient;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -126,6 +126,11 @@ public class SubscriptionValidationTestCase extends APIMLifecycleBaseTest {
         Assert.assertNotNull(analyticsResponse);
         Assert.assertTrue(analyticsResponse.getData().contains("SubscriptionValidationTestAPI"),
                 analyticsResponse.getData());
+
+        AnalyticsUtils.validatePublishedEvent(apiId, apiRequest.getType(), apiRequest.getName(),
+                apiRequest.getVersion(), "admin", "carbon.super", "GET",
+                "/pet/findByStatus", "200", "http://mockBackend:2380/v2", "PRODUCTION",
+                applicationId, "", "", "UNKNOWN");
     }
 
     @AfterClass(alwaysRun = true)
