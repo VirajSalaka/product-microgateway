@@ -1,0 +1,13 @@
+diff --git a/envoy-filters/mgw-source/filters/http/mgw-wasm-websocket/build.sh b/envoy-filters/mgw-source/filters/http/mgw-wasm-websocket/build.sh
+index 37ed83052..c595d2fe7 100755
+--- a/envoy-filters/mgw-source/filters/http/mgw-wasm-websocket/build.sh
++++ b/envoy-filters/mgw-source/filters/http/mgw-wasm-websocket/build.sh
+@@ -25,7 +25,7 @@ START_COMMAND=("/bin/bash" "-lc" "groupadd --gid $(id -g) -f envoygroup \
+     && usermod -a -G pcap envoybuild \
+     && sudo -EHs -u envoybuild bash -c '\
+         cd source/mgw-source/filters/http/mgw-wasm-websocket \
+-        && bazel build -c opt //:mgw-websocket.wasm \
++        && bazel build --jobs 1 -c opt //:mgw-websocket.wasm \
+         && cp -a bazel-bin/mgw-websocket.wasm /build'")
+ 
+ ENVOY_DOCKER_OPTIONS+=(-u root:root)
