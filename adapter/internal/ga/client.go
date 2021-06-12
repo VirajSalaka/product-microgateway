@@ -19,8 +19,10 @@ package ga
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
+	"time"
 
 	core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	discovery "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
@@ -47,36 +49,49 @@ func init() {
 }
 
 func initConnection(xdsURL string) {
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, xdsURL, grpc.WithInsecure())
+	// ctx := context.Background()
+	// TODO: (VirajSalaka) Dial or DialContext
+	conn, err := grpc.Dial(xdsURL, grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(err)
+		return
 	}
-	defer conn.Close()
+	// defer conn.Close()
 	client := stub.NewApiListDiscoveryServiceClient(conn)
 
-	streamContext := context.TODO()
+	streamContext := context.Background()
+	fmt.Println(conn.GetState().String())
+
+	time.Sleep(11 * time.Second)
 
 	xdsStream, err = client.StreamApiList(streamContext)
+
+	fmt.Println(conn.GetState().String())
+
 	if err != nil {
 		// TODO: (VirajSalaka) handle error
+		fmt.Printf("error while starting client %s \n", err.Error())
 		return
 	}
 }
 
 func watchAPIs() {
 	for {
+		fmt.Println("started.")
 		discoveryResponse, err := xdsStream.Recv()
+		fmt.Println("received.")
 		if err == io.EOF {
 			// read done.
 			// TODO: (VirajSalaka) observe the behavior when grpc connection terminates
+			fmt.Println("EOF")
 			return
 		}
 		if err != nil {
-			log.Fatalf("Failed to receive a note : %v", err)
+			fmt.Printf("Failed to receive a note : %v", err)
 			nack(err.Error())
 		} else {
 			lastReceivedResponse = discoveryResponse
+			fmt.Printf("response %v", discoveryResponse)
 			ack()
 		}
 	}
@@ -123,9 +138,10 @@ func InitAPIXds(xdsURL string) {
 	go watchAPIs()
 	discoveryRequest := &discovery.DiscoveryRequest{
 		Node:        getAdapterNode(),
-		VersionInfo: lastReceivedResponse.VersionInfo,
+		VersionInfo: "abcd",
 		TypeUrl:     apiTypeURL,
 	}
 	xdsStream.Send(discoveryRequest)
+	fmt.Println("sent")
 	select {}
 }
