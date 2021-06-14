@@ -26,7 +26,7 @@ import (
 
 	core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	discovery "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
-	stub "github.com/wso2/product-microgateway/adapter/pkg/discovery/api/wso2/discovery/service/subscription"
+	stub "github.com/wso2/product-microgateway/adapter/pkg/discovery/api/wso2/discovery/service/ga"
 	"google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 )
@@ -36,11 +36,11 @@ var (
 	lastSuccessfulVersion string
 	laskAckedResponse     *discovery.DiscoveryResponse
 	lastReceivedResponse  *discovery.DiscoveryResponse
-	xdsStream             stub.ApiListDiscoveryService_StreamApiListClient
+	xdsStream             stub.ApiGADiscoveryService_StreamGAApisClient
 )
 
 const (
-	apiTypeURL string = "type.googleapis.com/wso2.discovery.subscription.APIList"
+	apiTypeURL string = "type.googleapis.com/wso2.discovery.ga.Api"
 )
 
 func init() {
@@ -57,14 +57,14 @@ func initConnection(xdsURL string) {
 		return
 	}
 	// defer conn.Close()
-	client := stub.NewApiListDiscoveryServiceClient(conn)
+	client := stub.NewApiGADiscoveryServiceClient(conn)
 
 	streamContext := context.Background()
 	fmt.Println(conn.GetState().String())
 
 	time.Sleep(11 * time.Second)
 
-	xdsStream, err = client.StreamApiList(streamContext)
+	xdsStream, err = client.StreamGAApis(streamContext)
 
 	fmt.Println(conn.GetState().String())
 
