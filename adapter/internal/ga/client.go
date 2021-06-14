@@ -26,6 +26,8 @@ import (
 
 	core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	discovery "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
+	"github.com/golang/protobuf/ptypes"
+	ga_model "github.com/wso2/product-microgateway/adapter/pkg/discovery/api/wso2/discovery/ga"
 	stub "github.com/wso2/product-microgateway/adapter/pkg/discovery/api/wso2/discovery/service/ga"
 	"google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
@@ -37,15 +39,27 @@ var (
 	laskAckedResponse     *discovery.DiscoveryResponse
 	lastReceivedResponse  *discovery.DiscoveryResponse
 	xdsStream             stub.ApiGADiscoveryService_StreamGAApisClient
+
+	// GAAPIChannel stores the API Events composed from XDS states
+	GAAPIChannel chan *APIEvent
 )
 
 const (
 	apiTypeURL string = "type.googleapis.com/wso2.discovery.ga.Api"
 )
 
+// APIEvent represents the event corresponding to a single API Deploy or Remove event
+// based on XDS state changes
+type APIEvent struct {
+	APIUUID       string
+	RevisionUUID  string
+	IsDeployEvent bool
+}
+
 func init() {
 	apiRevisionMap = make(map[string]string)
 	laskAckedResponse = &discovery.DiscoveryResponse{}
+	GAAPIChannel = make(chan *APIEvent)
 }
 
 func initConnection(xdsURL string) {
@@ -92,6 +106,7 @@ func watchAPIs() {
 		} else {
 			lastReceivedResponse = discoveryResponse
 			fmt.Printf("response %v", discoveryResponse)
+			addAPIToChannel(discoveryResponse)
 			ack()
 		}
 	}
@@ -138,10 +153,62 @@ func InitAPIXds(xdsURL string) {
 	go watchAPIs()
 	discoveryRequest := &discovery.DiscoveryRequest{
 		Node:        getAdapterNode(),
-		VersionInfo: "abcd",
+		VersionInfo: "",
 		TypeUrl:     apiTypeURL,
 	}
 	xdsStream.Send(discoveryRequest)
 	fmt.Println("sent")
+	consumeAPIChannel()
 	select {}
+}
+
+// resources:{[type.googleapis.com/wso2.discovery.ga.Api]:{apiUUID:"myapi1"  revisionUUID:"1234"}}  resources:{[type.googleapis.com/wso2.discovery.ga.Api]:{apiUUID:"myapi2"  revisionUUID:"1234"}}  type_url:"type.googleapis.com/wso2.discovery.ga.Api"
+
+func addAPIToChannel(resp *discovery.DiscoveryResponse) {
+	removedAPIMap := make(map[string]string)
+
+	for k, v := range apiRevisionMap {
+		removedAPIMap[k] = v
+	}
+
+	for _, res := range resp.Resources {
+		api := &ga_model.Api{}
+		err := ptypes.UnmarshalAny(res, api)
+
+		if err != nil {
+			fmt.Printf("Error while conversion: %s\n", err.Error())
+			continue
+		}
+
+		currentRevision, apiFound := apiRevisionMap[api.ApiUUID]
+
+		if apiFound {
+			delete(removedAPIMap, api.ApiUUID)
+			if currentRevision == api.RevisionUUID {
+				continue
+			}
+		}
+		event := &APIEvent{
+			APIUUID:       api.ApiUUID,
+			RevisionUUID:  api.RevisionUUID,
+			IsDeployEvent: true,
+		}
+		GAAPIChannel <- event
+		apiRevisionMap[api.ApiUUID] = api.RevisionUUID
+	}
+
+	for apiEntry := range removedAPIMap {
+		event := &APIEvent{
+			APIUUID:       apiEntry,
+			IsDeployEvent: false,
+		}
+		GAAPIChannel <- event
+		delete(apiRevisionMap, apiEntry)
+	}
+}
+
+func consumeAPIChannel() {
+	for event := range GAAPIChannel {
+		fmt.Printf("Event : %v", event)
+	}
 }
