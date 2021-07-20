@@ -4,14 +4,18 @@ networks:
     name: apim_and_cc
 services:
   apim:
-    image: wso2/wso2am:4.0.0-alpine
+    image: wso2/choreo-product-apim:4.0
     ports:
       - "9763:9763"
       - "9443:9443"
       - "5672:5672"
       - "8243:8243"
     volumes:
-      - ./conf/deployment.toml:/home/wso2carbon/wso2am-4.0.0/repository/conf/deployment.toml
+      - /Users/user/Desktop/choreo-connect-1.0.0-SNAPSHOT/docker-compose/choreo-connect/apim/deployment.toml:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/conf/deployment.toml
+      - /Users/user/Desktop/choreo-connect-1.0.0-SNAPSHOT/docker-compose/choreo-connect/apim/libs/bson-4.1.0.jar:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/components/lib/bson-4.1.0.jar
+      - /Users/user/Desktop/choreo-connect-1.0.0-SNAPSHOT/docker-compose/choreo-connect/apim/libs/mongodb-driver-core-4.1.0.jar:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/components/lib/mongodb-driver-core-4.1.0.jar
+      - /Users/user/Desktop/choreo-connect-1.0.0-SNAPSHOT/docker-compose/choreo-connect/apim/libs/mongodb-driver-sync-4.1.0.jar:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/components/lib/mongodb-driver-sync-4.1.0.jar
+      - /Users/user/Desktop/choreo-connect-1.0.0-SNAPSHOT/docker-compose/choreo-connect/apim/jaggeryapps:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/deployment/server/jaggeryapps
     networks:
       - apim_and_cc
   

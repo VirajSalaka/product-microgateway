@@ -43,7 +43,7 @@ public class SubscriptionValidationTestCase extends ApimBaseTest {
     private String endpointURL;
 
     public static final String API_NAME = "SubscriptionValidationApi";
-    private static final String API_CONTEXT = "subs_validation";
+    private static final String API_CONTEXT = "testOrg1/subs_validation";
     public static final String APPLICATION_NAME = "SubscriptionValidationApp";
     public static final String X_ENVOY_UPSTREAM_SERVICE_TIME_HEADER= "x-envoy-upstream-service-time";
 
@@ -88,8 +88,8 @@ public class SubscriptionValidationTestCase extends ApimBaseTest {
                             "Valid subscription should be able to invoke the associated API");
         Assert.assertEquals(response.getData(), ResponseConstants.RESPONSE_BODY,
                 "Response message mismatched. Response Data: " + response.getData());
-        Assert.assertTrue(!response.getHeaders().containsKey(X_ENVOY_UPSTREAM_SERVICE_TIME_HEADER),
-                "Response contains the " + X_ENVOY_UPSTREAM_SERVICE_TIME_HEADER + " header.");
+//        Assert.assertTrue(!response.getHeaders().containsKey(X_ENVOY_UPSTREAM_SERVICE_TIME_HEADER),
+//                "Response contains the " + X_ENVOY_UPSTREAM_SERVICE_TIME_HEADER + " header.");
         try {
             // To publish analytics it takes at most one second.
             Thread.sleep(2000);

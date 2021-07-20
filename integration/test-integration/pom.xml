@@ -44,7 +44,7 @@
                         <sun.net.http.allowRestrictedHeaders>true</sun.net.http.allowRestrictedHeaders>
                     </systemPropertyVariables>
                     <suiteXmlFiles>
-                        <suiteXmlFile>src/test/resources/testng-cc-standalone.xml</suiteXmlFile>
+<!--                        <suiteXmlFile>src/test/resources/testng-cc-standalone.xml</suiteXmlFile>-->
                         <suiteXmlFile>src/test/resources/testng-cc-with-apim.xml</suiteXmlFile>
                     </suiteXmlFiles>
                     <systemProperties>
@@ -66,7 +66,7 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <target>
-                                <unzip src="${basedir}/../../distribution/target/choreo-connect-${project.version}.zip" dest="${basedir}/../test-integration/target" />
+                                <unzip src="/Users/user/Desktop/choreo-connect-1.0.0-SNAPSHOT.zip" dest="${basedir}/../test-integration/target" />
                                 <replaceregexp file="src/test/resources/dockerCompose/cc-in-common-network-docker-compose.yaml" match="wso2\/choreo-connect\-router\:.*" replace="wso2/choreo-connect-router:${project.version}" byline="true" />
                                 <replaceregexp file="src/test/resources/dockerCompose/cc-in-common-network-docker-compose.yaml" match="wso2\/choreo-connect\-adapter\:.*" replace="wso2/choreo-connect-adapter:${project.version}" byline="true" />
                                 <replaceregexp file="src/test/resources/dockerCompose/cc-in-common-network-docker-compose.yaml" match="wso2\/choreo-connect\-enforcer\:.*" replace="wso2/choreo-connect-enforcer:${project.version}" byline="true" />
@@ -240,9 +240,15 @@
             <artifactId>org.wso2.choreo.connect.enforcer</artifactId>
             <version>0.9.1-SNAPSHOT</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.wso2.am</groupId>-->
+<!--            <artifactId>org.wso2.am.integration.common.test.utils</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
         <dependency>
-            <groupId>org.wso2.am</groupId>
-            <artifactId>org.wso2.am.integration.common.test.utils</artifactId>
+            <groupId>org.wso2.choreo.am</groupId>
+            <artifactId>org.wso2.choreo.am.integration.common.test.utils</artifactId>
+            <version>${choreo.apim.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -348,5 +354,6 @@
 
     <properties>
         <apictl.package>default-package-to-be-overridden</apictl.package>
+        <choreo.apim.version>4.0.0-SNAPSHOT</choreo.apim.version>
     </properties>
 </project>

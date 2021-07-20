@@ -43,8 +43,8 @@ public class VhostApimTestCase extends ApimBaseTest {
     private final String US_HOST = "us.wso2.com";
 
     public static final String API_1_NAME = "VHostAPI1";
-    private static final String API_1_CONTEXT = "vhostApi1";
-    private static final String API_2_CONTEXT = "vhostApi2";
+    private static final String API_1_CONTEXT = "testOrg1/vhostApi1";
+    private static final String API_2_CONTEXT = "testOrg1/vhostApi2";
     public static final String APPLICATION_NAME = "VHostApp";
 
     private String apiId1;

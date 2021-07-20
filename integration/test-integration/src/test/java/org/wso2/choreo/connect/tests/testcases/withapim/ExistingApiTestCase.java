@@ -27,12 +27,14 @@ import org.wso2.choreo.connect.tests.apim.ApimResourceProcessor;
 import org.wso2.choreo.connect.tests.apim.utils.StoreUtils;
 import org.wso2.choreo.connect.tests.context.CCTestException;
 import org.wso2.choreo.connect.tests.util.TestConstant;
+import org.wso2.choreo.connect.tests.util.Utils;
 
+import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ExistingApiTestCase extends ApimBaseTest {
-    private static final String VHOST_API_ENDPOINT = "vhostApi1/1.0.0/pet/findByStatus";
+    private static final String VHOST_API_ENDPOINT = "testOrg1/vhostApi1/1.0.0/pet/findByStatus";
 
     @BeforeClass(alwaysRun = true, description = "initialize setup")
     void setup() throws Exception {
@@ -48,6 +50,10 @@ public class ExistingApiTestCase extends ApimBaseTest {
         Map<String, String> requestHeaders = new HashMap<>();
         requestHeaders.put(TestConstant.AUTHORIZATION_HEADER, "Bearer " + accessToken);
         requestHeaders.put(HttpHeaderNames.HOST.toString(), "localhost");
-        VhostApimTestCase.testInvokeAPI(VHOST_API_ENDPOINT, requestHeaders, HttpStatus.SC_SUCCESS, ResponseConstants.RESPONSE_BODY);
+        try {
+            VhostApimTestCase.testInvokeAPI(Utils.getServiceURLHttps(VHOST_API_ENDPOINT), requestHeaders, HttpStatus.SC_SUCCESS, ResponseConstants.RESPONSE_BODY);
+        } catch (MalformedURLException e) {
+            throw new CCTestException("Error while calling the vhostAPIEndpoint");
+        }
     }
 }

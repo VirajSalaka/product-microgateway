@@ -39,7 +39,7 @@ import java.util.Map;
 
 public class ApplicationThrottlingTestCase extends ThrottlingBaseTestCase {
     private static final String API_NAME = "ApplicationThrottlingApi";
-    private static final String API_CONTEXT = "application_throttling";
+    private static final String API_CONTEXT = "testOrg1/application_throttling";
     private static final String APPLICATION_NAME = "ApplicationThrottlingApp";
 
     private ApplicationThrottlePolicyDTO requestCountPolicyDTO;
