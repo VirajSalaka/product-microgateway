@@ -11,11 +11,11 @@ services:
       - "5672:5672"
       - "8243:8243"
     volumes:
-      - ./apim/deployment.toml:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/conf/deployment.toml
-      - ./apim/libs/bson-4.1.0.jar:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/components/lib/bson-4.1.0.jar
-      - ./apim/libs/mongodb-driver-core-4.1.0.jar:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/components/lib/mongodb-driver-core-4.1.0.jar
-      - ./apim/libs/mongodb-driver-sync-4.1.0.jar:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/components/lib/mongodb-driver-sync-4.1.0.jar
-      - ./apim/jaggeryapps:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/deployment/server/jaggeryapps
+      - /Users/user/Desktop/choreo-connect-1.0.0-SNAPSHOT/docker-compose/choreo-connect/apim/deployment.toml:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/conf/deployment.toml
+      - /Users/user/Desktop/choreo-connect-1.0.0-SNAPSHOT/docker-compose/choreo-connect/apim/libs/bson-4.1.0.jar:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/components/lib/bson-4.1.0.jar
+      - /Users/user/Desktop/choreo-connect-1.0.0-SNAPSHOT/docker-compose/choreo-connect/apim/libs/mongodb-driver-core-4.1.0.jar:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/components/lib/mongodb-driver-core-4.1.0.jar
+      - /Users/user/Desktop/choreo-connect-1.0.0-SNAPSHOT/docker-compose/choreo-connect/apim/libs/mongodb-driver-sync-4.1.0.jar:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/components/lib/mongodb-driver-sync-4.1.0.jar
+      - /Users/user/Desktop/choreo-connect-1.0.0-SNAPSHOT/docker-compose/choreo-connect/apim/jaggeryapps:/home/wso2carbon/wso2am-4.0.0-SNAPSHOT/repository/deployment/server/jaggeryapps
     networks:
       - apim_and_cc
   
