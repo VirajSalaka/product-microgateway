@@ -46,6 +46,7 @@ import static org.testng.Assert.assertEquals;
 
 public class PublisherUtils {
     private static final Logger log = LoggerFactory.getLogger(PublisherUtils.class);
+    private static final String orgID  = "ec459d25-683d-47ba-a064-ff369b53a3e8";
 
     /**
      * Create and publish an API
@@ -126,7 +127,7 @@ public class PublisherUtils {
     public static String createAPI(APIRequest apiRequest, RestAPIPublisherImpl publisherRestClient) throws CCTestException {
         HttpResponse createAPIResponse;
         try {
-            createAPIResponse = publisherRestClient.addAPI(apiRequest);
+            createAPIResponse = publisherRestClient.addAPI(apiRequest, orgID);
         } catch (ApiException e) {
             throw new CCTestException("Error while creating an API", e);
         }

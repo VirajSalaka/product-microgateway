@@ -44,7 +44,7 @@
                         <sun.net.http.allowRestrictedHeaders>true</sun.net.http.allowRestrictedHeaders>
                     </systemPropertyVariables>
                     <suiteXmlFiles>
-                        <suiteXmlFile>src/test/resources/testng-cc-standalone.xml</suiteXmlFile>
+<!--                        <suiteXmlFile>src/test/resources/testng-cc-standalone.xml</suiteXmlFile>-->
                         <suiteXmlFile>src/test/resources/testng-cc-with-apim.xml</suiteXmlFile>
                     </suiteXmlFiles>
                     <systemProperties>
@@ -240,9 +240,15 @@
             <artifactId>org.wso2.choreo.connect.enforcer</artifactId>
             <version>0.9.1-SNAPSHOT</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.wso2.am</groupId>-->
+<!--            <artifactId>org.wso2.am.integration.common.test.utils</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
         <dependency>
-            <groupId>org.wso2.am</groupId>
-            <artifactId>org.wso2.am.integration.common.test.utils</artifactId>
+            <groupId>org.wso2.choreo.am</groupId>
+            <artifactId>org.wso2.choreo.am.integration.common.test.utils</artifactId>
+            <version>${choreo.apim.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -348,5 +354,6 @@
 
     <properties>
         <apictl.package>default-package-to-be-overridden</apictl.package>
+        <choreo.apim.version>4.0.0-SNAPSHOT</choreo.apim.version>
     </properties>
 </project>
