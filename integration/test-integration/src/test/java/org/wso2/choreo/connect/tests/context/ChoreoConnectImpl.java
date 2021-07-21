@@ -56,7 +56,7 @@ public abstract class ChoreoConnectImpl implements ChoreoConnect {
         final Properties properties = new Properties();
         properties.load(getClass().getClassLoader().getResourceAsStream("project.properties"));
 
-        ccExtractedPath = Utils.getTargetDirPath() + File.separator + "choreo-connect-" + properties.getProperty("version");
+        ccExtractedPath = Utils.getTargetDirPath() + File.separator + "choreo-connect-" + "1.0.0-SNAPSHOT";
         ccTempPath = Utils.getTargetDirPath() + TestConstant.CC_TEMP_PATH;
     }
 

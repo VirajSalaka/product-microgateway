@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 
 public class BasicEventsTestCase extends ApimBaseTest {
     private static final String API_NAME = "BasicEventsApi";
-    private static final String API_CONTEXT = "basicEvents";
+    private static final String API_CONTEXT = "virajg/basicEvents";
     private static final String API_VERSION = "1.0.0";
     private static final String APP_NAME = "BasicEventsApp";
 

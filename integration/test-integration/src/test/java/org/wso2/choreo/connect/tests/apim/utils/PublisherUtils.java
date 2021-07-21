@@ -46,7 +46,7 @@ import static org.testng.Assert.assertEquals;
 
 public class PublisherUtils {
     private static final Logger log = LoggerFactory.getLogger(PublisherUtils.class);
-    private static final String orgID  = "ec459d25-683d-47ba-a064-ff369b53a3e8";
+    private static final String orgID  = "testOrg1";
 
     /**
      * Create and publish an API
