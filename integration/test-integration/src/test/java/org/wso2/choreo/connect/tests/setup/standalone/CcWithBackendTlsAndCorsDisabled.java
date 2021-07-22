@@ -35,7 +35,7 @@ public class CcWithBackendTlsAndCorsDisabled {
                 .withBackendServiceFile("backend-service-tls.yaml").build();
         ccInstance.start();
         Awaitility.await().pollDelay(5, TimeUnit.SECONDS).pollInterval(5, TimeUnit.SECONDS)
-                .atMost(2, TimeUnit.MINUTES).until(ccInstance.isHealthy());
+                .atMost(4, TimeUnit.MINUTES).until(ccInstance.isHealthy());
 
         ApictlUtils.createProject("backend_tsl_openAPI.yaml", "backend_tsl_petstore", "backend_tls.crt", null);
         ApictlUtils.createProject( "cors_openAPI.yaml", "cors_petstore", null, null);

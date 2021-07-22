@@ -136,7 +136,7 @@ allowCredentials = false
   # URL of the JWKs endpoint
   jwksURL = ""
   # Validate subscribed APIs
-  validateSubscription = false
+  validateSubscription = true
   # The claim in which the consumer key of the application is coming
   consumerKeyClaim = "azp"
   # Certificate Filepath within enforcer
@@ -227,7 +227,7 @@ allowCredentials = false
 
 # Control plane's connection details
 [controlPlane]
-  enabled = false
+  enabled = true
   serviceUrl = "https://apim:9443/"
   username="admin"
   password="$env{cp_admin_pwd}"
