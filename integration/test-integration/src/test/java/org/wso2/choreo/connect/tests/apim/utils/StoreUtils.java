@@ -163,6 +163,19 @@ public class StoreUtils {
                     ApplicationKeyGenerateRequestDTO.KeyTypeEnum.PRODUCTION,
                     null, grantTypes);
         } catch (ApiException e) {
+            if (e.getCode() == 409) {
+                try {
+                    ApplicationKeyListDTO appKeyList= storeRestClient.getApplicationKeysByAppId(appId);
+                    if (appKeyList.getCount() == 1) {
+                        applicationKeyDTO = appKeyList.getList().get(0);
+                        return applicationKeyDTO;
+                    } else {
+                        throw new CCTestException("Error while generating consumer keys from APIM Store", e);
+                    }
+                } catch (ApiException apiException) {
+                    throw new CCTestException("Error while generating consumer keys from APIM Store", e);
+                }
+            }
             throw new CCTestException("Error while generating consumer keys from APIM Store", e);
         }
         return applicationKeyDTO;
