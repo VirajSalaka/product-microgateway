@@ -166,13 +166,13 @@ allowCredentials = false
 # Throttling configurations
 [enforcer.throttling]
   # Connect with the central traffic manager
-  enableGlobalEventPublishing = false
+  enableGlobalEventPublishing = true
   # Enable global advanced throttling based on request header conditions
-  enableHeaderConditions = false
+  enableHeaderConditions = true
   # Enable global advanced throttling based on request query parameter conditions
-  enableQueryParamConditions = false
+  enableQueryParamConditions = true
   # Enable global advanced throttling based on jwt claim conditions
-  enableJwtClaimConditions = false
+  enableJwtClaimConditions = true
   # The message broker context factory
   jmsConnectionInitialContextFactory = "org.wso2.andes.jndi.PropertiesFileInitialContextFactory"
   # The message broker connection URL
@@ -239,7 +239,7 @@ allowCredentials = false
         eventListeningEndpoints = ["amqp://admin:$env{cp_admin_pwd}@apim:5672?retries='10'&connectdelay='30'"]
 
 [analytics]
-  enabled = false
+  enabled = true
   [analytics.adapter]
     bufferFlushInterval = "1s"
     bufferSizeBytes = 16384

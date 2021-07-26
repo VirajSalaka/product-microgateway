@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ExistingApiTestCase extends ApimBaseTest {
-    private static final String VHOST_API_ENDPOINT = "vhostApi1/1.0.0/pet/findByStatus";
+    private static final String VHOST_API_ENDPOINT = "testOrg1/vhostApi1/1.0.0/pet/findByStatus";
 
     @BeforeClass(alwaysRun = true, description = "initialize setup")
     void setup() throws Exception {

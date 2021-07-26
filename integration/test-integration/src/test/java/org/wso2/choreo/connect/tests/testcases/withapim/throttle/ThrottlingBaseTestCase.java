@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 public class ThrottlingBaseTestCase extends ApimBaseTest {
     private static final Logger log = LoggerFactory.getLogger(ThrottlingBaseTestCase.class);
     public static final String SAMPLE_API_NAME = "Throttling";
-    public static final String SAMPLE_API_CONTEXT = "throttling";
+    public static final String SAMPLE_API_CONTEXT = "testOrg1/throttling";
     public static final String SAMPLE_API_VERSION = "1.0.0";
 
     protected String createThrottleApi(String tiers, String apiTier, String resTier) throws MalformedURLException,
