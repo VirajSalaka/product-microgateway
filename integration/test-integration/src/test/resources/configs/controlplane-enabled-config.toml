@@ -71,6 +71,8 @@ allowCredentials = false
   disableSslVerification = false
 
 [enforcer] # --------------------------------------------------------
+[enforcer.jwtGenerator]
+    enable = true
 
 [enforcer.authService]
   port = 8081
@@ -93,19 +95,6 @@ allowCredentials = false
   enabled = true
   maximumSize = 10000
   expiryTime = 15
-
-[enforcer.jwtGenerator]
-  enable = false
-  encoding = "base64" # base64,base64url
-  claimDialect = "http://wso2.org/claims"
-  convertDialect = false
-  header = "X-JWT-Assertion"
-  signingAlgorithm = "SHA256withRSA"
-  enableUserClaims = false
-  gatewayGeneratorImpl = "org.wso2.carbon.apimgt.common.gateway.jwtgenerator.APIMgtGatewayJWTGeneratorImpl"
-  claimsExtractorImpl = "org.wso2.carbon.apimgt.impl.token.ExtendedDefaultClaimsRetriever"
-  publicCertificatePath = "/home/wso2/security/truststore/mg.pem"
-  privateKeyPath = "/home/wso2/security/keystore/mg.key"
 
 [enforcer.jwtIssuer]
   enabled = true
@@ -246,24 +235,6 @@ allowCredentials = false
       authToken = "$env{analytics_authToken}"
       "publisher.reporter.class" = "org.wso2.choreo.connect.tests.CustomMetricReporter"
 
-  [analytics.enforcer]
-    [analytics.enforcer.configProperties]
-      authURL = "$env{analytics_authURL}"
-      authToken = "$env{analytics_authToken}"
-
-    [analytics.enforcer.LogReceiver]
-      port = 18090
-      maxMessageSize = 1000000000
-      maxHeaderLimit = 8192
-      #keep alive time of the external authz connection
-      keepAliveTime = 600
-
-      [analytics.enforcer.LogReceiver.threadPool]
-        coreSize = 10
-        maxSize = 100
-        #keep alive time of threads in seconds
-        keepAliveTime = 600
-        queueSize = 1000
 
 # Global Adapter related configurations
 [globalAdapter]
