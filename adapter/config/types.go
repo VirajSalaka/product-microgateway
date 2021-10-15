@@ -251,11 +251,12 @@ type throttlingConfig struct {
 }
 
 type binaryPublisher struct {
-	Username string
-	Password string
-	URLGroup []urlGroup `toml:"urlGroup"`
-	Pool     publisherPool
-	Agent    binaryAgent
+	Username            string
+	Password            string
+	URLGroup_deprecated []urlGroup `toml:"urlGroup"`
+	URLGroup            []urlGroup
+	Pool                publisherPool
+	Agent               binaryAgent
 }
 
 type urlGroup struct {

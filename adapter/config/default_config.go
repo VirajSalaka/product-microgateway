@@ -18,7 +18,7 @@
 package config
 
 // Configuration object which is populated with default values.
-var defaultConfig = &Config{
+var DefaultConfig = &Config{
 	Adapter: adapter{
 		Server: server{
 			Enabled: true,
@@ -198,6 +198,12 @@ var defaultConfig = &Config{
 			Publisher: binaryPublisher{
 				Username: "admin",
 				Password: "$env{tm_admin_pwd}",
+				URLGroup_deprecated: []urlGroup{
+					{
+						ReceiverURLs: []string{"tcp://apim:9611"},
+						AuthURLs:     []string{"ssl://apim:9711"},
+					},
+				},
 				URLGroup: []urlGroup{
 					{
 						ReceiverURLs: []string{"tcp://apim:9611"},

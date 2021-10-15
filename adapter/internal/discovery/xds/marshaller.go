@@ -49,8 +49,7 @@ func MarshalConfig(config *config.Config) *enforcer.Config {
 		}
 		jwtUsers = append(jwtUsers, jwtUser)
 	}
-
-	for _, urlGroup := range config.Enforcer.Throttling.Publisher.URLGroup {
+	for _, urlGroup := range config.Enforcer.Throttling.Publisher.URLGroup_deprecated {
 		group := &enforcer.TMURLGroup{
 			AuthURLs:     urlGroup.AuthURLs,
 			ReceiverURLs: urlGroup.ReceiverURLs,

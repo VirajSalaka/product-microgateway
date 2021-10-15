@@ -71,7 +71,7 @@ const (
 // configuration object is achieved through the configuration file.
 func ReadConfigs() (*Config, error) {
 	onceConfigRead.Do(func() {
-		adapterConfig = defaultConfig
+		adapterConfig = DefaultConfig
 		_, err := os.Stat(pkgconf.GetMgwHome() + relativeConfigPath)
 		if err != nil {
 			logger.Fatal("Configuration file not found.", err)
