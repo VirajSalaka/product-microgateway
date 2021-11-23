@@ -32,6 +32,7 @@ import org.wso2.choreo.connect.tests.util.HttpsClientRequest;
 import org.wso2.choreo.connect.tests.util.Utils;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +44,10 @@ public class CcWithMultipleEnv {
     @BeforeTest(description = "initialise the setup")
     void start() throws Exception {
 
-        ccInstance = new CcInstance.Builder().withNewConfig("multiple-env-config.toml").build();
+        ccInstance = new CcInstance.Builder().withNewConfig("multiple-env-config.toml")
+                .withNewDockerCompose("multiple-env-docker-compose.yaml")
+                .withBackendServiceFile("backend-service-multiple-env.yaml")
+                .build();
         ccInstance.start();
         Awaitility.await().pollDelay(5, TimeUnit.SECONDS).pollInterval(5, TimeUnit.SECONDS)
                 .atMost(2, TimeUnit.MINUTES).until(ccInstance.isHealthy());
@@ -58,8 +62,45 @@ public class CcWithMultipleEnv {
         TimeUnit.SECONDS.sleep(5);
     }
 
-    @Test(description = "Undeploy API From Specific Gateway Env and Specific Vhost.")
-    public void invokeAPI() throws CCTestException, IOException {
+    @Test
+    public void invokeAPIsInMultipleEnvsUnderMultipleVhosts() throws MalformedURLException, CCTestException {
+        Map<String, String> headers = new HashMap<String, String>();
+        headers.put(HttpHeaderNames.AUTHORIZATION.toString(), encodedCredentials);
+        HttpResponse response = HttpsClientRequest.doPost(Utils.getServiceURLHttps(
+                "/testkey") ,"scope=read:pets",  headers);
+        String token = response.getData();
+        headers.put(HttpHeaderNames.AUTHORIZATION.toString(), "Bearer " + token);
+
+        // Check if the API is already deployed.
+        response = HttpsClientRequest.doGet(Utils.getServiceURLHttps(
+                "/v2/new/pet/findByStatus?status=available") , headers);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(response.getResponseCode(), HttpStatus.SC_OK,"Response code mismatched");
+
+        // Check if the API is already deployed.
+        response = HttpsClientRequest.doGet("https://localhost:9195/v2/new/pet/findByStatus?status=available" ,
+                headers);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(response.getResponseCode(), HttpStatus.SC_OK,"Response code mismatched");
+
+        // Check if the other deployement (under different host) is successful.
+        headers.put("host", "eu.wso2.com");
+        response = HttpsClientRequest.doGet(Utils.getServiceURLHttps(
+                "/v2/new/pet/findByStatus?status=available") , headers);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(response.getResponseCode(), HttpStatus.SC_OK,"Response code mismatched " +
+                "for undeployed API");
+
+        headers.put("host", "us.wso2.com");
+        response = HttpsClientRequest.doGet("https://localhost:9195/v2/new/pet/findByStatus?status=available" ,
+                headers);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(response.getResponseCode(), HttpStatus.SC_OK,"Response code mismatched");
+    }
+
+    @Test(description = "Undeploy API From Specific Gateway Env and Specific Vhost.",
+            dependsOnMethods={"invokeAPIsInMultipleEnvsUnderMultipleVhosts"})
+    public void deleteAPIFromSpecificVhostAndGatewayEnv() throws CCTestException, IOException {
         Map<String, String> headers = new HashMap<String, String>();
         headers.put(HttpHeaderNames.AUTHORIZATION.toString(), encodedCredentials);
         HttpResponse response = HttpsClientRequest.doPost(Utils.getServiceURLHttps(
