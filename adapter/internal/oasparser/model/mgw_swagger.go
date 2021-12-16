@@ -28,6 +28,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-openapi/spec"
+	"github.com/google/uuid"
 	parser "github.com/mitchellh/mapstructure"
 	"github.com/wso2/product-microgateway/adapter/config"
 	"github.com/wso2/product-microgateway/adapter/internal/interceptor"
@@ -1230,6 +1231,23 @@ func (swagger *MgwSwagger) PopulateSwaggerFromAPIYaml(apiData APIYaml, apiType s
 			}
 		}
 		swagger.sandboxEndpoints = generateEndpointCluster(sandClustersConfigNamePrefix, endpoints, endpointType)
+	}
+	if apiType == WS {
+		var resources []*Resource
+		resource1 := Resource{
+			path: "/*",
+			methods: []*Operation{{
+				method: "GET",
+				tier:   "Unlimited",
+			}},
+			// TODO: (VirajSalaka) This will not solve the actual problem when incremental Xds is introduced (used for cluster names)
+			iD: uuid.New().String(),
+			//Schemes: operation.,
+			//tags: operation.Tags,
+			//security: pathItem.operation.Security.,
+		}
+		resources = append(resources, &resource1)
+		swagger.resources = resources
 	}
 
 	// if yaml has production security, setting it
