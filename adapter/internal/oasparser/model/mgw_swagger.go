@@ -1234,11 +1234,40 @@ func (swagger *MgwSwagger) PopulateSwaggerFromAPIYaml(apiData APIYaml, apiType s
 	}
 	if apiType == WS {
 		var resources []*Resource
+		securityMapRes1 := make(map[string][]string)
+		securityMapRes2 := make(map[string][]string)
+		securityArrayRes1 := []string{"myscope1", "myscope2"}
+		securityArrayRes2 := []string{"myscope2", "myscope2"}
+		swagger.securityScheme = []SecurityScheme{
+			{
+				DefinitionName: "default",
+				Type:           "oauth2",
+			},
+		}
+
+		securityMapRes1["default"] = securityArrayRes1
+		securityMapRes2["default"] = securityArrayRes2
 		resource1 := Resource{
-			path: "/*",
+			path: "/notifications",
 			methods: []*Operation{{
-				method: "GET",
-				tier:   "Unlimited",
+				method:          "GET",
+				tier:            "Unlimited",
+				disableSecurity: false,
+				security:        []map[string][]string{securityMapRes1},
+			}},
+			// TODO: (VirajSalaka) This will not solve the actual problem when incremental Xds is introduced (used for cluster names)
+			iD: uuid.New().String(),
+			//Schemes: operation.,
+			//tags: operation.Tags,
+			//security: pathItem.operation.Security.,
+		}
+		resource2 := Resource{
+			path: "/rooms",
+			methods: []*Operation{{
+				method:          "GET",
+				tier:            "Unlimited",
+				disableSecurity: false,
+				security:        []map[string][]string{securityMapRes2},
 			}},
 			// TODO: (VirajSalaka) This will not solve the actual problem when incremental Xds is introduced (used for cluster names)
 			iD: uuid.New().String(),
@@ -1247,6 +1276,7 @@ func (swagger *MgwSwagger) PopulateSwaggerFromAPIYaml(apiData APIYaml, apiType s
 			//security: pathItem.operation.Security.,
 		}
 		resources = append(resources, &resource1)
+		resources = append(resources, &resource2)
 		swagger.resources = resources
 	}
 
