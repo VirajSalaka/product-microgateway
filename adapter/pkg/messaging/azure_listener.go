@@ -60,9 +60,9 @@ func startBrokerConsumer(subscriptionMetaData Subscription, reconnectInterval ti
 			defer cancel()
 			err = topicSubscriptionClient.Receive(ctx, servicebus.HandlerFunc(func(ctx context.Context,
 				message *servicebus.Message) error {
-				logger.LoggerMgw.Info("Message from ASB is in queue")
+				logger.LoggerMgw.Infof("Message %s from ASB waits to be processed.", message.CorrelationID)
 				dataChannel <- message.Data
-				logger.LoggerMgw.Info("Message from ASB is complete")
+				logger.LoggerMgw.Infof("Message %s from ASB is complete", message.CorrelationID)
 				return message.Complete(ctx)
 			}))
 		}()
