@@ -1300,5 +1300,10 @@ func (swagger *MgwSwagger) PopulateSwaggerFromAPIYaml(apiData APIYaml, apiType s
 				endpointConfig.APIEndpointSecurity.Sandbox.Type)
 		}
 	}
+
+	// TODO: (VirajSalaka) Check the impact on RestAPIs
+	if len(data.APIThrottlingPolicy) != 0 {
+		swagger.xWso2ThrottlingTier = data.APIThrottlingPolicy
+	}
 	return nil
 }

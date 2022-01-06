@@ -126,6 +126,7 @@ public class WebSocketAPI implements API {
         for (Resource res : api.getResourcesList()) {
             for (Operation operation : res.getMethodsList()) {
                 ResourceConfig resConfig = RestAPI.buildResource(operation, res.getPath(), new HashMap<>());
+                resConfig.setTier(api.getTier());
                 resources.add(resConfig);
             }
         }
