@@ -30,13 +30,16 @@ import org.wso2.carbon.apimgt.common.analytics.collectors.impl.GenericRequestDat
 import org.wso2.carbon.apimgt.common.analytics.exceptions.AnalyticsException;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.enums.EventCategory;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.enums.FaultCategory;
+import org.wso2.choreo.connect.enforcer.constants.APIConstants;
 import org.wso2.choreo.connect.enforcer.constants.AnalyticsConstants;
+import org.wso2.choreo.connect.enforcer.websocket.MetadataConstants;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.wso2.choreo.connect.enforcer.analytics.AnalyticsConstants.ERROR_SCHEMA;
 import static org.wso2.choreo.connect.enforcer.analytics.AnalyticsConstants.RESPONSE_SCHEMA;
+import static org.wso2.choreo.connect.enforcer.constants.MetadataConstants.EXT_AUTH_METADATA_CONTEXT_KEY;
 
 /**
  * Default Analytics Event publisher to the analytics cloud.
@@ -128,6 +131,19 @@ public class DefaultAnalyticsEventPublisher implements AnalyticsEventPublisher {
                 // Token endpoint calls needs to be removed as well
                 || (AnalyticsConstants.TOKEN_ENDPOINT_PATH.equals(logEntry.getRequest().getOriginalPath()))
                 // Health endpoint calls are not published
-                || (AnalyticsConstants.HEALTH_ENDPOINT_PATH.equals(logEntry.getRequest().getOriginalPath()));
+                || (AnalyticsConstants.HEALTH_ENDPOINT_PATH.equals(logEntry.getRequest().getOriginalPath()))
+                // Websocket log entries should not be published to the analytics.
+                || isWebsocketHttpLogEntry(logEntry);
+    }
+
+    private boolean isWebsocketHttpLogEntry(HTTPAccessLogEntry logEntry) {
+        if (logEntry.hasCommonProperties() && logEntry.getCommonProperties().hasMetadata()
+                && logEntry.getCommonProperties().getMetadata().getFilterMetadataMap()
+                .get(EXT_AUTH_METADATA_CONTEXT_KEY) != null) {
+            return APIConstants.ApiType.WEB_SOCKET.equals(logEntry.getCommonProperties().getMetadata()
+                    .getFilterMetadataMap().get(EXT_AUTH_METADATA_CONTEXT_KEY).getFieldsMap()
+                    .get(MetadataConstants.API_TYPE_KEY).getStringValue());
+        }
+        return false;
     }
 }
