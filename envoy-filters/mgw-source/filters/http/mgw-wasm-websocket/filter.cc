@@ -159,6 +159,10 @@ FilterDataStatus MgwWebSocketContext::onRequestBody(size_t body_buffer_length,
     // stop interation.
     }else if(this->throttle_state_ == ThrottleState::FailureModeBlocked){
       establishNewStream();
+      // HeaderStringPairs my_metadata;
+      // my_metadata.push_back(std::pair("parent", "bar"));
+      // sendLocalResponse(403, "Throttled", "Websockets is throttled.", my_metadata);
+      closeRequest();
       return FilterDataStatus::StopIterationNoBuffer;
     // If throttle state is overlimit, then check the throttle period before making a decision. 
     // If the current time has passed the throttle period in UTC seconds, then continue to the 
@@ -174,9 +178,17 @@ FilterDataStatus MgwWebSocketContext::onRequestBody(size_t body_buffer_length,
           // publish to enforcer
           return FilterDataStatus::Continue;
         }else{
+        //   HeaderStringPairs my_metadata;
+        // my_metadata.push_back(std::pair("parent", "bar"));
+        // sendLocalResponse(403, "Throttled", "Websockets is throttled.", my_metadata);
+          closeRequest();
           return FilterDataStatus::StopIterationNoBuffer;
         }
       }else{
+        // HeaderStringPairs my_metadata;
+        // my_metadata.push_back(std::pair("parent", "bar"));
+        // sendLocalResponse(403, "Throttled", "Websockets is throttled.", my_metadata);
+        closeRequest();
         return FilterDataStatus::StopIterationNoBuffer;
       }
     }
