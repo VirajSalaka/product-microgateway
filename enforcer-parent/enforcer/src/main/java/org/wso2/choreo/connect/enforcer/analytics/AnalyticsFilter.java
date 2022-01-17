@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 import org.wso2.carbon.apimgt.common.analytics.collectors.impl.GenericRequestDataCollector;
 import org.wso2.carbon.apimgt.common.analytics.exceptions.AnalyticsException;
+import org.wso2.choreo.connect.discovery.service.websocket.WebSocketFrameRequest;
 import org.wso2.choreo.connect.enforcer.commons.model.AuthenticationContext;
 import org.wso2.choreo.connect.enforcer.commons.model.RequestContext;
 import org.wso2.choreo.connect.enforcer.config.ConfigHolder;
@@ -91,6 +92,14 @@ public class AnalyticsFilter {
     public void handleGRPCLogMsg(StreamAccessLogsMessage message) {
         if (publisher != null) {
             publisher.handleGRPCLogMsg(message);
+        } else {
+            logger.error("Cannot publish the analytics event as analytics publisher is null.");
+        }
+    }
+
+    public void handleWebsocketFrameRequest(WebSocketFrameRequest frameRequest) {
+        if (publisher != null) {
+            publisher.handleWebsocketFrameRequest(frameRequest);
         } else {
             logger.error("Cannot publish the analytics event as analytics publisher is null.");
         }

@@ -30,6 +30,7 @@ import org.wso2.carbon.apimgt.common.analytics.collectors.impl.GenericRequestDat
 import org.wso2.carbon.apimgt.common.analytics.exceptions.AnalyticsException;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.enums.EventCategory;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.enums.FaultCategory;
+import org.wso2.choreo.connect.discovery.service.websocket.WebSocketFrameRequest;
 import org.wso2.choreo.connect.enforcer.constants.APIConstants;
 import org.wso2.choreo.connect.enforcer.constants.AnalyticsConstants;
 import org.wso2.choreo.connect.enforcer.websocket.MetadataConstants;
@@ -86,6 +87,19 @@ public class DefaultAnalyticsEventPublisher implements AnalyticsEventPublisher {
             } catch (AnalyticsException e) {
                 logger.error("Error while publishing the event to the analytics portal.", e);
             }
+        }
+    }
+
+    @Override
+    public void handleWebsocketFrameRequest(WebSocketFrameRequest webSocketFrameRequest) {
+        AnalyticsDataProvider  provider = new ChoreoAnalyticsForWSProvider(webSocketFrameRequest);
+        // TODO: (VirajSalaka) Common code
+        GenericRequestDataCollector dataCollector = new GenericRequestDataCollector(provider);
+        try {
+            dataCollector.collectData();
+            logger.debug("Event is published.");
+        } catch (AnalyticsException e) {
+            logger.error("Error while publishing the event to the analytics portal.", e);
         }
     }
 
