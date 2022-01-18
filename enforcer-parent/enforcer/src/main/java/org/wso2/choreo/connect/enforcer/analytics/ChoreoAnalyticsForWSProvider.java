@@ -125,7 +125,7 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
         Operation operation = new Operation();
         String method = "Publish";
         operation.setApiMethod(method);
-        String matchingResource = "/notifications";
+        String matchingResource = extAuthMetadata.get(MetadataConstants.API_RESOURCE_TEMPLATE_KEY);
         operation.setApiResourceTemplate(matchingResource);
         return operation;
     }
@@ -152,7 +152,7 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
         MetaInfo metaInfo = new MetaInfo();
         metaInfo.setCorrelationId(extAuthMetadata.get(MetadataConstants.CORRELATION_ID_KEY));
         metaInfo.setGatewayType("ENVOY");
-        metaInfo.setRegionId("UNKNOWN");
+        metaInfo.setRegionId(extAuthMetadata.get(MetadataConstants.REGION_KEY));
         return metaInfo;
     }
 
