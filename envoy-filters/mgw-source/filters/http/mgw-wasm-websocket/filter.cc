@@ -27,6 +27,8 @@ using google::protobuf::util::error::Code;
 using google::protobuf::util::Status;
 
 using envoy::extensions::filters::http::mgw_wasm_websocket::v3::WebSocketFrameRequest;
+using envoy::extensions::filters::http::mgw_wasm_websocket::v3::WebSocketFrameRequest_MessageDirection_PUBLISH;
+using envoy::extensions::filters::http::mgw_wasm_websocket::v3::WebSocketFrameRequest_MessageDirection_SUBSCRIBE;
 using envoy::extensions::filters::http::mgw_wasm_websocket::v3::WebSocketFrameResponse;
 using envoy::extensions::filters::http::mgw_wasm_websocket::v3::Config;
 using envoy::extensions::filters::http::mgw_wasm_websocket::v3::Metadata;
@@ -129,6 +131,7 @@ FilterDataStatus MgwWebSocketContext::onRequestBody(size_t body_buffer_length,
     // Read ext_authz_metadata_ metdata saved as a member variable
     *request.mutable_metadata() = *this->metadata_;
     request.set_payload(std::string(body->view()));
+    request.set_direction(WebSocketFrameRequest_MessageDirection_PUBLISH);
     
     // Perform throttling logic.
     // If the throttle state is underlimit and if the gRPC stream is open, send WebSocketFrameRequest. 
@@ -208,6 +211,7 @@ FilterDataStatus MgwWebSocketContext::onResponseBody(size_t body_buffer_length,
     // Read ext_authz_metadata_ metdata saved as a member variable
     *request.mutable_metadata() = *this->metadata_;
     request.set_payload(std::string(body->view()));
+    request.set_direction(WebSocketFrameRequest_MessageDirection_SUBSCRIBE);
 
     // Perform throttling logic.
     // If the throttle state is underlimit and if the gRPC stream is open, send WebSocketFrameRequest. 

@@ -89,4 +89,15 @@ public interface WebSocketFrameRequestOrBuilder extends
    * @return The payload.
    */
   com.google.protobuf.ByteString getPayload();
+
+  /**
+   * <code>.envoy.extensions.filters.http.mgw_wasm_websocket.v3.WebSocketFrameRequest.MessageDirection direction = 6;</code>
+   * @return The enum numeric value on the wire for direction.
+   */
+  int getDirectionValue();
+  /**
+   * <code>.envoy.extensions.filters.http.mgw_wasm_websocket.v3.WebSocketFrameRequest.MessageDirection direction = 6;</code>
+   * @return The direction.
+   */
+  org.wso2.choreo.connect.discovery.service.websocket.WebSocketFrameRequest.MessageDirection getDirection();
 }
