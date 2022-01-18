@@ -16,6 +16,13 @@ message WebSocketFrameRequest {
   string remote_ip = 4;
 
   bytes payload = 5;
+
+  // direction of the message
+  enum MessageDirection {
+        PUBLISH = 0;
+        SUBSCRIBE = 1;
+  }
+  MessageDirection direction = 6;
 }
 
 message WebSocketFrameResponse {

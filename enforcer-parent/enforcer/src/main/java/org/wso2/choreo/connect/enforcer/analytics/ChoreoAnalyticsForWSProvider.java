@@ -123,7 +123,7 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
     @Override
     public Operation getOperation() throws DataNotFoundException {
         Operation operation = new Operation();
-        String method = "Publish";
+        String method = webSocketFrameRequest.getDirection().name();
         operation.setApiMethod(method);
         String matchingResource = extAuthMetadata.get(MetadataConstants.API_RESOURCE_TEMPLATE_KEY);
         operation.setApiResourceTemplate(matchingResource);

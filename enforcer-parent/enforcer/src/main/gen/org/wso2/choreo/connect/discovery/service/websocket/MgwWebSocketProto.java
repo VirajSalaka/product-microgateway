@@ -45,12 +45,16 @@ public final class MgwWebSocketProto {
     java.lang.String[] descriptorData = {
       "\n4wso2/discovery/service/websocket/frame" +
       "_service.proto\0223envoy.extensions.filters" +
-      ".http.mgw_wasm_websocket.v3\"\263\001\n\025WebSocke" +
+      ".http.mgw_wasm_websocket.v3\"\323\002\n\025WebSocke" +
       "tFrameRequest\022\017\n\007node_id\030\001 \001(\t\022O\n\010metada" +
       "ta\030\002 \001(\0132=.envoy.extensions.filters.http" +
       ".mgw_wasm_websocket.v3.Metadata\022\024\n\014frame" +
       "_length\030\003 \001(\005\022\021\n\tremote_ip\030\004 \001(\t\022\017\n\007payl" +
-      "oad\030\005 \001(\014\"\310\001\n\026WebSocketFrameResponse\022h\n\016" +
+      "oad\030\005 \001(\014\022n\n\tdirection\030\006 \001(\0162[.envoy.ext" +
+      "ensions.filters.http.mgw_wasm_websocket." +
+      "v3.WebSocketFrameRequest.MessageDirectio" +
+      "n\".\n\020MessageDirection\022\013\n\007PUBLISH\020\000\022\r\n\tSU" +
+      "BSCRIBE\020\001\"\310\001\n\026WebSocketFrameResponse\022h\n\016" +
       "throttle_state\030\001 \001(\0162P.envoy.extensions." +
       "filters.http.mgw_wasm_websocket.v3.WebSo" +
       "cketFrameResponse.Code\022\027\n\017throttle_perio" +
@@ -78,7 +82,7 @@ public final class MgwWebSocketProto {
     internal_static_envoy_extensions_filters_http_mgw_wasm_websocket_v3_WebSocketFrameRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_envoy_extensions_filters_http_mgw_wasm_websocket_v3_WebSocketFrameRequest_descriptor,
-        new java.lang.String[] { "NodeId", "Metadata", "FrameLength", "RemoteIp", "Payload", });
+        new java.lang.String[] { "NodeId", "Metadata", "FrameLength", "RemoteIp", "Payload", "Direction", });
     internal_static_envoy_extensions_filters_http_mgw_wasm_websocket_v3_WebSocketFrameResponse_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_envoy_extensions_filters_http_mgw_wasm_websocket_v3_WebSocketFrameResponse_fieldAccessorTable = new
