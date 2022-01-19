@@ -93,6 +93,11 @@ private static final long serialVersionUID = 0L;
             direction_ = rawValue;
             break;
           }
+          case 56: {
+
+            apimErrorCode_ = input.readInt32();
+            break;
+          }
           default: {
             if (!parseUnknownField(
                 input, unknownFields, extensionRegistry, tag)) {
@@ -412,6 +417,17 @@ private static final long serialVersionUID = 0L;
     return result == null ? org.wso2.choreo.connect.discovery.service.websocket.WebSocketFrameRequest.MessageDirection.UNRECOGNIZED : result;
   }
 
+  public static final int APIM_ERROR_CODE_FIELD_NUMBER = 7;
+  private int apimErrorCode_;
+  /**
+   * <code>int32 apim_error_code = 7;</code>
+   * @return The apimErrorCode.
+   */
+  @java.lang.Override
+  public int getApimErrorCode() {
+    return apimErrorCode_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -444,6 +460,9 @@ private static final long serialVersionUID = 0L;
     if (direction_ != org.wso2.choreo.connect.discovery.service.websocket.WebSocketFrameRequest.MessageDirection.PUBLISH.getNumber()) {
       output.writeEnum(6, direction_);
     }
+    if (apimErrorCode_ != 0) {
+      output.writeInt32(7, apimErrorCode_);
+    }
     unknownFields.writeTo(output);
   }
 
@@ -475,6 +494,10 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeEnumSize(6, direction_);
     }
+    if (apimErrorCode_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(7, apimErrorCode_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -504,6 +527,8 @@ private static final long serialVersionUID = 0L;
     if (!getPayload()
         .equals(other.getPayload())) return false;
     if (direction_ != other.direction_) return false;
+    if (getApimErrorCode()
+        != other.getApimErrorCode()) return false;
     if (!unknownFields.equals(other.unknownFields)) return false;
     return true;
   }
@@ -529,6 +554,8 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getPayload().hashCode();
     hash = (37 * hash) + DIRECTION_FIELD_NUMBER;
     hash = (53 * hash) + direction_;
+    hash = (37 * hash) + APIM_ERROR_CODE_FIELD_NUMBER;
+    hash = (53 * hash) + getApimErrorCode();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -678,6 +705,8 @@ private static final long serialVersionUID = 0L;
 
       direction_ = 0;
 
+      apimErrorCode_ = 0;
+
       return this;
     }
 
@@ -714,6 +743,7 @@ private static final long serialVersionUID = 0L;
       result.remoteIp_ = remoteIp_;
       result.payload_ = payload_;
       result.direction_ = direction_;
+      result.apimErrorCode_ = apimErrorCode_;
       onBuilt();
       return result;
     }
@@ -781,6 +811,9 @@ private static final long serialVersionUID = 0L;
       }
       if (other.direction_ != 0) {
         setDirectionValue(other.getDirectionValue());
+      }
+      if (other.getApimErrorCode() != 0) {
+        setApimErrorCode(other.getApimErrorCode());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1285,6 +1318,37 @@ private static final long serialVersionUID = 0L;
     public Builder clearDirection() {
       
       direction_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int apimErrorCode_ ;
+    /**
+     * <code>int32 apim_error_code = 7;</code>
+     * @return The apimErrorCode.
+     */
+    @java.lang.Override
+    public int getApimErrorCode() {
+      return apimErrorCode_;
+    }
+    /**
+     * <code>int32 apim_error_code = 7;</code>
+     * @param value The apimErrorCode to set.
+     * @return This builder for chaining.
+     */
+    public Builder setApimErrorCode(int value) {
+      
+      apimErrorCode_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 apim_error_code = 7;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearApimErrorCode() {
+      
+      apimErrorCode_ = 0;
       onChanged();
       return this;
     }

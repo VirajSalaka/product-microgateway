@@ -100,4 +100,10 @@ public interface WebSocketFrameRequestOrBuilder extends
    * @return The direction.
    */
   org.wso2.choreo.connect.discovery.service.websocket.WebSocketFrameRequest.MessageDirection getDirection();
+
+  /**
+   * <code>int32 apim_error_code = 7;</code>
+   * @return The apimErrorCode.
+   */
+  int getApimErrorCode();
 }

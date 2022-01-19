@@ -237,11 +237,22 @@ FilterDataStatus MgwWebSocketContext::onResponseBody(size_t body_buffer_length,
     // pass the request to next filter.
     }else if (this->throttle_state_ == ThrottleState::FailureModeAllowed){
       establishNewStream();
+      auto ack = this->stream_handler_->send(request, false);
+      if (ack != WasmResult::Ok) {
+        LOG_TRACE(std::string("error sending frame data")+ toString(ack));
+      }
+      LOG_TRACE(std::string("frame data successfully sent:"+ toString(ack)));
       return FilterDataStatus::Continue;
     // If throttle state is FailureModeBlocked, then try to establish a new gRPC stream and 
     // stop interation.
     }else if(this->throttle_state_ == ThrottleState::FailureModeBlocked){
       establishNewStream();
+      request.set_apim_error_code(900800);
+      auto ack = this->stream_handler_->send(request, false);
+      if (ack != WasmResult::Ok) {
+        LOG_TRACE(std::string("error sending frame data")+ toString(ack));
+      }
+      LOG_TRACE(std::string("frame data successfully sent:"+ toString(ack)));
       return FilterDataStatus::StopIterationNoBuffer;
     // If throttle state is overlimit, then check the throttle period before making a decision. 
     // If the current time has passed the throttle period in UTC seconds, then continue to the 

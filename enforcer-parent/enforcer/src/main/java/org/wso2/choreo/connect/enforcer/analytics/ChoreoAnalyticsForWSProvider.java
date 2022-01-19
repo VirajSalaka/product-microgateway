@@ -32,6 +32,7 @@ import org.wso2.carbon.apimgt.common.analytics.publishers.dto.Operation;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.Target;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.enums.EventCategory;
 import org.wso2.carbon.apimgt.common.analytics.publishers.dto.enums.FaultCategory;
+import org.wso2.carbon.apimgt.common.analytics.publishers.dto.enums.FaultSubCategory;
 import org.wso2.choreo.connect.discovery.service.websocket.WebSocketFrameRequest;
 import org.wso2.choreo.connect.enforcer.constants.APIConstants;
 import org.wso2.choreo.connect.enforcer.constants.AnalyticsConstants;
@@ -67,11 +68,11 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
     }
 
     private boolean isSuccessRequest() {
-        return true;
+        return 900800 != webSocketFrameRequest.getApimErrorCode();
     }
 
     private boolean isFaultRequest() {
-        return false;
+        return 900800 == webSocketFrameRequest.getApimErrorCode();
     }
 
     @Override
@@ -88,7 +89,10 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
 
     @Override
     public FaultCategory getFaultType() {
-        return null;
+        if (webSocketFrameRequest.getApimErrorCode() == 900800) {
+            return FaultCategory.THROTTLED;
+        }
+        return FaultCategory.OTHER;
     }
 
     @Override
@@ -116,7 +120,7 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
         application.setApplicationId(extAuthMetadata.get(MetadataConstants.APP_UUID_KEY));
         application.setApplicationName(extAuthMetadata.get(MetadataConstants.APP_NAME_KEY));
         application.setApplicationOwner(extAuthMetadata.get(MetadataConstants.APP_OWNER_KEY));
-        application.setKeyType(extAuthMetadata.get(MetadataConstants.API_TYPE_KEY));
+        application.setKeyType(extAuthMetadata.get(MetadataConstants.APP_KEY_TYPE_KEY));
         return application;
     }
 
@@ -179,7 +183,13 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
 
     @Override
     public Error getError(FaultCategory faultCategory) {
-        return null;
+        int errorCode = webSocketFrameRequest.getApimErrorCode();
+        FaultCodeClassifier faultCodeClassifier = new FaultCodeClassifier(errorCode);
+        FaultSubCategory faultSubCategory = faultCodeClassifier.getFaultSubCategory(faultCategory);
+        Error error = new Error();
+        error.setErrorCode(errorCode);
+        error.setErrorMessage(faultSubCategory);
+        return error;
     }
 
     @Override
