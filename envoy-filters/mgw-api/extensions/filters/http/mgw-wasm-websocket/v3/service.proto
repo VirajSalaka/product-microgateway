@@ -23,6 +23,8 @@ message WebSocketFrameRequest {
         SUBSCRIBE = 1;
   }
   MessageDirection direction = 6;
+
+  int32 apim_error_code = 7;
 }
 
 message WebSocketFrameResponse {
