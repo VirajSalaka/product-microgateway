@@ -155,6 +155,20 @@ public class AnalyticsFilter {
 
             requestContext.addMetadataToMap(MetadataConstants.API_ORGANIZATION_ID,
                     requestContext.getMatchedAPI().getOrganizationId());
+            requestContext.addMetadataToMap(MetadataConstants.CLIENT_IP_KEY, requestContext.getClientIp());
+            requestContext.addMetadataToMap(MetadataConstants.USER_AGENT_KEY,
+                    AnalyticsUtils.setDefaultIfNull(requestContext.getHeaders().get("user-agent")));
+            if (APIConstants.WEBSOCKET.equals(requestContext.getHeaders().get(APIConstants.UPGRADE_HEADER))) {
+                logger.debug(" websocket upgrade request");
+                ChoreoFaultAnalyticsProvider provider = new ChoreoFaultAnalyticsProvider(requestContext);
+                GenericRequestDataCollector dataCollector = new GenericRequestDataCollector(provider);
+                try {
+                    dataCollector.collectData();
+                    logger.debug("Analytics event for websocket upgrade is published.");
+                } catch (AnalyticsException e) {
+                    logger.error("Error while publishing the analytics event for websocket upgrade. ", e);
+                }
+            }
         } finally {
             if (Utils.tracingEnabled()) {
                 analyticsSpanScope.close();
@@ -163,7 +177,7 @@ public class AnalyticsFilter {
         }
     }
 
-    private String resolveEndpoint(RequestContext requestContext) {
+    public String resolveEndpoint(RequestContext requestContext) {
         AuthenticationContext authContext = requestContext.getAuthenticationContext();
         // KeyType could be sandbox only if the keytype is set fetched from the Eventhub
         if (authContext != null && authContext.getKeyType() != null
