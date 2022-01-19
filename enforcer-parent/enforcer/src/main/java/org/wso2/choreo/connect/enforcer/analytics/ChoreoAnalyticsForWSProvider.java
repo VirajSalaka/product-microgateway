@@ -184,12 +184,12 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
 
     @Override
     public String getUserAgentHeader() {
-        return "ballerina";
+        return extAuthMetadata.get(MetadataConstants.USER_AGENT_KEY);
     }
 
     @Override
     public String getEndUserIP() {
-        return "10.10.10.10";
+        return extAuthMetadata.get(MetadataConstants.CLIENT_IP_KEY);
     }
 
     private String getExtAuthzMetadata(String key) {

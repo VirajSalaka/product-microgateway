@@ -46,13 +46,27 @@ import org.wso2.choreo.connect.enforcer.util.FilterUtils;
 public class ChoreoFaultAnalyticsProvider implements AnalyticsDataProvider {
     private final RequestContext requestContext;
     private static final Logger logger = LogManager.getLogger(ChoreoFaultAnalyticsProvider.class);
+    private final boolean isWebsocketUpgradeRequest;
 
     public ChoreoFaultAnalyticsProvider(RequestContext requestContext) {
         this.requestContext = requestContext;
+        if (APIConstants.WEBSOCKET.equals(requestContext.getHeaders().get(APIConstants.UPGRADE_HEADER))) {
+            isWebsocketUpgradeRequest = true;
+        } else {
+            isWebsocketUpgradeRequest = false;
+        }
     }
 
     @Override
     public EventCategory getEventCategory() {
+        if (isWebsocketUpgradeRequest  &&
+                !requestContext.getProperties().containsKey(APIConstants.MessageFormat.STATUS_CODE)) {
+//            int statusCode = Integer.parseInt(requestContext.getProperties()
+//                    .get(APIConstants.MessageFormat.STATUS_CODE).toString());
+//            if (statusCode == 200 || statusCode == 204) {
+                return EventCategory.SUCCESS;
+//            }
+        }
         return EventCategory.FAULT;
     }
 
@@ -129,6 +143,12 @@ public class ChoreoFaultAnalyticsProvider implements AnalyticsDataProvider {
         // This could be null if  OPTIONS request comes
         if (requestContext.getMatchedResourcePath() != null) {
             Operation operation = new Operation();
+            if (isWebsocketUpgradeRequest) {
+                operation.setApiMethod("HANDSHAKE");
+                operation.setApiResourceTemplate("init-request:" +
+                        requestContext.getMatchedResourcePath().getPath());
+                return operation;
+            }
             operation.setApiMethod(requestContext.getMatchedResourcePath().getMethod().name());
             operation.setApiResourceTemplate(requestContext.getMatchedResourcePath().getPath());
             return operation;
@@ -140,8 +160,13 @@ public class ChoreoFaultAnalyticsProvider implements AnalyticsDataProvider {
     public Target getTarget() {
         Target target = new Target();
         target.setResponseCacheHit(false);
-        target.setTargetResponseCode(Integer.parseInt(
-                requestContext.getProperties().get(APIConstants.MessageFormat.STATUS_CODE).toString()));
+        if (requestContext.getProperties().containsKey(APIConstants.MessageFormat.STATUS_CODE)) {
+            target.setTargetResponseCode(Integer.parseInt(
+                    requestContext.getProperties().get(APIConstants.MessageFormat.STATUS_CODE).toString()));
+        } else {
+            target.setTargetResponseCode(200);
+        }
+        target.setDestination(AnalyticsFilter.getInstance().resolveEndpoint(requestContext));
         // Destination is not included in the fault event scenario
         return target;
     }
@@ -149,7 +174,7 @@ public class ChoreoFaultAnalyticsProvider implements AnalyticsDataProvider {
     @Override
     public Latencies getLatencies() {
         // Latencies information are not required.
-        return null;
+        return new Latencies();
     }
 
     @Override
@@ -163,14 +188,16 @@ public class ChoreoFaultAnalyticsProvider implements AnalyticsDataProvider {
 
     @Override
     public int getProxyResponseCode() {
-        return Integer.parseInt(requestContext.getProperties()
-                .get(APIConstants.MessageFormat.STATUS_CODE).toString());
+        return requestContext.getProperties().containsKey(APIConstants.MessageFormat.STATUS_CODE)
+            ? Integer.parseInt(requestContext.getProperties()
+                .get(APIConstants.MessageFormat.STATUS_CODE).toString()) : 200;
     }
 
     @Override
     public int getTargetResponseCode() {
-        return Integer.parseInt(requestContext.getProperties()
-                .get(APIConstants.MessageFormat.STATUS_CODE).toString());
+        return requestContext.getProperties().containsKey(APIConstants.MessageFormat.STATUS_CODE)
+                ? Integer.parseInt(requestContext.getProperties()
+                .get(APIConstants.MessageFormat.STATUS_CODE).toString()) : 200;
     }
 
     @Override
@@ -197,14 +224,12 @@ public class ChoreoFaultAnalyticsProvider implements AnalyticsDataProvider {
     @Override
     public String getUserAgentHeader() {
         // User agent is not required for fault scenario
-        logger.error("Internal Error: User agent header is not required for fault events");
-        return null;
+        return requestContext.getHeaders().containsKey("user-agent") ?
+                requestContext.getHeaders().get("user-agent") : "UNKNOWN";
     }
 
     @Override
     public String getEndUserIP() {
-        logger.error("Internal Error: End User IPAddress is not required for fault events");
-        // EndUserIP is not required for fault event type
-        return null;
+        return requestContext.getClientIp();
     }
 }

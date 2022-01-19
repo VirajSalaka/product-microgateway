@@ -39,6 +39,7 @@ import org.wso2.choreo.connect.enforcer.cors.CorsFilter;
 import org.wso2.choreo.connect.enforcer.security.AuthFilter;
 import org.wso2.choreo.connect.enforcer.throttle.ThrottleConstants;
 import org.wso2.choreo.connect.enforcer.throttle.ThrottleFilter;
+import org.wso2.choreo.connect.enforcer.util.FilterUtils;
 import org.wso2.choreo.connect.enforcer.websocket.WebSocketMetaDataFilter;
 import org.wso2.choreo.connect.enforcer.websocket.WebSocketThrottleFilter;
 import org.wso2.choreo.connect.enforcer.websocket.WebSocketThrottleResponse;
@@ -191,6 +192,10 @@ public class WebSocketAPI implements API {
             }
             if (requestContext.getAddHeaders() != null && requestContext.getAddHeaders().size() > 0) {
                 responseObject.setHeaderMap(requestContext.getAddHeaders());
+            }
+            if (analyticsEnabled && !FilterUtils.isSkippedAnalyticsFaultEvent(responseObject.getErrorCode())) {
+                AnalyticsFilter.getInstance().handleFailureRequest(requestContext);
+                responseObject.setMetaDataMap(new HashMap<>(0));
             }
         }
         return responseObject;
