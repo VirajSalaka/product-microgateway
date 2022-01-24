@@ -279,6 +279,8 @@ public class WebSocketAPI implements API {
         }
         WebSocketThrottleResponse webSocketThrottleResponse = new WebSocketThrottleResponse();
         webSocketThrottleResponse.setOverLimitState();
+        webSocketThrottleResponse.setApimErrorCode(Integer.parseInt(requestContext.getProperties()
+                .get(APIConstants.MessageFormat.ERROR_CODE).toString()));
         webSocketThrottleResponse.setThrottlePeriod(
                 (Long) requestContext.getProperties().get(ThrottleConstants.HEADER_RETRY_AFTER));
         return webSocketThrottleResponse;
