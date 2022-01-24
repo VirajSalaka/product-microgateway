@@ -54,24 +54,25 @@ public final class MgwWebSocketProto {
       "ensions.filters.http.mgw_wasm_websocket." +
       "v3.WebSocketFrameRequest.MessageDirectio" +
       "n\022\027\n\017apim_error_code\030\007 \001(\005\".\n\020MessageDir" +
-      "ection\022\013\n\007PUBLISH\020\000\022\r\n\tSUBSCRIBE\020\001\"\310\001\n\026W" +
+      "ection\022\013\n\007PUBLISH\020\000\022\r\n\tSUBSCRIBE\020\001\"\341\001\n\026W" +
       "ebSocketFrameResponse\022h\n\016throttle_state\030" +
       "\001 \001(\0162P.envoy.extensions.filters.http.mg" +
       "w_wasm_websocket.v3.WebSocketFrameRespon" +
-      "se.Code\022\027\n\017throttle_period\030\002 \001(\003\"+\n\004Code" +
-      "\022\013\n\007UNKNOWN\020\000\022\006\n\002OK\020\001\022\016\n\nOVER_LIMIT\020\002\"\264\001" +
-      "\n\010Metadata\022o\n\022ext_authz_metadata\030\001 \003(\0132S" +
-      ".envoy.extensions.filters.http.mgw_wasm_" +
-      "websocket.v3.Metadata.ExtAuthzMetadataEn" +
-      "try\0327\n\025ExtAuthzMetadataEntry\022\013\n\003key\030\001 \001(" +
-      "\t\022\r\n\005value\030\002 \001(\t:\0028\0012\313\001\n\025WebSocketFrameS" +
-      "ervice\022\261\001\n\020PublishFrameData\022J.envoy.exte" +
-      "nsions.filters.http.mgw_wasm_websocket.v" +
-      "3.WebSocketFrameRequest\032K.envoy.extensio" +
-      "ns.filters.http.mgw_wasm_websocket.v3.We" +
-      "bSocketFrameResponse\"\000(\0010\001BJ\n3org.wso2.c" +
-      "horeo.connect.discovery.service.websocke" +
-      "tB\021MgwWebSocketProtoP\001b\006proto3"
+      "se.Code\022\027\n\017throttle_period\030\002 \001(\003\022\027\n\017apim" +
+      "_error_code\030\003 \001(\005\"+\n\004Code\022\013\n\007UNKNOWN\020\000\022\006" +
+      "\n\002OK\020\001\022\016\n\nOVER_LIMIT\020\002\"\264\001\n\010Metadata\022o\n\022e" +
+      "xt_authz_metadata\030\001 \003(\0132S.envoy.extensio" +
+      "ns.filters.http.mgw_wasm_websocket.v3.Me" +
+      "tadata.ExtAuthzMetadataEntry\0327\n\025ExtAuthz" +
+      "MetadataEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(" +
+      "\t:\0028\0012\313\001\n\025WebSocketFrameService\022\261\001\n\020Publ" +
+      "ishFrameData\022J.envoy.extensions.filters." +
+      "http.mgw_wasm_websocket.v3.WebSocketFram" +
+      "eRequest\032K.envoy.extensions.filters.http" +
+      ".mgw_wasm_websocket.v3.WebSocketFrameRes" +
+      "ponse\"\000(\0010\001BJ\n3org.wso2.choreo.connect.d" +
+      "iscovery.service.websocketB\021MgwWebSocket" +
+      "ProtoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -88,7 +89,7 @@ public final class MgwWebSocketProto {
     internal_static_envoy_extensions_filters_http_mgw_wasm_websocket_v3_WebSocketFrameResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_envoy_extensions_filters_http_mgw_wasm_websocket_v3_WebSocketFrameResponse_descriptor,
-        new java.lang.String[] { "ThrottleState", "ThrottlePeriod", });
+        new java.lang.String[] { "ThrottleState", "ThrottlePeriod", "ApimErrorCode", });
     internal_static_envoy_extensions_filters_http_mgw_wasm_websocket_v3_Metadata_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_envoy_extensions_filters_http_mgw_wasm_websocket_v3_Metadata_fieldAccessorTable = new

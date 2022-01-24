@@ -83,14 +83,16 @@ public class WebSocketResponseObserver implements StreamObserver<WebSocketFrameR
                             .process(webSocketFrameRequestClone);
                     if (WebSocketThrottleState.OK == webSocketThrottleResponse.getWebSocketThrottleState()) {
                         WebSocketFrameResponse response = WebSocketFrameResponse.newBuilder().setThrottleState(
-                                WebSocketFrameResponse.Code.OK).build();
+                                WebSocketFrameResponse.Code.OK).setApimErrorCode(0).build();
                         responseStreamObserver.onNext(response);
                     } else if (WebSocketThrottleState.OVER_LIMIT == webSocketThrottleResponse
                             .getWebSocketThrottleState()) {
                         logger.debug("throttle out period" + webSocketThrottleResponse.getThrottlePeriod());
-                        WebSocketFrameResponse response = WebSocketFrameResponse.newBuilder().setThrottleState(
-                                WebSocketFrameResponse.Code.OVER_LIMIT).setThrottlePeriod(
-                                webSocketThrottleResponse.getThrottlePeriod()).build();
+                        WebSocketFrameResponse response = WebSocketFrameResponse.newBuilder()
+                                .setThrottleState(WebSocketFrameResponse.Code.OVER_LIMIT)
+                                .setThrottlePeriod(webSocketThrottleResponse.getThrottlePeriod())
+                                .setApimErrorCode(webSocketThrottleResponse.getApimErrorCode())
+                                .build();
                         responseStreamObserver.onNext(response);
                     } else {
                         logger.debug("throttle state of the connection is not available in enforcer");

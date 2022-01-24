@@ -40,6 +40,8 @@ message WebSocketFrameResponse {
   Code throttle_state = 1;
 
   int64 throttle_period = 2;
+
+  int32 apim_error_code = 3;
 }
 
 // message MetadataValue {

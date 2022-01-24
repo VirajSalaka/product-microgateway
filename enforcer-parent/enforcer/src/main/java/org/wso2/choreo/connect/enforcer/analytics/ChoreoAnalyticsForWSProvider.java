@@ -165,6 +165,9 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
         if (isSuccessRequest()) {
             return 200;
         }
+        if (webSocketFrameRequest.getApimErrorCode() == 900800) {
+            return 429;
+        }
         return Constants.UNKNOWN_INT_VALUE;
     }
 
