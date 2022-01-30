@@ -123,7 +123,7 @@ FilterHeadersStatus MgwWebSocketContext::onResponseHeaders(uint32_t, bool) {
       *request.mutable_metadata() = *this->metadata_;
       request.set_payload("");
       request.set_direction(WebSocketFrameRequest_MessageDirection_HANDSHAKE);
-      request.set_apim_error_code(503);
+      request.set_apim_error_code(101503);
         if(this->handler_state_ == HandlerState::OK){
         LOG_INFO(std::string("gRPC bidi stream available. publishing frame data..."));
         auto ack = this->stream_handler_->send(request, false);
