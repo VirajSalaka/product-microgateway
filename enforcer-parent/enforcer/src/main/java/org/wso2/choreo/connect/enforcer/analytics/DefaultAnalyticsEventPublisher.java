@@ -153,7 +153,10 @@ public class DefaultAnalyticsEventPublisher implements AnalyticsEventPublisher {
     private boolean isWebsocketHttpLogEntry(HTTPAccessLogEntry logEntry) {
         if (logEntry.hasCommonProperties() && logEntry.getCommonProperties().hasMetadata()
                 && logEntry.getCommonProperties().getMetadata().getFilterMetadataMap()
-                .get(EXT_AUTH_METADATA_CONTEXT_KEY) != null) {
+                .get(EXT_AUTH_METADATA_CONTEXT_KEY) != null &&
+                logEntry.getCommonProperties().getMetadata()
+                .getFilterMetadataMap().get(EXT_AUTH_METADATA_CONTEXT_KEY).getFieldsMap()
+                .get(MetadataConstants.API_TYPE_KEY) != null) {
             return APIConstants.ApiType.WEB_SOCKET.equals(logEntry.getCommonProperties().getMetadata()
                     .getFilterMetadataMap().get(EXT_AUTH_METADATA_CONTEXT_KEY).getFieldsMap()
                     .get(MetadataConstants.API_TYPE_KEY).getStringValue());
