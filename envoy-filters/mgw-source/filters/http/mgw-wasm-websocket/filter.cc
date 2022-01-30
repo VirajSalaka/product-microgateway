@@ -105,7 +105,37 @@ FilterHeadersStatus MgwWebSocketContext::onRequestHeaders(uint32_t, bool) {
 }
 
 FilterHeadersStatus MgwWebSocketContext::onResponseHeaders(uint32_t, bool) {
-  LOG_TRACE(std::string("onResponseHeaders called mgw_WASM_websocket") + std::to_string(id()));
+  LOG_INFO(std::string("onResponseHeaders called mgw_WASM_websocket") + std::to_string(id()));
+  auto result = getResponseHeaderPairs();
+  auto pairs = result->pairs();
+  LOG_INFO(std::string("headers: ") + std::to_string(pairs.size()));
+  for (auto& p : pairs) {
+    LOG_INFO(std::string(p.first) + std::string(" -> ") + std::string(p.second));
+    // if (std::string(p.second) == "503") {
+    //   WebSocketFrameRequest request;
+    //   request.set_node_id(this->node_id_);
+    //   request.set_frame_length(body_buffer_length);
+    //   request.set_remote_ip(upstream_address);
+    //   // Read ext_authz_metadata_ metdata saved as a member variable
+    //   *request.mutable_metadata() = *this->metadata_;
+    //   request.set_payload("init-request");
+    //   request.set_direction(WebSocketFrameRequest_MessageDirection_PUBLISH);
+    //     if(this->handler_state_ == HandlerState::OK){
+    //     LOG_INFO(std::string("gRPC bidi stream available. publishing frame data..."));
+    //     auto ack = this->stream_handler_->send(request, false);
+    //     if (ack != WasmResult::Ok) {
+    //       LOG_INFO(std::string("error sending frame data")+ toString(ack));
+    //     }
+    //     LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
+    //   }else{
+    //     establishNewStream();
+    //     auto ack = this->stream_handler_->send(request, false);
+    //     if (ack != WasmResult::Ok) {
+    //       LOG_INFO(std::string("error sending frame data")+ toString(ack));
+    //     }
+    //     LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
+    //   }
+  }
   return FilterHeadersStatus::Continue;
 }
 

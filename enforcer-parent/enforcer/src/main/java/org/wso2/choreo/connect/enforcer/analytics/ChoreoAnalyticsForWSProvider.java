@@ -67,6 +67,7 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
         }
     }
 
+    // TODO: (VirajSalaka) Fix
     private boolean isSuccessRequest() {
         return 900800 != webSocketFrameRequest.getApimErrorCode();
     }
@@ -89,7 +90,8 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
 
     @Override
     public FaultCategory getFaultType() {
-        if (webSocketFrameRequest.getApimErrorCode() == 900800) {
+        if (webSocketFrameRequest.getApimErrorCode() >= 900800
+                && webSocketFrameRequest.getApimErrorCode() < 900900) {
             return FaultCategory.THROTTLED;
         }
         return FaultCategory.OTHER;
@@ -165,7 +167,10 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
         if (isSuccessRequest()) {
             return 200;
         }
-        if (webSocketFrameRequest.getApimErrorCode() == 900800) {
+        // TODO: (VirajSalaka) bring in constants
+        // This is required by the analytics endpoint in order to display the errors properly.
+        if (webSocketFrameRequest.getApimErrorCode() >= 900800
+                && webSocketFrameRequest.getApimErrorCode() < 900900) {
             return 429;
         }
         return Constants.UNKNOWN_INT_VALUE;
