@@ -47,6 +47,7 @@ message WebSocketFrameRequest {
   enum MessageDirection {
         PUBLISH = 0;
         SUBSCRIBE = 1;
+        HANDSHAKE = 2;
   }
   MessageDirection direction = 6;
 
