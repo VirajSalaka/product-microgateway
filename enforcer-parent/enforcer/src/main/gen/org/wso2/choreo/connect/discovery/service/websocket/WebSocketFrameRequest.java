@@ -147,6 +147,10 @@ private static final long serialVersionUID = 0L;
      * <code>SUBSCRIBE = 1;</code>
      */
     SUBSCRIBE(1),
+    /**
+     * <code>HANDSHAKE = 2;</code>
+     */
+    HANDSHAKE(2),
     UNRECOGNIZED(-1),
     ;
 
@@ -158,6 +162,10 @@ private static final long serialVersionUID = 0L;
      * <code>SUBSCRIBE = 1;</code>
      */
     public static final int SUBSCRIBE_VALUE = 1;
+    /**
+     * <code>HANDSHAKE = 2;</code>
+     */
+    public static final int HANDSHAKE_VALUE = 2;
 
 
     public final int getNumber() {
@@ -186,6 +194,7 @@ private static final long serialVersionUID = 0L;
       switch (value) {
         case 0: return PUBLISH;
         case 1: return SUBSCRIBE;
+        case 2: return HANDSHAKE;
         default: return null;
       }
     }
