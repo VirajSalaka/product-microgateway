@@ -67,13 +67,13 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
         }
     }
 
-    // TODO: (VirajSalaka) Fix
     private boolean isSuccessRequest() {
-        return 900800 != webSocketFrameRequest.getApimErrorCode();
+        return 0 == webSocketFrameRequest.getApimErrorCode();
     }
 
     private boolean isFaultRequest() {
-        return 900800 == webSocketFrameRequest.getApimErrorCode();
+        // TODO: (VirajSalaka) Fix
+        return !isSuccessRequest();
     }
 
     @Override
@@ -93,6 +93,8 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
         if (webSocketFrameRequest.getApimErrorCode() >= 900800
                 && webSocketFrameRequest.getApimErrorCode() < 900900) {
             return FaultCategory.THROTTLED;
+        } else if (webSocketFrameRequest.getApimErrorCode() == 101503) {
+            return FaultCategory.TARGET_CONNECTIVITY;
         }
         return FaultCategory.OTHER;
     }
@@ -132,6 +134,9 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
         String method = webSocketFrameRequest.getDirection().name();
         operation.setApiMethod(method);
         String matchingResource = extAuthMetadata.get(MetadataConstants.API_RESOURCE_TEMPLATE_KEY);
+        if ("HANDSHAKE".equals(webSocketFrameRequest.getDirection().name())) {
+            matchingResource = "init-request:" + matchingResource;
+        }
         operation.setApiResourceTemplate(matchingResource);
         return operation;
     }
@@ -172,6 +177,9 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
         if (webSocketFrameRequest.getApimErrorCode() >= 900800
                 && webSocketFrameRequest.getApimErrorCode() < 900900) {
             return 429;
+        }
+        if (webSocketFrameRequest.getApimErrorCode() == 101503) {
+            return webSocketFrameRequest.getApimErrorCode();
         }
         return Constants.UNKNOWN_INT_VALUE;
     }
