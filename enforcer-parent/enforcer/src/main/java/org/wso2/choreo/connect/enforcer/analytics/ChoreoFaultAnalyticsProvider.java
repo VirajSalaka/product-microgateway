@@ -59,14 +59,6 @@ public class ChoreoFaultAnalyticsProvider implements AnalyticsDataProvider {
 
     @Override
     public EventCategory getEventCategory() {
-        if (isWebsocketUpgradeRequest  &&
-                !requestContext.getProperties().containsKey(APIConstants.MessageFormat.STATUS_CODE)) {
-//            int statusCode = Integer.parseInt(requestContext.getProperties()
-//                    .get(APIConstants.MessageFormat.STATUS_CODE).toString());
-//            if (statusCode == 200 || statusCode == 204) {
-                return EventCategory.SUCCESS;
-//            }
-        }
         return EventCategory.FAULT;
     }
 
@@ -160,13 +152,8 @@ public class ChoreoFaultAnalyticsProvider implements AnalyticsDataProvider {
     public Target getTarget() {
         Target target = new Target();
         target.setResponseCacheHit(false);
-        if (requestContext.getProperties().containsKey(APIConstants.MessageFormat.STATUS_CODE)) {
-            target.setTargetResponseCode(Integer.parseInt(
-                    requestContext.getProperties().get(APIConstants.MessageFormat.STATUS_CODE).toString()));
-        } else {
-            target.setTargetResponseCode(200);
-        }
-        target.setDestination(AnalyticsFilter.getInstance().resolveEndpoint(requestContext));
+        target.setTargetResponseCode(Integer.parseInt(
+                requestContext.getProperties().get(APIConstants.MessageFormat.STATUS_CODE).toString()));
         // Destination is not included in the fault event scenario
         return target;
     }
@@ -188,16 +175,14 @@ public class ChoreoFaultAnalyticsProvider implements AnalyticsDataProvider {
 
     @Override
     public int getProxyResponseCode() {
-        return requestContext.getProperties().containsKey(APIConstants.MessageFormat.STATUS_CODE)
-            ? Integer.parseInt(requestContext.getProperties()
-                .get(APIConstants.MessageFormat.STATUS_CODE).toString()) : 200;
+        return Integer.parseInt(requestContext.getProperties()
+                .get(APIConstants.MessageFormat.STATUS_CODE).toString());
     }
 
     @Override
     public int getTargetResponseCode() {
-        return requestContext.getProperties().containsKey(APIConstants.MessageFormat.STATUS_CODE)
-                ? Integer.parseInt(requestContext.getProperties()
-                .get(APIConstants.MessageFormat.STATUS_CODE).toString()) : 200;
+        return Integer.parseInt(requestContext.getProperties()
+                .get(APIConstants.MessageFormat.STATUS_CODE).toString());
     }
 
     @Override
@@ -224,12 +209,12 @@ public class ChoreoFaultAnalyticsProvider implements AnalyticsDataProvider {
     @Override
     public String getUserAgentHeader() {
         // User agent is not required for fault scenario
-        return requestContext.getHeaders().containsKey("user-agent") ?
-                requestContext.getHeaders().get("user-agent") : "UNKNOWN";
+        return null;
     }
 
     @Override
     public String getEndUserIP() {
-        return requestContext.getClientIp();
+        // EndUserIP is not required for fault event type
+        return null;
     }
 }
