@@ -146,11 +146,14 @@ public class DefaultAnalyticsEventPublisher implements AnalyticsEventPublisher {
                 || (AnalyticsConstants.TOKEN_ENDPOINT_PATH.equals(logEntry.getRequest().getOriginalPath()))
                 // Health endpoint calls are not published
                 || (AnalyticsConstants.HEALTH_ENDPOINT_PATH.equals(logEntry.getRequest().getOriginalPath()))
-                // Websocket log entries should not be published to the analytics.
-                || isWebsocketHttpLogEntry(logEntry);
+                // already published websocket log entries should not be published to the analytics again.
+                || alreadyPublishedWebsocketHttpLogEntry(logEntry);
     }
 
-    private boolean isWebsocketHttpLogEntry(HTTPAccessLogEntry logEntry) {
+    // If the access log entry has the status code of 101 and it is a websocket related log entry,
+    // it corresponds to the successful websocket upgrade. And that event is handled via the
+    // WebsocketResponseObserver.
+    private boolean alreadyPublishedWebsocketHttpLogEntry(HTTPAccessLogEntry logEntry) {
         if (logEntry.hasCommonProperties() && logEntry.getCommonProperties().hasMetadata()
                 && logEntry.getCommonProperties().getMetadata().getFilterMetadataMap()
                 .get(EXT_AUTH_METADATA_CONTEXT_KEY) != null &&
@@ -159,7 +162,8 @@ public class DefaultAnalyticsEventPublisher implements AnalyticsEventPublisher {
                 .get(MetadataConstants.API_TYPE_KEY) != null) {
             return APIConstants.ApiType.WEB_SOCKET.equals(logEntry.getCommonProperties().getMetadata()
                     .getFilterMetadataMap().get(EXT_AUTH_METADATA_CONTEXT_KEY).getFieldsMap()
-                    .get(MetadataConstants.API_TYPE_KEY).getStringValue());
+                    .get(MetadataConstants.API_TYPE_KEY).getStringValue()) &&
+                    logEntry.getResponse().getResponseCode().getValue() == 101;
         }
         return false;
     }
