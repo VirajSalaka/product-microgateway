@@ -164,6 +164,9 @@ public class WebSocketAPI implements API {
         ResponseObject responseObject = new ResponseObject();
         boolean analyticsEnabled = ConfigHolder.getInstance().getConfig().getAnalyticsConfig().isEnabled();
         if (executeFilterChain(requestContext)) {
+            if (analyticsEnabled) {
+                AnalyticsFilter.getInstance().handleSuccessRequest(requestContext);
+            }
             responseObject.setStatusCode(APIConstants.StatusCodes.OK.getCode());
             if (requestContext.getAddHeaders() != null && requestContext.getAddHeaders().size() > 0) {
                 responseObject.setHeaderMap(requestContext.getAddHeaders());
