@@ -179,7 +179,7 @@ public class ChoreoAnalyticsForWSProvider implements AnalyticsDataProvider {
             return 429;
         }
         if (webSocketFrameRequest.getApimErrorCode() == 101503) {
-            return webSocketFrameRequest.getApimErrorCode();
+            return 503;
         }
         return Constants.UNKNOWN_INT_VALUE;
     }
