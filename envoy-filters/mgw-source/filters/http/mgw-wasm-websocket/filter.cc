@@ -125,21 +125,7 @@ FilterHeadersStatus MgwWebSocketContext::onResponseHeaders(uint32_t, bool) {
       request.set_payload("");
       request.set_direction(WebSocketFrameRequest_MessageDirection_HANDSHAKE);
       request.set_apim_error_code(0);
-        if(this->handler_state_ == HandlerState::OK){
-        LOG_INFO(std::string("gRPC bidi stream available. publishing frame data..."));
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-      }else{
-        establishNewStream();
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-      }
+      sendEnforcerRequest(this, request);
     }
   }
   return FilterHeadersStatus::Continue;
@@ -173,60 +159,20 @@ FilterDataStatus MgwWebSocketContext::onRequestBody(size_t body_buffer_length,
     // If the throttle state is underlimit and if the gRPC stream is open, send WebSocketFrameRequest. 
     // If no gRPC stream, try to open a new stream and then send. 
     if(this->throttle_state_ == ThrottleState::UnderLimit){
-      if(this->handler_state_ == HandlerState::OK){
-        LOG_INFO(std::string("gRPC bidi stream available. publishing frame data..."));
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-      }else{
-        establishNewStream();
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-      }
+      request.set_apim_error_code(0);
+      sendEnforcerRequest(this, request);
       return FilterDataStatus::Continue;
     // If throttle state is FailureModeAllowed, then try to esatblish a new gRPC stream and 
     // pass the request to next filter. 
     }else if (this->throttle_state_ == ThrottleState::FailureModeAllowed){
-      if(this->handler_state_ == HandlerState::OK){
-        LOG_INFO(std::string("gRPC bidi stream available. publishing frame data..."));
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-      }else{
-        establishNewStream();
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-      }
+      request.set_apim_error_code(0);
+      sendEnforcerRequest(this, request);
       return FilterDataStatus::Continue;
     // If throttle state is FailureModeBlocked, then try to establish a new gRPC stream and 
     // stop interation.
     }else if(this->throttle_state_ == ThrottleState::FailureModeBlocked){
       request.set_apim_error_code(this->apim_error_code_);
-      if(this->handler_state_ == HandlerState::OK){
-        LOG_INFO(std::string("gRPC bidi stream available. publishing frame data..."));
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-      }else{
-        establishNewStream();
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-      }
+      sendEnforcerRequest(this, request);
       return FilterDataStatus::StopIterationNoBuffer;
     // If throttle state is overlimit, then check the throttle period before making a decision. 
     // If the current time has passed the throttle period in UTC seconds, then continue to the 
@@ -240,58 +186,17 @@ FilterDataStatus MgwWebSocketContext::onRequestBody(size_t body_buffer_length,
         if(this->throttle_period_ <= now.tv_sec){
           this->throttle_state_ = ThrottleState::UnderLimit;
           // publish to enforcer
-          if(this->handler_state_ == HandlerState::OK){
-        LOG_INFO(std::string("gRPC bidi stream available. publishing frame data..."));
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-        }else{
-          establishNewStream();
-          auto ack = this->stream_handler_->send(request, false);
-          if (ack != WasmResult::Ok) {
-            LOG_INFO(std::string("error sending frame data")+ toString(ack));
-          }
-          LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-        }
+          request.set_apim_error_code(0);
+          sendEnforcerRequest(this, request);
           return FilterDataStatus::Continue;
         }else{
           request.set_apim_error_code(this->apim_error_code_);
-          if(this->handler_state_ == HandlerState::OK){
-        LOG_INFO(std::string("gRPC bidi stream available. publishing frame data..."));
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-        }else{
-          establishNewStream();
-          auto ack = this->stream_handler_->send(request, false);
-          if (ack != WasmResult::Ok) {
-            LOG_INFO(std::string("error sending frame data")+ toString(ack));
-          }
-          LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-        }
+          sendEnforcerRequest(this, request);
           return FilterDataStatus::StopIterationNoBuffer;
         }
       }else{
         request.set_apim_error_code(this->apim_error_code_);
-          if(this->handler_state_ == HandlerState::OK){
-        LOG_INFO(std::string("gRPC bidi stream available. publishing frame data..."));
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-        }else{
-          establishNewStream();
-          auto ack = this->stream_handler_->send(request, false);
-          if (ack != WasmResult::Ok) {
-            LOG_INFO(std::string("error sending frame data")+ toString(ack));
-          }
-          LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-        }
+        sendEnforcerRequest(this, request); 
         return FilterDataStatus::StopIterationNoBuffer;
       }
     }
@@ -329,42 +234,20 @@ FilterDataStatus MgwWebSocketContext::onResponseBody(size_t body_buffer_length,
     // If the throttle state is underlimit and if the gRPC stream is open, send WebSocketFrameRequest. 
     // If no gRPC stream, try to open a new stream and then send. 
     if(this->throttle_state_ == ThrottleState::UnderLimit){
-      if(this->handler_state_ == HandlerState::OK){
-        LOG_INFO(std::string("gRPC bidi stream available. publishing frame data..."));
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-      }else{
-        establishNewStream();
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
-      }
+      request.set_apim_error_code(0);
+      sendEnforcerRequest(this, request);
       return FilterDataStatus::Continue;
     // If throttle state is FailureModeAllowed, then try to esatblish a new gRPC stream and 
     // pass the request to next filter.
     }else if (this->throttle_state_ == ThrottleState::FailureModeAllowed){
-      establishNewStream();
-      auto ack = this->stream_handler_->send(request, false);
-      if (ack != WasmResult::Ok) {
-        LOG_INFO(std::string("error sending frame data")+ toString(ack));
-      }
-      LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
+      request.set_apim_error_code(0);
+      sendEnforcerRequest(this, request);
       return FilterDataStatus::Continue;
     // If throttle state is FailureModeBlocked, then try to establish a new gRPC stream and 
     // stop interation.
     }else if(this->throttle_state_ == ThrottleState::FailureModeBlocked){
-      establishNewStream();
       request.set_apim_error_code(this->apim_error_code_);
-      auto ack = this->stream_handler_->send(request, false);
-      if (ack != WasmResult::Ok) {
-        LOG_INFO(std::string("error sending frame data")+ toString(ack));
-      }
-      LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
+      sendEnforcerRequest(this, request);
       return FilterDataStatus::StopIterationNoBuffer;
     // If throttle state is overlimit, then check the throttle period before making a decision. 
     // If the current time has passed the throttle period in UTC seconds, then continue to the 
@@ -381,19 +264,12 @@ FilterDataStatus MgwWebSocketContext::onResponseBody(size_t body_buffer_length,
           return FilterDataStatus::Continue;
         }else{
           request.set_apim_error_code(this->apim_error_code_);
-          auto ack = this->stream_handler_->send(request, false);
-          if (ack != WasmResult::Ok) {
-            LOG_INFO(std::string("error sending frame data")+ toString(ack));
-          }
-          LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
+          sendEnforcerRequest(this, request);
           return FilterDataStatus::StopIterationNoBuffer;
         }
       }else{
-        auto ack = this->stream_handler_->send(request, false);
-        if (ack != WasmResult::Ok) {
-          LOG_INFO(std::string("error sending frame data")+ toString(ack));
-        }
-        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
+        request.set_apim_error_code(this->apim_error_code_);
+        sendEnforcerRequest(this, request);
         return FilterDataStatus::StopIterationNoBuffer;
       }
     }
@@ -478,4 +354,23 @@ void MgwWebSocketContext::establishNewStream() {
 void MgwWebSocketContext::updateThrottlePeriod(const int throttle_period){
   this->throttle_period_ = throttle_period;
   LOG_TRACE("Throttle period updated to"+ std::to_string(throttle_period));
+}
+
+void MgwWebSocketContext::sendEnforcerRequest(MgwWebSocketContext* websocContext, WebSocketFrameRequest request) {
+  if(websocContext->handler_state_ == HandlerState::OK){
+        LOG_INFO(std::string("gRPC bidi stream available. publishing frame data..."));
+        auto ack = websocContext->stream_handler_->send(request, false);
+        if (ack != WasmResult::Ok) {
+          LOG_INFO(std::string("error sending frame data")+ toString(ack));
+        }
+        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
+      }else{
+        establishNewStream();
+        auto ack = websocContext->stream_handler_->send(request, false);
+        if (ack != WasmResult::Ok) {
+          LOG_INFO(std::string("error sending frame data")+ toString(ack));
+        }
+        LOG_INFO(std::string("frame data successfully sent:"+ toString(ack)));
+      }
+
 }

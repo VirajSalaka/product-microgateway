@@ -54,6 +54,6 @@ private:
   
   bool isDataFrame(const std::string_view data);
   void establishNewStream();
-
+  void sendEnforcerRequest(MgwWebSocketContext* websocContext, WebSocketFrameRequest request);
 };
 
