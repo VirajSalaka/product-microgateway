@@ -181,6 +181,7 @@ public class AuthServer {
                 .addService(ServerInterceptors.intercept(new WebSocketFrameService(), new AccessLogInterceptor()))
                 .maxInboundMessageSize(authServerConfig.getMaxMessageSize())
                 .maxInboundMetadataSize(authServerConfig.getMaxHeaderLimit()).channelType(NioServerSocketChannel.class)
+                .maxConnectionAgeGrace()
                 .executor(enforcerWorkerPool.getExecutor())
                 .sslContext(TLSUtils.buildGRPCServerSSLContext())
                 .build();
