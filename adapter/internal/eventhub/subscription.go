@@ -132,6 +132,7 @@ func LoadSubscriptionData(configFile *config.Config, initialAPIUUIDListMap map[s
 				logger.LoggerSync.Errorf("Error occurred while fetching data from control plane: %v", data.Error)
 				go func(d response) {
 					// Retry fetching from control plane after a configured time interval
+					// TODO: (VirajSalaka) remove this
 					if conf.ControlPlane.RetryInterval == 0 {
 						// Assign default retry interval
 						conf.ControlPlane.RetryInterval = 5

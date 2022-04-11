@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"time"
 
 	"github.com/wso2/product-microgateway/adapter/config"
 	"github.com/wso2/product-microgateway/adapter/internal/notifier"
@@ -42,6 +43,12 @@ const (
 	zipExt          string = ".zip"
 	defaultCertPath string = "/home/wso2/security/controlplane.pem"
 )
+
+func init() {
+	conf, _ := config.ReadConfigs()
+	sync.InitializeWorkerPool(conf.ControlPlane.ControlPlaneRequestWorkerPool.PoolSize,
+		conf.ControlPlane.ControlPlaneRequestWorkerPool.QueueSizePerWorker, conf.ControlPlane.RetryInterval*time.Second)
+}
 
 // PushAPIProjects configure the router and enforcer using the zip containing API project(s) as
 // byte slice. This method ensures to update the enforcer and router using entries inside the

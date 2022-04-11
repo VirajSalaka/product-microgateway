@@ -75,6 +75,9 @@ func FetchAPIs(id *string, gwLabel []string, c chan SyncAPIResponse, serviceURL 
 		workerReq.labels = gwLabel
 	}
 
+	if WorkerPool == nil {
+		logger.LoggerSync.Fatal("WorkerPool is not inititated due to an internal error.")
+	}
 	WorkerPool.Enqueue(workerReq)
 }
 

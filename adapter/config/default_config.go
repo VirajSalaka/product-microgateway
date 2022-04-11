@@ -288,6 +288,10 @@ var defaultConfig = &Config{
 		HTTPClient: httpClient{
 			RequestTimeOut: 30,
 		},
+		ControlPlaneRequestWorkerPool: controlPlaneRequestWorkerPool{
+			PoolSize:           4,
+			QueueSizePerWorker: 1000,
+		},
 	},
 	GlobalAdapter: globalAdapter{
 		Enabled:              false,

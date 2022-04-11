@@ -419,15 +419,21 @@ type controlPlane struct {
 	Enabled    bool
 	ServiceURL string
 	// Deprecated: Use ServiceURL instead.
-	ServiceURLDeprecated       string `toml:"serviceUrl"`
-	Username                   string
-	Password                   string
-	SyncApisOnStartUp          bool
-	EnvironmentLabels          []string
-	RetryInterval              time.Duration
-	SkipSSLVerification        bool
-	BrokerConnectionParameters brokerConnectionParameters
-	HTTPClient                 httpClient
+	ServiceURLDeprecated          string `toml:"serviceUrl"`
+	Username                      string
+	Password                      string
+	SyncApisOnStartUp             bool
+	EnvironmentLabels             []string
+	RetryInterval                 time.Duration
+	SkipSSLVerification           bool
+	BrokerConnectionParameters    brokerConnectionParameters
+	HTTPClient                    httpClient
+	ControlPlaneRequestWorkerPool controlPlaneRequestWorkerPool
+}
+
+type controlPlaneRequestWorkerPool struct {
+	PoolSize           int
+	QueueSizePerWorker int
 }
 
 type globalAdapter struct {

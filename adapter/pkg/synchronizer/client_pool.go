@@ -8,13 +8,17 @@ package synchronizer
 
 import (
 	"net/http"
+	"sync"
 	"time"
+
+	"github.com/wso2/product-microgateway/adapter/pkg/loggers"
 )
 
 type worker struct {
-	id            int
-	internalQueue <-chan WorkerRequest
-	processFunc   processHTTPRequest
+	id                       int
+	internalQueue            <-chan WorkerRequest
+	processFunc              processHTTPRequest
+	delayAfterFaultInSeconds time.Duration
 	// done          *sync.WaitGroup
 	// work          chan Work
 	// quit          chan bool
@@ -51,14 +55,24 @@ func (w *worker) ProcessFunction() {
 	}
 }
 
-// WorkerPool is the thread pool responsible for sending the control plane request to fetch APIs
-var WorkerPool *Pool
+var (
+	// WorkerPool is the thread pool responsible for sending the control plane request to fetch APIs
+	WorkerPool        *Pool
+	oncePoolInitiated sync.Once
+)
 
-func init() {
-	WorkerPool = newWorkerPool(4, 100)
+// InitializeWorkerPool creates the Worker Pool used for the Control Plane Rest API invocations.
+// maxWorkers indicate the maximum number of parallel workers sending requests to the control plane.
+// jobQueueCapacity indicate the maximum number of requests can kept inside a single worker's queue.
+// delayForFaultRequests indicate the delay a worker enforce (in seconds) when a fault response is received.
+func InitializeWorkerPool(maxWorkers, jobQueueCapacity int, delayForFaultRequests time.Duration) {
+	// TODO: (VirajSalaka) Think on whether this could be moved to global adapter seamlessly.
+	oncePoolInitiated.Do(func() {
+		WorkerPool = newWorkerPool(maxWorkers, jobQueueCapacity, delayForFaultRequests)
+	})
 }
 
-func newWorkerPool(maxWorkers int, jobQueueCapacity int) *Pool {
+func newWorkerPool(maxWorkers, jobQueueCapacity int, delayForFaultRequests time.Duration) *Pool {
 	if jobQueueCapacity <= 0 {
 		jobQueueCapacity = 100
 	}
@@ -68,12 +82,13 @@ func newWorkerPool(maxWorkers int, jobQueueCapacity int) *Pool {
 	// create workers
 	for i := 0; i < maxWorkers; i++ {
 		workers[i] = &worker{
-			id:            i,
-			internalQueue: requestChannel,
-			processFunc:   SendRequestToControlPlane,
+			id:                       i,
+			internalQueue:            requestChannel,
+			processFunc:              SendRequestToControlPlane,
+			delayAfterFaultInSeconds: delayForFaultRequests,
 		}
 		go workers[i].ProcessFunction()
-		// NewWorker(i+1, readyPool, &workersStopped)
+		loggers.LoggerSync.Infof("ControlPlane processing worker %d spawned.", i)
 	}
 
 	return &Pool{
@@ -95,6 +110,7 @@ func (q *Pool) Enqueue(req WorkerRequest) bool {
 
 // EnqueueWithTimeout Tries to enqueue but fails if queue becomes not vacant within the defined period of time.
 func (q *Pool) EnqueueWithTimeout(req WorkerRequest) bool {
+	// TODO: Use this
 	timeout := q.timeout
 	if timeout <= 0 {
 		timeout = 1 * time.Second
