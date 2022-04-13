@@ -58,10 +58,9 @@ const (
 // FetchAPIs pulls the API artifact calling to the API manager
 // API Manager returns a .zip file as a response and this function
 // returns a byte slice of that ZIP file.
-func FetchAPIs(id *string, gwLabel []string, c chan SyncAPIResponse, serviceURL string,
-	userName string, password string, resourceEndpoint string, sendType bool, apiUUIDList []string) {
-	logger.LoggerSync.Info("Fetching APIs from Control Plane.")
-	req := ConstructControlPlaneRequest(id, gwLabel, serviceURL, userName, password, resourceEndpoint, sendType, apiUUIDList)
+func FetchAPIs(id *string, gwLabel []string, c chan SyncAPIResponse, resourceEndpoint string, sendType bool, apiUUIDList []string) {
+	logger.LoggerSync.Infof("Fetching APIs from Control Plane for Id %q.", *id)
+	req := ConstructControlPlaneRequest(id, gwLabel, workerPool.controlPlaneParams, resourceEndpoint, sendType, apiUUIDList)
 	workerReq := workerRequest{
 		Req:                *req,
 		APIUUID:            id,
@@ -135,13 +134,16 @@ func SendRequestToControlPlane(req *http.Request, apiID *string, gwLabels []stri
 }
 
 // ConstructControlPlaneRequest constructs the http Request used to send to the control plane
-func ConstructControlPlaneRequest(id *string, gwLabel []string, serviceURL string,
-	userName string, password string, resourceEndpoint string, sendType bool, apiUUIDList []string) *http.Request {
+func ConstructControlPlaneRequest(id *string, gwLabel []string, controlPlaneParams controlPlaneParameters,
+	resourceEndpoint string, sendType bool, apiUUIDList []string) *http.Request {
 	var (
 		req      *http.Request
 		err      error
 		bodyJSON []byte
 	)
+	serviceURL := controlPlaneParams.serviceURL
+	userName := controlPlaneParams.username
+	password := controlPlaneParams.password
 	// postData contains the API UUID list in the payload of the post request.
 	type postData struct {
 		Uuids []string `json:"uuids"`
@@ -208,9 +210,8 @@ func ConstructControlPlaneRequest(id *string, gwLabel []string, serviceURL strin
 }
 
 // RetryFetchingAPIs function keeps retrying to fetch APIs from runtime-artifact endpoint.
-func RetryFetchingAPIs(c chan SyncAPIResponse, serviceURL string, userName string, password string,
-	retryInterval time.Duration, data SyncAPIResponse, endpoint string, sendType bool,
-	requestTimeOut time.Duration) {
+func RetryFetchingAPIs(c chan SyncAPIResponse, data SyncAPIResponse, endpoint string, sendType bool) {
+	retryInterval := workerPool.controlPlaneParams.retryInterval
 	go func(d SyncAPIResponse) {
 		// Retry fetching from control plane after a configured time interval
 		if retryInterval == 0 {
@@ -220,7 +221,7 @@ func RetryFetchingAPIs(c chan SyncAPIResponse, serviceURL string, userName strin
 		logger.LoggerSync.Debugf("Time Duration for retrying: %v", retryInterval*time.Second)
 		time.Sleep(retryInterval * time.Second)
 		logger.LoggerSync.Infof("Retrying to fetch API data from control plane.")
-		FetchAPIs(&d.APIUUID, d.GatewayLabels, c, serviceURL, userName, password, endpoint, sendType, nil)
+		FetchAPIs(&d.APIUUID, d.GatewayLabels, c, endpoint, sendType, nil)
 	}(data)
 }
 

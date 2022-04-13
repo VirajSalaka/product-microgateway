@@ -28,7 +28,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/wso2/product-microgateway/adapter/config"
 	"github.com/wso2/product-microgateway/adapter/internal/notifier"
@@ -46,9 +45,10 @@ const (
 
 func init() {
 	conf, _ := config.ReadConfigs()
-	sync.InitializeWorkerPool(conf.ControlPlane.RequestWorkerPool.PoolSize,
-		conf.ControlPlane.RequestWorkerPool.QueueSizePerPool, conf.ControlPlane.RetryInterval*time.Second,
-		conf.Adapter.Truststore.Location, conf.ControlPlane.SkipSSLVerification, conf.ControlPlane.HTTPClient.RequestTimeOut)
+	sync.InitializeWorkerPool(conf.ControlPlane.RequestWorkerPool.PoolSize, conf.ControlPlane.RequestWorkerPool.QueueSizePerPool,
+		conf.ControlPlane.RetryInterval, conf.Adapter.Truststore.Location, conf.ControlPlane.SkipSSLVerification,
+		conf.ControlPlane.HTTPClient.RequestTimeOut, conf.ControlPlane.RetryInterval, conf.ControlPlane.ServiceURL,
+		conf.ControlPlane.Username, conf.ControlPlane.Password)
 }
 
 // PushAPIProjects configure the router and enforcer using the zip containing API project(s) as
@@ -135,13 +135,7 @@ func FetchAPIsFromControlPlane(updatedAPIID string, updatedEnvs []string) {
 		// This has to be error. For debugging purpose info
 		logger.LoggerSync.Errorf("Error reading configs: %v", errReadConfig)
 	}
-	// Populate data from config.
-	serviceURL := conf.ControlPlane.ServiceURL
-	userName := conf.ControlPlane.Username
-	password := conf.ControlPlane.Password
 	configuredEnvs := conf.ControlPlane.EnvironmentLabels
-	retryInterval := conf.ControlPlane.RetryInterval
-	requestTimeOut := conf.ControlPlane.HTTPClient.RequestTimeOut
 	//finalEnvs contains the actual envrionments that the adapter should update
 	var finalEnvs []string
 	if len(configuredEnvs) > 0 {
@@ -168,8 +162,7 @@ func FetchAPIsFromControlPlane(updatedAPIID string, updatedEnvs []string) {
 
 	c := make(chan sync.SyncAPIResponse)
 	logger.LoggerSync.Infof("API %s is added/updated to APIList for label %v", updatedAPIID, updatedEnvs)
-	go sync.FetchAPIs(&updatedAPIID, finalEnvs, c, serviceURL, userName, password, sync.RuntimeArtifactEndpoint,
-		true, nil)
+	go sync.FetchAPIs(&updatedAPIID, finalEnvs, c, sync.RuntimeArtifactEndpoint, true, nil)
 	for {
 		data := <-c
 		logger.LoggerSync.Debug("Receiving data for an environment")
@@ -187,8 +180,7 @@ func FetchAPIsFromControlPlane(updatedAPIID string, updatedEnvs []string) {
 		} else {
 			// Keep the iteration still until all the envrionment response properly.
 			logger.LoggerSync.Errorf("Error occurred while fetching data from control plane: %v", data.Err)
-			sync.RetryFetchingAPIs(c, serviceURL, userName, password, retryInterval, data, sync.RuntimeArtifactEndpoint,
-				true, requestTimeOut)
+			sync.RetryFetchingAPIs(c, data, sync.RuntimeArtifactEndpoint, true)
 		}
 	}
 }

@@ -34,21 +34,22 @@ type workerRequest struct {
 	SyncAPIRespChannel chan SyncAPIResponse
 }
 
-// Pool is the worker pool which is handling
+// pool is the worker pool which is handling
 type pool struct {
 	// TODO: (VirajSalaka) remove timeout
-	internalQueue    chan workerRequest
-	workers          []*worker
-	quit             chan bool
-	timeout          time.Duration
-	connectionParams httpConnectionParameters
-	client           http.Client
+	internalQueue      chan workerRequest
+	workers            []*worker
+	quit               chan bool
+	timeout            time.Duration
+	client             http.Client
+	controlPlaneParams controlPlaneParameters
 }
 
-type httpConnectionParameters struct {
-	trustStoreLocation string
-	skipSSL            bool
-	requestTimeout     time.Duration
+type controlPlaneParameters struct {
+	serviceURL    string
+	username      string
+	password      string
+	retryInterval time.Duration
 }
 
 type processHTTPRequest func(*http.Request, *string, []string, chan SyncAPIResponse, *http.Client) bool
@@ -73,11 +74,18 @@ var (
 // maxWorkers indicate the maximum number of parallel workers sending requests to the control plane.
 // jobQueueCapacity indicate the maximum number of requests can kept inside a single worker's queue.
 // delayForFaultRequests indicate the delay a worker enforce (in seconds) when a fault response is received.
-func InitializeWorkerPool(maxWorkers, jobQueueCapacity int, delayForFaultRequests time.Duration,
-	trustStoreLocation string, skipSSL bool, requestTimeout time.Duration) {
+// TODO: (VirajSalaka) comment
+func InitializeWorkerPool(maxWorkers, jobQueueCapacity int, delayForFaultRequests time.Duration, trustStoreLocation string,
+	skipSSL bool, requestTimeout, retryInterval time.Duration, serviceURL, username, password string) {
 	// TODO: (VirajSalaka) Think on whether this could be moved to global adapter seamlessly.
 	oncePoolInitiated.Do(func() {
 		workerPool = newWorkerPool(maxWorkers, jobQueueCapacity, delayForFaultRequests)
+		workerPool.controlPlaneParams = controlPlaneParameters{
+			serviceURL:    serviceURL,
+			username:      username,
+			password:      password,
+			retryInterval: retryInterval,
+		}
 		var tr *http.Transport
 		if !skipSSL {
 			caCertPool := tlsutils.GetTrustedCertPool(trustStoreLocation)
