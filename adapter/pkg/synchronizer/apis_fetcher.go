@@ -59,7 +59,12 @@ const (
 // API Manager returns a .zip file as a response and this function
 // returns a byte slice of that ZIP file.
 func FetchAPIs(id *string, gwLabel []string, c chan SyncAPIResponse, resourceEndpoint string, sendType bool, apiUUIDList []string) {
-	logger.LoggerSync.Infof("Fetching APIs from Control Plane for Id %q.", *id)
+	if id != nil {
+		logger.LoggerSync.Infof("Fetching API from Control Plane for Id %q.", *id)
+	} else {
+		logger.LoggerSync.Info("Fetching APIs from Control Plane")
+	}
+
 	req := ConstructControlPlaneRequest(id, gwLabel, workerPool.controlPlaneParams, resourceEndpoint, sendType, apiUUIDList)
 	workerReq := workerRequest{
 		Req:                *req,
