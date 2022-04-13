@@ -25,7 +25,6 @@ package synchronizer
 import (
 	"archive/zip"
 	"bytes"
-	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -35,10 +34,8 @@ import (
 	"time"
 
 	parser "github.com/mitchellh/mapstructure"
-	"github.com/wso2/product-microgateway/adapter/config"
 	"github.com/wso2/product-microgateway/adapter/pkg/auth"
 	logger "github.com/wso2/product-microgateway/adapter/pkg/loggers"
-	"github.com/wso2/product-microgateway/adapter/pkg/tlsutils"
 )
 
 const (
@@ -65,8 +62,8 @@ func FetchAPIs(id *string, gwLabel []string, c chan SyncAPIResponse, serviceURL 
 	userName string, password string, skipSSL bool, truststoreLocation string,
 	resourceEndpoint string, sendType bool, apiUUIDList []string, requestTimeOut time.Duration) {
 	logger.LoggerSync.Info("Fetching APIs from Control Plane.")
-	req := ConstructControlPlaneRequest(id, gwLabel, serviceURL, userName, password, skipSSL, truststoreLocation, resourceEndpoint, sendType, apiUUIDList)
-	workerReq := WorkerRequest{
+	req := ConstructControlPlaneRequest(id, gwLabel, serviceURL, userName, password, resourceEndpoint, sendType, apiUUIDList)
+	workerReq := workerRequest{
 		Req:                *req,
 		APIUUID:            id,
 		SyncAPIRespChannel: c,
@@ -75,36 +72,17 @@ func FetchAPIs(id *string, gwLabel []string, c chan SyncAPIResponse, serviceURL 
 		workerReq.labels = gwLabel
 	}
 
-	if WorkerPool == nil {
+	if workerPool == nil {
 		logger.LoggerSync.Fatal("WorkerPool is not inititated due to an internal error.")
 	}
 	// If adding task to the pool cannot be done, the whole thread hangs here.
-	WorkerPool.Enqueue(workerReq)
+	workerPool.Enqueue(workerReq)
 }
 
 // SendRequestToControlPlane is the function triggered to send the request to the control plane.
 // It returns true if a response is received from the api manager.
-func SendRequestToControlPlane(req *http.Request, apiID *string, gwLabels []string, c chan SyncAPIResponse) bool {
-	var tr *http.Transport
-	conf, _ := config.ReadConfigs()
-	skipSSL := conf.ControlPlane.SkipSSLVerification
-	requestTimeOut := conf.ControlPlane.HTTPClient.RequestTimeOut
-	if !skipSSL {
-		caCertPool := tlsutils.GetTrustedCertPool(conf.Adapter.Truststore.Location)
-		tr = &http.Transport{
-			TLSClientConfig: &tls.Config{RootCAs: caCertPool},
-		}
-	} else {
-		tr = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-	}
-
-	// Configuring the http client
-	client := &http.Client{
-		Transport: tr,
-		Timeout:   requestTimeOut * time.Second,
-	}
+func SendRequestToControlPlane(req *http.Request, apiID *string, gwLabels []string, c chan SyncAPIResponse,
+	client *http.Client) bool {
 	// Make the request
 	logger.LoggerSync.Debug("Sending the controle plane request")
 	resp, err := client.Do(req)
@@ -159,8 +137,7 @@ func SendRequestToControlPlane(req *http.Request, apiID *string, gwLabels []stri
 
 // ConstructControlPlaneRequest constructs the http Request used to send to the control plane
 func ConstructControlPlaneRequest(id *string, gwLabel []string, serviceURL string,
-	userName string, password string, skipSSL bool, truststoreLocation string,
-	resourceEndpoint string, sendType bool, apiUUIDList []string) *http.Request {
+	userName string, password string, resourceEndpoint string, sendType bool, apiUUIDList []string) *http.Request {
 	var (
 		req      *http.Request
 		err      error

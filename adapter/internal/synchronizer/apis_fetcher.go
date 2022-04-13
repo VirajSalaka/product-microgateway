@@ -47,7 +47,8 @@ const (
 func init() {
 	conf, _ := config.ReadConfigs()
 	sync.InitializeWorkerPool(conf.ControlPlane.RequestWorkerPool.PoolSize,
-		conf.ControlPlane.RequestWorkerPool.QueueSizePerPool, conf.ControlPlane.RetryInterval*time.Second)
+		conf.ControlPlane.RequestWorkerPool.QueueSizePerPool, conf.ControlPlane.RetryInterval*time.Second,
+		conf.Adapter.Truststore.Location, conf.ControlPlane.SkipSSLVerification, conf.ControlPlane.HTTPClient.RequestTimeOut)
 }
 
 // PushAPIProjects configure the router and enforcer using the zip containing API project(s) as
