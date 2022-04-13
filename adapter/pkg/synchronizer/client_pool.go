@@ -37,9 +37,7 @@ type Pool struct {
 	internalQueue chan WorkerRequest
 	workers       []*worker
 	quit          chan bool
-	// TODO: (VirajSalaka) remove
-	processFunc processHTTPRequest
-	timeout     time.Duration
+	timeout       time.Duration
 }
 
 type processHTTPRequest func(*http.Request, *string, []string, chan SyncAPIResponse) bool
@@ -48,8 +46,7 @@ func (w *worker) ProcessFunction() {
 	for workerReq := range w.internalQueue {
 		responseReceived := w.processFunc(&workerReq.Req, workerReq.APIUUID, workerReq.labels, workerReq.SyncAPIRespChannel)
 		if !responseReceived {
-			// TODO: (VirajSalaka) make it configurable
-			time.Sleep(5 * time.Second)
+			time.Sleep(w.delayAfterFaultInSeconds)
 		}
 
 	}
@@ -117,7 +114,7 @@ func (q *Pool) Enqueue(req WorkerRequest) bool {
 
 // EnqueueWithTimeout Tries to enqueue but fails if queue becomes not vacant within the defined period of time.
 func (q *Pool) EnqueueWithTimeout(req WorkerRequest) bool {
-	// TODO: Use this
+	// TODO: (VirajSalaka) Remove this
 	timeout := q.timeout
 	if timeout <= 0 {
 		timeout = 1 * time.Second
