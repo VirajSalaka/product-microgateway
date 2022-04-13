@@ -78,6 +78,7 @@ func FetchAPIs(id *string, gwLabel []string, c chan SyncAPIResponse, serviceURL 
 	if WorkerPool == nil {
 		logger.LoggerSync.Fatal("WorkerPool is not inititated due to an internal error.")
 	}
+	// If adding task to the pool cannot be done, the whole thread hangs here.
 	WorkerPool.Enqueue(workerReq)
 }
 
