@@ -140,9 +140,7 @@ func FetchAPIsFromControlPlane(updatedAPIID string, updatedEnvs []string) {
 	userName := conf.ControlPlane.Username
 	password := conf.ControlPlane.Password
 	configuredEnvs := conf.ControlPlane.EnvironmentLabels
-	skipSSL := conf.ControlPlane.SkipSSLVerification
 	retryInterval := conf.ControlPlane.RetryInterval
-	truststoreLocation := conf.Adapter.Truststore.Location
 	requestTimeOut := conf.ControlPlane.HTTPClient.RequestTimeOut
 	//finalEnvs contains the actual envrionments that the adapter should update
 	var finalEnvs []string
@@ -170,8 +168,8 @@ func FetchAPIsFromControlPlane(updatedAPIID string, updatedEnvs []string) {
 
 	c := make(chan sync.SyncAPIResponse)
 	logger.LoggerSync.Infof("API %s is added/updated to APIList for label %v", updatedAPIID, updatedEnvs)
-	go sync.FetchAPIs(&updatedAPIID, finalEnvs, c, serviceURL, userName, password, skipSSL, truststoreLocation,
-		sync.RuntimeArtifactEndpoint, true, nil, requestTimeOut)
+	go sync.FetchAPIs(&updatedAPIID, finalEnvs, c, serviceURL, userName, password, sync.RuntimeArtifactEndpoint,
+		true, nil)
 	for {
 		data := <-c
 		logger.LoggerSync.Debug("Receiving data for an environment")
@@ -189,9 +187,8 @@ func FetchAPIsFromControlPlane(updatedAPIID string, updatedEnvs []string) {
 		} else {
 			// Keep the iteration still until all the envrionment response properly.
 			logger.LoggerSync.Errorf("Error occurred while fetching data from control plane: %v", data.Err)
-			sync.RetryFetchingAPIs(c, serviceURL, userName, password, skipSSL, truststoreLocation, retryInterval,
-				data, sync.RuntimeArtifactEndpoint, true, requestTimeOut)
+			sync.RetryFetchingAPIs(c, serviceURL, userName, password, retryInterval, data, sync.RuntimeArtifactEndpoint,
+				true, requestTimeOut)
 		}
 	}
-
 }

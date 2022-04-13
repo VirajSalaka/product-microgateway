@@ -59,8 +59,7 @@ const (
 // API Manager returns a .zip file as a response and this function
 // returns a byte slice of that ZIP file.
 func FetchAPIs(id *string, gwLabel []string, c chan SyncAPIResponse, serviceURL string,
-	userName string, password string, skipSSL bool, truststoreLocation string,
-	resourceEndpoint string, sendType bool, apiUUIDList []string, requestTimeOut time.Duration) {
+	userName string, password string, resourceEndpoint string, sendType bool, apiUUIDList []string) {
 	logger.LoggerSync.Info("Fetching APIs from Control Plane.")
 	req := ConstructControlPlaneRequest(id, gwLabel, serviceURL, userName, password, resourceEndpoint, sendType, apiUUIDList)
 	workerReq := workerRequest{
@@ -209,8 +208,8 @@ func ConstructControlPlaneRequest(id *string, gwLabel []string, serviceURL strin
 }
 
 // RetryFetchingAPIs function keeps retrying to fetch APIs from runtime-artifact endpoint.
-func RetryFetchingAPIs(c chan SyncAPIResponse, serviceURL string, userName string, password string, skipSSL bool,
-	truststoreLocation string, retryInterval time.Duration, data SyncAPIResponse, endpoint string, sendType bool,
+func RetryFetchingAPIs(c chan SyncAPIResponse, serviceURL string, userName string, password string,
+	retryInterval time.Duration, data SyncAPIResponse, endpoint string, sendType bool,
 	requestTimeOut time.Duration) {
 	go func(d SyncAPIResponse) {
 		// Retry fetching from control plane after a configured time interval
@@ -221,8 +220,7 @@ func RetryFetchingAPIs(c chan SyncAPIResponse, serviceURL string, userName strin
 		logger.LoggerSync.Debugf("Time Duration for retrying: %v", retryInterval*time.Second)
 		time.Sleep(retryInterval * time.Second)
 		logger.LoggerSync.Infof("Retrying to fetch API data from control plane.")
-		FetchAPIs(&d.APIUUID, d.GatewayLabels, c, serviceURL, userName, password, skipSSL, truststoreLocation,
-			endpoint, sendType, nil, requestTimeOut)
+		FetchAPIs(&d.APIUUID, d.GatewayLabels, c, serviceURL, userName, password, endpoint, sendType, nil)
 	}(data)
 }
 
