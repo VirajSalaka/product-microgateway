@@ -29,7 +29,7 @@ import (
 
 const (
 	componentName                = "adapter"
-	subscriptionIdleTimeDuration = time.Duration(72 * time.Hour)
+	subscriptionIdleTimeDuration = "0000-00-00T72:00:00+0000"
 )
 
 // InitiateAndProcessEvents to pass event consumption
