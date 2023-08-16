@@ -674,7 +674,12 @@ public class JWTAuthenticator implements Authenticator {
                     if (jwtValidationInfo.isValid()) {
                         CacheProvider.getGatewayTokenCache().put(jti, true);
                     } else {
-                        CacheProvider.getInvalidTokenCache().put(jti, true);
+                        // Put to the token to the invalid cache only if the issuer is found under key managers
+                        if (signedJWTInfo.getJwtClaimsSet() != null &&
+                                KeyManagerHolder.getInstance().getTokenIssuerDTO(organizationUUID,
+                                        signedJWTInfo.getJwtClaimsSet().getIssuer()) != null) {
+                            CacheProvider.getInvalidTokenCache().put(jti, true);
+                        }
                     }
                     CacheProvider.getGatewayKeyCache().put(jti, jwtValidationInfo);
 
