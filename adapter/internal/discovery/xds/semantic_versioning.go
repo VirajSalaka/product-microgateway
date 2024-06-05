@@ -22,6 +22,7 @@ import (
 
 	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	envoy_type_matcherv3 "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3"
+	"github.com/wso2/product-microgateway/adapter/internal/oasparser/envoyconf"
 	mgw "github.com/wso2/product-microgateway/adapter/internal/oasparser/model"
 	semantic_version "github.com/wso2/product-microgateway/adapter/pkg/semanticversion"
 )
@@ -84,6 +85,10 @@ func updateRoutingRulesOnAPIUpdate(organizationID, apiIdentifier, apiName, apiVe
 						action := route.Action.(*routev3.Route_Route)
 						action.Route.RegexRewrite.Pattern.Regex = regexRewritePattern
 						route.Action = action
+						routeErr := envoyconf.ValidateRoute(route)
+						if routeErr != nil {
+							// TODO: Handle the error
+						}
 					}
 				}
 			}
@@ -121,6 +126,10 @@ func updateRoutingRulesOnAPIUpdate(organizationID, apiIdentifier, apiName, apiVe
 			action = route.Action.(*routev3.Route_Route)
 			action.Route.RegexRewrite.Pattern.Regex = regexRewritePattern
 			route.Action = action
+			routeErr := envoyconf.ValidateRoute(route)
+			if routeErr != nil {
+				// TODO: Handle the error
+			}
 		}
 	}
 }
@@ -189,6 +198,10 @@ func updateRoutingRulesOnAPIDelete(organizationID, apiIdentifier string, api mgw
 					action = route.Action.(*routev3.Route_Route)
 					action.Route.RegexRewrite.Pattern.Regex = regexRewritePattern
 					route.Action = action
+					routeErr := envoyconf.ValidateRoute(route)
+					if routeErr != nil {
+						// TODO: Handle the error
+					}
 				}
 			} else {
 				delete(orgIDLatestAPIVersionMap[organizationID][apiRangeIdentifier], majorVersionRange)

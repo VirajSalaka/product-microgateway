@@ -317,12 +317,19 @@ func CreateRoutesWithClusters(mgwSwagger model.MgwSwagger, upstreamCerts map[str
 			}
 		}
 
-		routeP := createRoute(genRouteCreateParams(&mgwSwagger, resource, vHost, resourceBasePath, clusterNameProd, operationalReqInterceptors, operationalRespInterceptorVal, organizationID))
+		routeP, routerErr := createRoute(genRouteCreateParams(&mgwSwagger, resource, vHost, resourceBasePath, clusterNameProd, operationalReqInterceptors, operationalRespInterceptorVal, organizationID))
+		if routerErr != nil {
+			// TODO: (VirajSalaka)
+		}
 		routes = append(routes, routeP)
 	}
 	if mgwSwagger.GetAPIType() == model.WS {
-		routesP := createRoute(genRouteCreateParams(&mgwSwagger, nil, vHost, apiLevelbasePath, apiLevelClusterNameProd, nil, nil, organizationID))
-		routes = append(routes, routesP)
+		routeP, routerErr := createRoute(genRouteCreateParams(&mgwSwagger, nil, vHost, apiLevelbasePath, apiLevelClusterNameProd, nil, nil, organizationID))
+		if routerErr != nil {
+			// TODO: (VirajSalaka)
+		}
+		routes = append(routes, routeP)
+
 	}
 	return routes, clusters, endpoints
 }
@@ -628,6 +635,11 @@ func processEndpoints(clusterName string, clusterDetails *model.EndpointCluster,
 			serviceDiscoveryString)
 	}
 
+	clusterErr := ValidateCluster(&cluster)
+	if clusterErr != nil {
+		return nil, nil, errors.New("Invalid cluster configuration : " + clusterErr.Error())
+	}
+
 	return &cluster, addresses, nil
 }
 
@@ -738,7 +750,7 @@ func createTLSProtocolVersion(tlsVersion string) tlsv3.TlsParameters_TlsProtocol
 // createRoute creates route elements for the route configurations. API title, VHost, xWso2Basepath, API version,
 // endpoint's basePath, resource Object (Microgateway's internal representation), production clusterName and
 // sandbox clusterName needs to be provided.
-func createRoute(params *routeCreateParams) *routev3.Route {
+func createRoute(params *routeCreateParams) (*routev3.Route, error) {
 	// func createRoute(title string, apiType string, xWso2Basepath string, version string, endpointBasepath string,
 	// 	resourcePathParam string, resourceMethods []string, prodClusterName string, sandClusterName string,
 	// 	corsPolicy *routev3.CorsPolicy) *routev3.Route {
@@ -1027,7 +1039,13 @@ func createRoute(params *routeCreateParams) *routev3.Route {
 			wellknown.CORS:                      corsFilter,
 		},
 	}
-	return &router
+
+	routeErr := ValidateRoute(&router)
+	if routeErr != nil {
+		return nil, errors.New("Invalid route configuration : " + routeErr.Error())
+
+	}
+	return &router, nil
 }
 
 func getInlineLuaScript(requestInterceptor map[string]model.InterceptEndpoint, responseInterceptor map[string]model.InterceptEndpoint,
@@ -1126,12 +1144,17 @@ func createStaticRoute(routeName, path string, pathSubstitute string, clusterNam
 }
 
 // CreateTokenRoute generates a route for the jwt /testkey endpoint
-func CreateTokenRoute() *routev3.Route {
-	return createSystemRoute(testKeyPath, "/testkey", extAuthzHTTPCluster)
+func CreateTokenRoute() (*routev3.Route, error) {
+	route := createSystemRoute(testKeyPath, "/testkey", extAuthzHTTPCluster)
+	routeErr := ValidateRoute(route)
+	if routeErr != nil {
+		return nil, errors.New("Invalid route configuration : " + routeErr.Error())
+	}
+	return route, nil
 }
 
 // CreateJwksEndpoint generates a route for JWKS /.wellknown/jwks endpoint
-func CreateJwksEndpoint() *routev3.Route {
+func CreateJwksEndpoint() (*routev3.Route, error) {
 	conf, _ := config.ReadConfigs()
 	route := createSystemRoute(jwksPath, "/jwks", extAuthzHTTPCluster)
 	ratelimitPerRoute := &local_rate_limitv3.LocalRateLimit{
@@ -1165,7 +1188,11 @@ func CreateJwksEndpoint() *routev3.Route {
 		Value:   buffer.Bytes(),
 	}
 	route.TypedPerFilterConfig = currentFilterMap
-	return route
+	routeErr := ValidateRoute(route)
+	if routeErr != nil {
+		return nil, errors.New("Invalid route configuration : " + routeErr.Error())
+	}
+	return route, nil
 }
 
 func marshalFilterConfig(perFilterConfig *extAuthService.ExtAuthzPerRoute) *anypb.Any {
@@ -1181,7 +1208,7 @@ func marshalFilterConfig(perFilterConfig *extAuthService.ExtAuthzPerRoute) *anyp
 
 // CreateHealthEndpoint generates a route for the jwt /health endpoint
 // Replies with direct response.
-func CreateHealthEndpoint() *routev3.Route {
+func CreateHealthEndpoint() (*routev3.Route, error) {
 	var (
 		router    routev3.Route
 		match     *routev3.RouteMatch
@@ -1231,12 +1258,16 @@ func CreateHealthEndpoint() *routev3.Route {
 			wellknown.HTTPExternalAuthorization: filter,
 		},
 	}
-	return &router
+	routeErr := ValidateRoute(&router)
+	if routeErr != nil {
+		return nil, errors.New("Invalid route configuration : " + routeErr.Error())
+	}
+	return &router, nil
 }
 
 // CreateReadyEndpoint generates a route for the router /ready endpoint
 // Replies with direct response.
-func CreateReadyEndpoint() *routev3.Route {
+func CreateReadyEndpoint() (*routev3.Route, error) {
 	var (
 		router    routev3.Route
 		match     *routev3.RouteMatch
@@ -1286,7 +1317,11 @@ func CreateReadyEndpoint() *routev3.Route {
 			wellknown.HTTPExternalAuthorization: filter,
 		},
 	}
-	return &router
+	routeErr := ValidateRoute(&router)
+	if routeErr != nil {
+		return nil, errors.New("Invalid route configuration : " + routeErr.Error())
+	}
+	return &router, nil
 }
 
 // generateRoutePaths generates route paths for the api resources.

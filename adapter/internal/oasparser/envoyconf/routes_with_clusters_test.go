@@ -379,7 +379,7 @@ func TestCreateRoutesWithChoreoSandboxEnvProp(t *testing.T) {
 }
 
 func TestCreateHealthEndpoint(t *testing.T) {
-	route := envoy.CreateHealthEndpoint()
+	route, _ := envoy.CreateHealthEndpoint()
 	assert.NotNil(t, route, "Health Endpoint Route should not be null.")
 	assert.Equal(t, "system#/health", route.Name, "Health Route Name is incorrect.")
 	assert.Equal(t, "/health", route.GetMatch().GetPath(), "Health route path is incorrect.")

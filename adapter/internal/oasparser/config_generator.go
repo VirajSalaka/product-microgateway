@@ -63,13 +63,26 @@ func GetGlobalClusters() ([]*clusterv3.Cluster, []*corev3.Address) {
 		} else {
 			logger.LoggerOasparser.Fatalf("Failed to initialize rate-limit cluster. Hence terminating the adapter. Error: %s", errRL)
 		}
+		if rlCluster != nil {
+			clusterErr := envoyconf.ValidateCluster(rlCluster)
+			if clusterErr != nil {
+				logger.LoggerOasparser.Fatalf("Failed to initialize rate-limit cluster. Hence terminating the adapter. Error: %s", errRL)
+			}
+		}
 	}
 
 	if conf.Tracing.Enabled && conf.Tracing.Type != envoyconf.TracerTypeAzure {
 		logger.LoggerOasparser.Debugln("Creating global cluster - Tracing")
 		if c, e, err := envoyconf.CreateTracingCluster(conf); err == nil {
-			clusters = append(clusters, c)
-			endpoints = append(endpoints, e...)
+			if c != nil {
+				clusterErr := envoyconf.ValidateCluster(c)
+				if clusterErr != nil {
+					logger.LoggerOasparser.Error("Failed to initialize tracer's cluster. Router tracing will be disabled. ", clusterErr)
+				} else {
+					clusters = append(clusters, c)
+					endpoints = append(endpoints, e...)
+				}
+			}
 		} else {
 			logger.LoggerOasparser.Error("Failed to initialize tracer's cluster. Router tracing will be disabled. ", err)
 			conf.Tracing.Enabled = false

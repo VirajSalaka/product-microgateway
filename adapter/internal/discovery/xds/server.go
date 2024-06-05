@@ -877,22 +877,38 @@ func GenerateEnvoyResoucesForLabel(label string) ([]types.Resource, []types.Reso
 	}
 	// Add testkey and JWKS endpoints
 	if conf.Enforcer.JwtIssuer.Enabled {
-		routeToken := envoyconf.CreateTokenRoute()
-		vhostToRouteArrayMap[internalServiceHost] = append(vhostToRouteArrayMap[internalServiceHost], routeToken)
+		routeToken, routeErr := envoyconf.CreateTokenRoute()
+		if routeErr != nil {
+			logger.LoggerXds.Errorf("Error validating the token route: %v", routeErr)
+		} else {
+			vhostToRouteArrayMap[internalServiceHost] = append(vhostToRouteArrayMap[internalServiceHost], routeToken)
+		}
 	}
 	if conf.Enforcer.JwtGenerator.Enabled {
-		routeJwks := envoyconf.CreateJwksEndpoint()
-		vhostToRouteArrayMap[internalServiceHost] = append(vhostToRouteArrayMap[internalServiceHost], routeJwks)
+		routeJwks, routeErr := envoyconf.CreateJwksEndpoint()
+		if routeErr != nil {
+			logger.LoggerXds.Errorf("Error validating the jwks route: %v", routeErr)
+		} else {
+			vhostToRouteArrayMap[internalServiceHost] = append(vhostToRouteArrayMap[internalServiceHost], routeJwks)
+		}
 	}
 
 	// Add health endpoint
-	routeHealth := envoyconf.CreateHealthEndpoint()
-	vhostToRouteArrayMap[systemHost] = append(vhostToRouteArrayMap[systemHost], routeHealth)
+	routeHealth, routeErr := envoyconf.CreateHealthEndpoint()
+	if routeErr != nil {
+		logger.LoggerXds.Errorf("Error validating the health route: %v", routeErr)
+	} else {
+		vhostToRouteArrayMap[systemHost] = append(vhostToRouteArrayMap[systemHost], routeHealth)
+	}
 
 	// Add the readiness endpoint. isReady flag will be set to true once all the apis are fetched from the control plane
 	if isReady {
-		readynessEndpoint := envoyconf.CreateReadyEndpoint()
-		vhostToRouteArrayMap[systemHost] = append(vhostToRouteArrayMap[systemHost], readynessEndpoint)
+		readynessEndpoint, routeErr := envoyconf.CreateReadyEndpoint()
+		if routeErr != nil {
+			logger.LoggerXds.Errorf("Error validating the ready route: %v", routeErr)
+		} else {
+			vhostToRouteArrayMap[systemHost] = append(vhostToRouteArrayMap[systemHost], readynessEndpoint)
+		}
 	}
 
 	listenerArray, listenerFound := envoyListenerConfigMap[label]
