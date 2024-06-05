@@ -48,6 +48,10 @@ func CreateRoutesConfigForRds(vHosts []*routev3.VirtualHost) *routev3.RouteConfi
 		VirtualHosts:           vHosts,
 		RequestHeadersToRemove: []string{clusterHeaderName, gatewayURLHeaderName, choreoTestSessionHeaderName},
 	}
+	routeConfigErr := routeConfiguration.ValidateAll()
+	if routeConfigErr != nil {
+		// TODO: (VirajSalaka)
+	}
 	return &routeConfiguration
 }
 
@@ -72,7 +76,14 @@ func CreateListenersWithRds() []*listenerv3.Listener {
 	if errReadConfig != nil {
 		logger.LoggerOasparser.Fatal("Error loading configuration. ", errReadConfig)
 	}
-	return createListeners(conf)
+	listeners := createListeners(conf)
+	for _, listener := range listeners {
+		listenerErr := ValidateListener(listener)
+		if listenerErr != nil {
+			// TODO: (VirajSalaka)
+		}
+	}
+	return listeners
 }
 
 func createListeners(conf *config.Config) []*listenerv3.Listener {
@@ -246,12 +257,17 @@ func CreateVirtualHosts(vhostToRouteArrayMap map[string][]*routev3.Route) []*rou
 			Domains: []string{vhost, fmt.Sprint(vhost, ":*")},
 			Routes:  routes,
 		}
+		vhostErr := ValidateVhost(virtualHost)
+		if vhostErr != nil {
+			// TODO: (VirajSalaka)
+		}
 		virtualHosts = append(virtualHosts, virtualHost)
 	}
+
 	return virtualHosts
 }
 
-//TODO: (VirajSalaka) Still the following method is not utilized as Sds is not implement. Keeping the Implementation for future reference
+// TODO: (VirajSalaka) Still the following method is not utilized as Sds is not implement. Keeping the Implementation for future reference
 func generateDefaultSdsSecretFromConfigfile(privateKeyPath string, pulicKeyPath string) (*tlsv3.Secret, error) {
 	var secret tlsv3.Secret
 	tlsCert := generateTLSCert(privateKeyPath, pulicKeyPath)

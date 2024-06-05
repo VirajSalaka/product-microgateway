@@ -21,24 +21,46 @@ import (
 	"os"
 
 	clusterv3 "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
+	listenerv3 "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
 	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 )
 
 // TODO: (VirajSalaka) remove later
 const EnforceValidationENVVar = "ENFORCE_XDS_VALIDATION"
 
-func ValidateRoute(route *routev3.Route) (error) {
+func ValidateRoute(route *routev3.Route) error {
 	if !enforceXDSValidation() {
 		return nil
 	}
 	return route.ValidateAll()
 }
 
-func ValidateCluster(cluster *clusterv3.Cluster) (error) {
+func ValidateCluster(cluster *clusterv3.Cluster) error {
 	if !enforceXDSValidation() {
 		return nil
 	}
 	return cluster.ValidateAll()
+}
+
+func ValidateListener(listener *listenerv3.Listener) error {
+	if !enforceXDSValidation() {
+		return nil
+	}
+	return listener.ValidateAll()
+}
+
+func ValidateVhost(vhost *routev3.VirtualHost) error {
+	if !enforceXDSValidation() {
+		return nil
+	}
+	return vhost.ValidateAll()
+}
+
+func ValidateRouteConfiguration(routeConfig *routev3.RouteConfiguration) error {
+	if !enforceXDSValidation() {
+		return nil
+	}
+	return routeConfig.ValidateAll()
 }
 
 func enforceXDSValidation() bool {
