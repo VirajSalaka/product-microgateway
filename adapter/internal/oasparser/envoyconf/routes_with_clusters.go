@@ -637,7 +637,13 @@ func processEndpoints(clusterName string, clusterDetails *model.EndpointCluster,
 
 	clusterErr := ValidateCluster(&cluster)
 	if clusterErr != nil {
-		return nil, nil, errors.New("Invalid cluster configuration : " + clusterErr.Error())
+		if EnforceXDSValidation() {
+			return nil, nil, errors.New("Invalid cluster configuration : " + clusterErr.Error())
+		}
+		// TODO: (VirajSalaka) Undesired state, may be we need to specifically handle this
+		logger.LoggerXds.Warnf("Error occurred while validating XDS resource (cluster) "+
+			"for cluster: %s Error: %v", clusterName, clusterErr)
+
 	}
 
 	return &cluster, addresses, nil
@@ -729,6 +735,7 @@ func createUpstreamTLSContext(upstreamCerts []byte, address *corev3.Address) *tl
 		}
 		upstreamTLSContext.CommonTlsContext.GetValidationContext().MatchTypedSubjectAltNames = subjectAltNames
 	}
+	// TODO: (VirajSalaka) validate Upstream TLS Certificate
 	return upstreamTLSContext
 }
 

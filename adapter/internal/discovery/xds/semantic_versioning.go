@@ -22,6 +22,7 @@ import (
 
 	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	envoy_type_matcherv3 "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3"
+	logger "github.com/wso2/product-microgateway/adapter/internal/loggers"
 	"github.com/wso2/product-microgateway/adapter/internal/oasparser/envoyconf"
 	mgw "github.com/wso2/product-microgateway/adapter/internal/oasparser/model"
 	semantic_version "github.com/wso2/product-microgateway/adapter/pkg/semanticversion"
@@ -45,12 +46,12 @@ func GetMajorVersionRange(semVersion semantic_version.SemVersion) string {
 	return "v" + strconv.Itoa(semVersion.Major)
 }
 
-func updateRoutingRulesOnAPIUpdate(organizationID, apiIdentifier, apiName, apiVersion, vHost string) {
+func updateRoutingRulesOnAPIUpdate(organizationID, apiIdentifier, apiName, apiVersion, vHost string) error {
 	apiSemVersion, err := semantic_version.ValidateAndGetVersionComponents(apiVersion, apiName)
 	// If the version validation is not success, we just proceed without intelligent version
 	// Valid version pattern: vx.y.z or vx.y where x, y and z are non-negative integers and v is a prefix
 	if err != nil && apiSemVersion == nil {
-		return
+		return nil
 	}
 
 	apiRangeIdentifier := GenerateIdentifierForAPIWithoutVersion(vHost, apiName)
@@ -87,7 +88,12 @@ func updateRoutingRulesOnAPIUpdate(organizationID, apiIdentifier, apiName, apiVe
 						route.Action = action
 						routeErr := envoyconf.ValidateRoute(route)
 						if routeErr != nil {
-							// TODO: Handle the error
+							if envoyconf.EnforceXDSValidation() {
+								return routeErr
+							}
+							// TODO: (VirajSalaka) Undesired state, may be we need to specifically handle this
+							logger.LoggerXds.Warnf("Error occurred while validating XDS resource (route) "+
+							"for API: %s Error: %v", apiIdentifier, routeErr)
 						}
 					}
 				}
@@ -128,24 +134,29 @@ func updateRoutingRulesOnAPIUpdate(organizationID, apiIdentifier, apiName, apiVe
 			route.Action = action
 			routeErr := envoyconf.ValidateRoute(route)
 			if routeErr != nil {
-				// TODO: Handle the error
+				if envoyconf.EnforceXDSValidation() {
+					return routeErr
+				}
+				logger.LoggerXds.Warnf("Error occurred while validating XDS resource (route) "+
+					"for API: %s Error: %v", apiIdentifier, routeErr)
 			}
 		}
 	}
+	return nil
 }
 
-func updateRoutingRulesOnAPIDelete(organizationID, apiIdentifier string, api mgw.MgwSwagger) {
+func updateRoutingRulesOnAPIDelete(organizationID, apiIdentifier string, api mgw.MgwSwagger) error {
 	// Update the intelligent routing if the deleting API is the latest version of the API range
 	// and the API range has other versions
 	apiRangeIdentifier := GenerateIdentifierForAPIWithoutVersion(api.GetVHost(), api.GetTitle())
 
 	latestAPIVersionMap, latestAPIVersionMapExists := orgIDLatestAPIVersionMap[organizationID][apiRangeIdentifier]
 	if !latestAPIVersionMapExists {
-		return
+		return nil
 	}
 	deletingAPISemVersion, _ := semantic_version.ValidateAndGetVersionComponents(api.GetVersion(), api.GetTitle())
 	if deletingAPISemVersion == nil {
-		return
+		return nil
 	}
 	majorVersionRange := GetMajorVersionRange(*deletingAPISemVersion)
 	newLatestMajorRangeAPIIdentifier := ""
@@ -200,7 +211,11 @@ func updateRoutingRulesOnAPIDelete(organizationID, apiIdentifier string, api mgw
 					route.Action = action
 					routeErr := envoyconf.ValidateRoute(route)
 					if routeErr != nil {
-						// TODO: Handle the error
+						if envoyconf.EnforceXDSValidation() {
+							return routeErr
+						}
+						logger.LoggerXds.Warnf("Error occurred while validating XDS resource (route) "+
+							"for API: %s Error: %v", apiIdentifier, routeErr)
 					}
 				}
 			} else {
@@ -208,4 +223,5 @@ func updateRoutingRulesOnAPIDelete(organizationID, apiIdentifier string, api mgw
 			}
 		}
 	}
+	return nil
 }

@@ -26,45 +26,30 @@ import (
 )
 
 // TODO: (VirajSalaka) remove later
-const EnforceValidationENVVar = "ENFORCE_XDS_VALIDATION"
+const enforceValidationENVVar = "ENFORCE_XDS_VALIDATION"
 
 func ValidateRoute(route *routev3.Route) error {
-	if !enforceXDSValidation() {
-		return nil
-	}
 	return route.ValidateAll()
 }
 
 func ValidateCluster(cluster *clusterv3.Cluster) error {
-	if !enforceXDSValidation() {
-		return nil
-	}
 	return cluster.ValidateAll()
 }
 
 func ValidateListener(listener *listenerv3.Listener) error {
-	if !enforceXDSValidation() {
-		return nil
-	}
 	return listener.ValidateAll()
 }
 
 func ValidateVhost(vhost *routev3.VirtualHost) error {
-	if !enforceXDSValidation() {
-		return nil
-	}
 	return vhost.ValidateAll()
 }
 
 func ValidateRouteConfiguration(routeConfig *routev3.RouteConfiguration) error {
-	if !enforceXDSValidation() {
-		return nil
-	}
 	return routeConfig.ValidateAll()
 }
 
-func enforceXDSValidation() bool {
-	envVar, found := os.LookupEnv(EnforceValidationENVVar)
+func EnforceXDSValidation() bool {
+	envVar, found := os.LookupEnv(enforceValidationENVVar)
 	if found {
 		return envVar == "true"
 	}
