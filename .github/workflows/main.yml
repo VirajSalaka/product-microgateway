@@ -27,7 +27,7 @@ jobs:
             echo "Validation passed"
           fi 
           
-          if [[ "${{ needs.validate_oas.outputs.status_code }}" != "200" || "${{ needs.validate_oas.outputs.isValid }}" == "false" ]]; then
+          if [[ "${{ steps.validate_oas.outputs.status_code }}" != "200" || "${{ steps.validate_oas.outputs.isValid }}" == "false" ]]; then
              echo "API definition validation failed - second"
              exit 1
           else
