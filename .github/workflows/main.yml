@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Echo string
-        id: "validate_oas",
+        id: "validate_oas"
         run: |
           IS_VALID=true
           echo "isValid=$IS_VALID" >> $GITHUB_OUTPUT
