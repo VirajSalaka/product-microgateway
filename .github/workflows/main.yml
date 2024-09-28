@@ -12,6 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Echo string
+        id: "validate_oas",
         run: |
           IS_VALID=true
           echo "isValid=$IS_VALID" >> $GITHUB_OUTPUT
@@ -27,8 +28,7 @@ jobs:
           fi 
           
           if [[ "${{ needs.validate_oas.outputs.status_code }}" != "200" || "${{ needs.validate_oas.outputs.isValid }}" == "false" ]]; then
-             echo "API definition validation failed"
-             cat response.json | jq .
+             echo "API definition validation failed - second"
              exit 1
           else
              echo "Validation passed"
