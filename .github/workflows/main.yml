@@ -18,7 +18,7 @@ jobs:
           pip3 install tabulate
       - name: Echo string
         id: "validate_linting"
-        run: |
+        run: |-
           LINTER_URL="https://run.mocky.io/v3/fbfb4a7f-05dd-4076-a543-8c2d7b8d2a34"
           RESPONSE=$(curl -o response.json -s -w "%{http_code}" ${LINTER_URL})
           cat response.json | python3 -c "
