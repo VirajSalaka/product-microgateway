@@ -42,13 +42,13 @@ jobs:
                           if rule['severity'] in ['error', 'warn']:
                               severity = rule['severity'].upper()
                               ruleset_name = ruleset['rulesetName']
-                              rule_id = rule['ruleId']
+                              # rule_id = rule['ruleId']
                               message = rule['message']
                               paths = ', '.join(rule['paths']['list'])
                               table_data.append([severity, ruleset_name, rule_id, message, paths])
 
               if table_data:
-                  headers = [\"SEVERITY\", \"RULESET\", \"RULE ID\", \"MESSAGE\", \"PATHS\"]
+                  headers = [\"SEVERITY\", \"RULESET\", \"MESSAGE\", \"PATHS\"]
                   print(tabulate(table_data, headers=headers, tablefmt=\"grid\"))
               else:
                   print(\"No errors or warnings found.\")
