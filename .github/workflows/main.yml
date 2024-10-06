@@ -11,25 +11,51 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - name: Echo string
-        id: "validate_oas"
+      - name: Install python dependencies
+        id: "install_python_deps"
         run: |
-          IS_VALID=true
-          echo "isValid=$IS_VALID" >> $GITHUB_OUTPUT
-          RESPONSE=$(curl -o response2.json -s -w "%{http_code}" 'https://sts.choreo.dev/api/am/publisher/v2/apis/validate-openapi?organizationId=1c632c6b-a713-4b7e-b9cc-553853e59590&returnContent=true')
-          echo "status_code=$RESPONSE" >> $GITHUB_OUTPUT
-          echo "isValid=$IS_VALID"
-          
-          if [[ $RESPONSE != "401" || $IS_VALID == "false" ]]; then
-            echo "API definition validation failed"
-            exit 1
-          else
-            echo "Validation passed"
-          fi 
-          
-          if [[ "${{ steps.validate_oas.outputs.status_code }}" != "200" || "${{ steps.validate_oas.outputs.isValid }}" == "false" ]]; then
-             echo "API definition validation failed - second"
-             exit 1
-          else
-             echo "Validation passed"
-          fi 
+          python3 -m pip install --upgrade pip
+          pip3 install tabulate
+      - name: Echo string
+        id: "validate_linting"
+        run: |
+          'LINTER_URL="https://run.mocky.io/v3/fbfb4a7f-05dd-4076-a543-8c2d7b8d2a34" '
+          'RESPONSE=$(curl -o response.json -s -w "%{http_code}" 'https://sts.choreo.dev/api/am/publisher/v2/apis/validate-openapi?organizationId=1c632c6b-a713-4b7e-b9cc-553853e59590&returnContent=true')' 
+          cat response.json | python -c "
+          import json
+          from tabulate import tabulate
+
+          def visualize_trivy_like_table(json_data):
+              data = json.loads(json_data)
+              
+              # Print summary
+              print("Summary:")
+              print(f"  Violated rulesets: {data['summary']['ruleset']['violated']}")
+              print(f"  Adhered rulesets: {data['summary']['ruleset']['adhered']}")
+              print(f"  Total rulesets: {data['summary']['ruleset']['total']}")
+              print()
+
+              # Prepare table data
+              table_data = []
+              for ruleset in data['list']:
+                  if ruleset['status'] == 'violated':
+                      for rule in ruleset['violatedRules']['list']:
+                          if rule['severity'] in ['error', 'warn']:
+                              severity = rule['severity'].upper()
+                              ruleset_name = ruleset['rulesetName']
+                              rule_id = rule['ruleId']
+                              message = rule['message']
+                              paths = ', '.join(rule['paths']['list'])
+                              table_data.append([severity, ruleset_name, rule_id, message, paths])
+
+              # Print table
+              if table_data:
+                  headers = ["SEVERITY", "RULESET", "RULE ID", "MESSAGE", "PATHS"]
+                  print(tabulate(table_data, headers=headers, tablefmt="grid"))
+              else:
+                  print("No errors or warnings found.")
+
+              print(f"\nTotal rulesets evaluated: {data['count']}")
+              json_payload = sys.stdin.read()
+              visualize_trivy_like_log(json_payload)
+              "
