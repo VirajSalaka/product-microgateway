@@ -20,41 +20,41 @@ jobs:
         id: "validate_linting"
         run: |
           LINTER_URL="https://run.mocky.io/v3/fbfb4a7f-05dd-4076-a543-8c2d7b8d2a34"
-          RESPONSE=$(curl -o response.json -s -w "%{http_code}" '${LINTER_URL}')
+          RESPONSE=$(curl -o response.json -s -w "%{http_code}" ${LINTER_URL})
           cat response.json | python3 -c """
-          import json
-          import sys
-          from tabulate import tabulate
+            import json
+            import sys
+            from tabulate import tabulate
 
-          def visualize_trivy_like_table(json_data):
-              data = json.loads(json_data)
-              
-              print(\"Summary:\")
-              print(f\"  Violated rulesets: {data['summary']['ruleset']['violated']}\")
-              print(f\"  Adhered rulesets: {data['summary']['ruleset']['adhered']}\")
-              print(f\"  Total rulesets: {data['summary']['ruleset']['total']}\")
-              print()
+            def visualize_trivy_like_table(json_data):
+                data = json.loads(json_data)
+                
+                print(\"Summary:\")
+                print(f\"  Violated rulesets: {data['summary']['ruleset']['violated']}\")
+                print(f\"  Adhered rulesets: {data['summary']['ruleset']['adhered']}\")
+                print(f\"  Total rulesets: {data['summary']['ruleset']['total']}\")
+                print()
 
-              table_data = []
-              for ruleset in data['list']:
-                  if ruleset['status'] == 'violated':
-                      for rule in ruleset['violatedRules']['list']:
-                          if rule['severity'] in ['error', 'warn']:
-                              severity = rule['severity'].upper()
-                              ruleset_name = ruleset['rulesetName']
-                              rule_id = rule['ruleId']
-                              message = rule['message']
-                              paths = ', '.join(rule['paths']['list'])
-                              table_data.append([severity, ruleset_name, rule_id, message, paths])
+                table_data = []
+                for ruleset in data['list']:
+                    if ruleset['status'] == 'violated':
+                        for rule in ruleset['violatedRules']['list']:
+                            if rule['severity'] in ['error', 'warn']:
+                                severity = rule['severity'].upper()
+                                ruleset_name = ruleset['rulesetName']
+                                rule_id = rule['ruleId']
+                                message = rule['message']
+                                paths = ', '.join(rule['paths']['list'])
+                                table_data.append([severity, ruleset_name, rule_id, message, paths])
 
-              if table_data:
-                  headers = [\"SEVERITY\", \"RULESET\", \"RULE ID\", \"MESSAGE\", \"PATHS\"]
-                  print(tabulate(table_data, headers=headers, tablefmt=\"grid\"))
-              else:
-                  print(\"No errors or warnings found.\")
+                if table_data:
+                    headers = [\"SEVERITY\", \"RULESET\", \"RULE ID\", \"MESSAGE\", \"PATHS\"]
+                    print(tabulate(table_data, headers=headers, tablefmt=\"grid\"))
+                else:
+                    print(\"No errors or warnings found.\")
 
-              print(f\"\nTotal rulesets evaluated: {data['count']}\")
+                print(f\"\nTotal rulesets evaluated: {data['count']}\")
 
-          json_payload = sys.stdin.read()
-          visualize_trivy_like_table(json_payload)
+            json_payload = sys.stdin.read()
+            visualize_trivy_like_table(json_payload)
           """
