@@ -45,7 +45,7 @@ jobs:
                               # rule_id = rule['ruleId']
                               message = rule['message']
                               paths = ', '.join(rule['paths']['list'])
-                              table_data.append([severity, ruleset_name, rule_id, message, paths])
+                              table_data.append([severity, ruleset_name, message, paths])
 
               if table_data:
                   headers = [\"SEVERITY\", \"RULESET\", \"MESSAGE\", \"PATHS\"]
