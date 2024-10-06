@@ -21,6 +21,10 @@ jobs:
         run: |-
           LINTER_URL="https://run.mocky.io/v3/fbfb4a7f-05dd-4076-a543-8c2d7b8d2a34"
           RESPONSE=$(curl -o response.json -s -w "%{http_code}" ${LINTER_URL})
+          if [[ $RESPONSE == "200" ]]; then
+             echo "Governance Validation Failed Internally"
+             exit 1
+          fi   
           cat response.json | python3 -c "
           import json;
           import sys;
