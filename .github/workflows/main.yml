@@ -21,7 +21,7 @@ jobs:
         run: |
           LINTER_URL="https://run.mocky.io/v3/fbfb4a7f-05dd-4076-a543-8c2d7b8d2a34"
           RESPONSE=$(curl -o response.json -s -w "%{http_code}" 'https://sts.choreo.dev/api/am/publisher/v2/apis/validate-openapi?organizationId=1c632c6b-a713-4b7e-b9cc-553853e59590&returnContent=true')
-          cat response.json | python3 -c "
+          cat response.json | python3 -c """
           import json
           import sys
           from tabulate import tabulate
@@ -57,4 +57,4 @@ jobs:
 
           json_payload = sys.stdin.read()
           visualize_trivy_like_table(json_payload)
-          "
+          """
