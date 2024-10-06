@@ -29,14 +29,12 @@ jobs:
           def visualize_trivy_like_table(json_data):
               data = json.loads(json_data)
               
-              # Print summary
               print(\"Summary:\")
               print(f\"  Violated rulesets: {data['summary']['ruleset']['violated']}\")
               print(f\"  Adhered rulesets: {data['summary']['ruleset']['adhered']}\")
               print(f\"  Total rulesets: {data['summary']['ruleset']['total']}\")
               print()
 
-              # Prepare table data
               table_data = []
               for ruleset in data['list']:
                   if ruleset['status'] == 'violated':
@@ -49,7 +47,6 @@ jobs:
                               paths = ', '.join(rule['paths']['list'])
                               table_data.append([severity, ruleset_name, rule_id, message, paths])
 
-              # Print table
               if table_data:
                   headers = [\"SEVERITY\", \"RULESET\", \"RULE ID\", \"MESSAGE\", \"PATHS\"]
                   print(tabulate(table_data, headers=headers, tablefmt=\"grid\"))
