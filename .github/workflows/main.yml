@@ -48,7 +48,13 @@ jobs:
                               ruleset_name = ruleset['rulesetName']
                               # rule_id = rule['ruleId']
                               message = rule['message']
-                              paths = '\ngkkjjjjj\n'.join([f\"...{path[-45:]}\" for path in rule['paths']['list']])
+                              pathsList = []
+                              for path in rule['paths']['list']:
+                                  if len(path) <= 45: 
+                                      pathsList.append(path)
+                                  else:
+                                      pathsList.append(f\"...{path[-45:]}\")
+                              paths = '\n'.join(pathsList)
                               table_data.append([severity, ruleset_name, message, paths])
 
               if table_data:
