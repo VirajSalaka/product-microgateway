@@ -19,7 +19,7 @@ jobs:
       - name: Echo string
         id: "validate_linting"
         run: |-
-          LINTER_URL="https://run.mocky.io/v3/fbfb4a7f-05dd-4076-a543-8c2d7b8d2a34"
+          LINTER_URL="https://run.mocky.io/v3/b9eac955-0136-4196-8529-fda4ee5aa20b"
           RESPONSE=$(curl -o response.json -s -w "%{http_code}" ${LINTER_URL})
           if [[ $RESPONSE != "200" ]]; then
              echo "Governance Validation Failed Internally"
