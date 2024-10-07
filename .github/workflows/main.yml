@@ -59,7 +59,7 @@ jobs:
 
               if table_data:
                   headers = [\"SEVERITY\", \"RULESET\", \"MESSAGE\", \"PATHS\"]
-                  maxcolwidths = [10, 30, 30, 50]
+                  maxcolwidths = [10, 30, 30, NONE]
                   print(tabulate(table_data, headers=headers, tablefmt=\"grid\", maxcolwidths=maxcolwidths))
               else:
                   print(\"No errors or warnings found.\")
