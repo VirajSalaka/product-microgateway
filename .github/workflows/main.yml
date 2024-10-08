@@ -50,10 +50,10 @@ jobs:
                               message = rule['message']
                               pathsList = []
                               for path in rule['paths']['list']:
-                                  if len(path) <= 45: 
+                                  if len(path[2:]) <= 48: 
                                       pathsList.append(path)
                                   else:
-                                      pathsList.append(f\"...{path[-45:]}\")
+                                      pathsList.append(f\"{path[:1]}...{path[-48:]}\")
                               paths = '\n'.join(pathsList)
                               table_data.append([severity, ruleset_name, message, paths])
 
