@@ -9,6 +9,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    env:
+      USER_SOURCE_REPO: VirajSalaka/proxy-from-gh
+      MAX_HEAP: 2048m
+      MIN_HEAP: 512m
+      APIM_ENDPOINT: https://sts.preview-dv.choreo.dev
+      RUDDER_ENDPOINT: http://dp-rudder
+      SUB_PATH: adminService
+      ORG_UUID: e615dff6-6691-4cec-96af-45be2a11a2ca
+      LINTER_ENDPOINT: undefined
+      SERVICE_SOURCE_DIR: proxy-dir
+      COMPONENT_ID: 5f7ad903-54ab-4724-aa4b-5cedf8604c88
+      PROJECT_ID: 01fe8d09-0f76-458a-b40f-d15afbc69f8c
+      CP_GW_ENDPOINT: https://apis.preview-dv.choreo.dev
     steps:
       - uses: actions/checkout@v2
       - name: Install python dependencies
@@ -19,7 +32,9 @@ jobs:
       - name: Echo string
         id: "validate_linting"
         run: |-
-          LINTER_URL="https://run.mocky.io/v3/b9eac955-0136-4196-8529-fda4ee5aa20b"
+          sleep 3
+          LINTER_URL="${{env.CP_GW_ENDPOINT}}/governance/v1.0/projects/${{env.PROJECT_ID}}/components/${{env.COMPONENT_ID}}/endpoints/${{inputs.apiId}}/rule-adherence"
+          RESPONSE=$(curl -s -o response.json -w "%{http_code}" -X GET "${{LINTER_URL}}" -H "Authorization: Bearer ${{github.events.inputs.userToken}}")
           RESPONSE=$(curl -o response.json -s -w "%{http_code}" ${LINTER_URL})
           if [[ $RESPONSE != "200" ]]; then
              echo "Governance Validation Failed Internally"
