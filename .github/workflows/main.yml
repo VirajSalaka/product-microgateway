@@ -83,4 +83,4 @@ jobs:
 
           json_payload = sys.stdin.read()
           visualize_trivy_like_table(json_payload)
-          "
+          
