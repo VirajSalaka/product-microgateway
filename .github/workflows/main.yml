@@ -1,38 +1,123 @@
-name: PR Check - Integration Tests
-
-on:
-  push:
-    branches: [choreo]
-  pull_request:
-    branches: [choreo]
-
+name: Proxy build
+'on':
+  workflow_dispatch:
+    inputs:
+      userToken:
+        description: Choreo user token for communicate with other services
+        required: true
+        default: default
+        type: string
+      commitSha:
+        description: Commit hash
+        required: false
+        type: string
+        default: ''
+      apiId:
+        description: APIM API ID
+        required: true
+        type: string
+      branch:
+        description: Branch
+        required: false
+        type: string
 jobs:
-  build:
-    runs-on: ubuntu-20.04
+  proxy-build:
+    runs-on: choreo-custom-runner
+    env:
+      USER_SOURCE_REPO: VirajSalaka/proxy-from-gh
+      MAX_HEAP: 2048m
+      MIN_HEAP: 512m
+      APIM_ENDPOINT: https://sts.preview-dv.choreo.dev
+      RUDDER_ENDPOINT: http://dp-rudder
+      SUB_PATH: adminService
+      ORG_UUID: e615dff6-6691-4cec-96af-45be2a11a2ca
+      LINTER_ENDPOINT: undefined
+      SERVICE_SOURCE_DIR: proxy-dir
+      COMPONENT_ID: 14d104da-3bcb-4454-b0b3-3f419f4c32f8
+      PROJECT_ID: 01fe8d09-0f76-458a-b40f-d15afbc69f8c
+      CP_GW_ENDPOINT: https://apis.preview-dv.choreo.dev
     steps:
-      - uses: actions/checkout@v2
-      - name: Install python dependencies
-        id: "install_python_deps"
-        run: |
+      - name: Store Action Run Status
+        if: always()
+        uses: choreo-templates/run-status-save@v1.2.0
+        with:
+          baseURL: ${{ env.NEW_RUDDER_WEBHOOK_URL }}
+          runId: ${{ github.run_id }}
+          componentId: ${{ env.COMPONENT_ID }}
+          token: ${{ secrets.CHOREO_CALLBACK_TOKEN }}
+          ghActionType: BUILD_DEPLOY
+          statusSequenceNo: 10
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+        with:
+          repository: ${{env.USER_SOURCE_REPO}}
+          token: ${{ secrets.APP_GH_TOKEN }}
+          ref: ${{inputs.commitSha != '' && inputs.commitSha || format('refs/heads/{0}', inputs.branch) }}
+          path: ./${{env.SERVICE_SOURCE_DIR}}
+      - name: Install Dependencies
+        id: install_deps
+        run: |-
           python3 -m pip install --upgrade pip
           pip3 install tabulate
-      - name: Echo string
-        id: "validate_linting"
+      - name: Read Component Yaml
+        id: read_yaml
         run: |-
-          LINTER_URL="https://run.mocky.io/v3/b9eac955-0136-4196-8529-fda4ee5aa20b"
-          RESPONSE=$(curl -o response.json -s -w "%{http_code}" ${LINTER_URL})
-          if [[ $RESPONSE != "200" ]]; then
-             echo "Governance Validation Failed Internally"
+          cd ${{env.SERVICE_SOURCE_DIR}}/${{env.SUB_PATH}}/.choreo
+          python -c "
+          import yaml;
+          with open('./component.yml', 'r') as file:
+            data = yaml.safe_load(file);
+            schemaPath = data['proxy']['schemaFilePath']
+            docPath = data['proxy']['docPath']
+            print(f'SCHEMA_PATH={schemaPath}');
+            print(f'THUMBNAIL_PATH={docPath}');
+          " >> variables.txt
+          while IFS= read -r line; do
+            echo "$line" >> $GITHUB_ENV
+          done < variables.txt
+      - name: Validate OAS
+        id: validate_oas
+        run: |-
+          cd ${{env.SERVICE_SOURCE_DIR}}/${{env.SUB_PATH}}
+          RESPONSE=$(curl -s -o response.json -w "%{http_code}" -X POST "${{env.APIM_ENDPOINT}}/api/am/publisher/v2/apis/validate-openapi?organizationId=${{env.ORG_UUID}}&returnContent=true" -F file=@./${{env.SCHEMA_PATH}}  -H "Authorization: Bearer ${{inputs.userToken}}")
+          echo "status_code=$RESPONSE" >> $GITHUB_OUTPUT
+          echo "response_body=$(cat response.json)" >> $GITHUB_OUTPUT
+          IS_VALID=$(cat response.json | jq -r ".isValid")
+          echo "isValid=$IS_VALID" >> $GITHUB_OUTPUT
+          if [[ $RESPONSE != "200" || $IS_VALID == "false" ]]; then
+             echo "API definition validation failed"
+             cat response.json | jq .
              exit 1
-          fi   
+          else
+             echo "Validation passed"
+          fi 
+      - name: Validate Against Governance Rules
+        id: validate_governance_rules
+        if: ${{ env.CP_GW_ENDPOINT != '' }}
+        run: |-
+          sleep 3
+          LINTER_URL= "${{env.CP_GW_ENDPOINT}}/governance/v1.0/projects/${{env.PROJECT_ID}}/components/${{env.COMPONENT_ID}}/endpoints/${{github.events.inputs.apiId}}/rule-adherence"
+          RESPONSE=$(curl -s -o response.json -w "%{http_code}" -X GET "${{LINTER_URL}}" -H "Authorization: Bearer ${{github.events.inputs.userToken}}")
+          if [[ $RESPONSE == "403" ]]; then
+            echo "Governance Validation Failed Due to Insufficient Permissions."
+            exit 1
+          elif [[ $RESPONSE == "401" ]]; then
+            echo "Governance Validation Failed Due to Authentication Failure. Retry build again."
+            exit 1
+          elif [[ $RESPONSE == "500" ]]; then
+            echo "Governance Validation Failed Due to Internal Server Error."
+            exit 1
+          elif [[ $RESPONSE != "200" ]]; then
+            echo "Governance Validation Failed Due to Unknown Failure. Retry build again."
+            exit 1
+          fi
           cat response.json | python3 -c "
-          import json;
-          import sys;
-          from tabulate import tabulate;
-
+          import json
+          import sys
+          from tabulate import tabulate
           def visualize_trivy_like_table(json_data):
+
               data = json.loads(json_data)
-              
               print(\"Summary:\")
               print(f\"  Violated rulesets: {data['summary']['ruleset']['violated']}\")
               print(f\"  Adhered rulesets: {data['summary']['ruleset']['adhered']}\")
@@ -46,26 +131,33 @@ jobs:
                           if rule['severity'] in ['error', 'warn']:
                               severity = rule['severity'].upper()
                               ruleset_name = ruleset['rulesetName']
-                              # rule_id = rule['ruleId']
                               message = rule['message']
                               pathsList = []
                               for path in rule['paths']['list']:
-                                  if len(path[2:]) <= 43: 
+                                  if len(path <= 50:
                                       pathsList.append(path)
                                   else:
-                                      pathsList.append(f\"{path[:1]}...{path[-41:]}\")
-                              paths = '\n'.join(pathsList)
+                                      pathsList.append(f\"{path[:1]}...{path[-46:]}\")
+                              paths = '
+          '.join(rule['paths']['list'])
                               table_data.append([severity, ruleset_name, message, paths])
 
               if table_data:
-                  headers = [\"SEVERITY\", \"RULESET\", \"MESSAGE\", \"PATHS\"]
-                  maxcolwidths = [10, 30, 30, None]
-                  print(tabulate(table_data, headers=headers, tablefmt=\"grid\", maxcolwidths=maxcolwidths))
+                  headers = [\"SEVERITY", \"RULESET", \"MESSAGE", \"PATHS\"]
+                  maxcolwidths = [10, 20, 30, None]
+                  print(tabulate(table_data, headers=headers, tablefmt="grid", maxcolwidths=maxcolwidths))
               else:
                   print(\"No errors or warnings found.\")
-
-              print(f\"\nTotal rulesets evaluated: {data['count']}\")
+              print(f\"
+          Total rulesets evaluated: {data['count']}\")
 
           json_payload = sys.stdin.read()
           visualize_trivy_like_table(json_payload)
           "
+      - name: Update proxy API
+        id: update_api
+        if: ${{ steps.update_api.outputs.update_api_status_code != 200 }}
+        run: |-
+          cd ${{env.SERVICE_SOURCE_DIR}}/${{env.SUB_PATH}}
+          UPDATE_RESPONSE=$(curl -o createRes.json -w "%{http_code}" -X PUT -F file=@./${{env.SCHEMA_PATH}} "${{env.APIM_ENDPOINT}}/api/am/publisher/v2/apis/${{inputs.apiId}}/swagger?organizationId=${{env.ORG_UUID}}" -H "Authorization: Bearer ${{inputs.userToken}}")
+          echo "::set-output name=update_api_status_code::$UPDATE_RESPONSE"
