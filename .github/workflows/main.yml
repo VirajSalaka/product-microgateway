@@ -33,8 +33,8 @@ jobs:
         id: "validate_linting"
         run: |-
           sleep 3
-          LINTER_URL="${{env.CP_GW_ENDPOINT}}/governance/v1.0/projects/${{env.PROJECT_ID}}/components/${{env.COMPONENT_ID}}/endpoints/${{inputs.apiId}}/rule-adherence"
-          RESPONSE=$(curl -s -o response.json -w "%{http_code}" -X GET "${{LINTER_URL}}" -H "Authorization: Bearer ${{github.events.inputs.userToken}}")
+          LINTER_URL="${{env.CP_GW_ENDPOINT}}/governance/v1.0/projects/${{env.PROJECT_ID}}/components/${{env.COMPONENT_ID}}/endpoints/${{inputs.apiId}}/rule-adherence"  >> $GITHUB_OUTPUT
+          RESPONSE=$(curl -s -o response.json -w "%{http_code}" -X GET "${{LINTER_URL}}" -H "Authorization: Bearer ${{github.events.inputs.userToken}}")  >> $GITHUB_OUTPUT
           RESPONSE=$(curl -o response.json -s -w "%{http_code}" ${LINTER_URL})
           if [[ $RESPONSE != "200" ]]; then
              echo "Governance Validation Failed Internally"
