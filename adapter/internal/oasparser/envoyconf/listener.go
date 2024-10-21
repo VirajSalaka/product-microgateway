@@ -129,7 +129,7 @@ func createListeners(conf *config.Config) []*listenerv3.Listener {
 				manager.Tracing = tracing
 				manager.GenerateRequestId = &wrappers.BoolValue{Value: conf.Tracing.Enabled}
 			} else {
-				logger.LoggerOasparser.Error("Failed to initialize tracing for %s. Router tracing will be disabled. ",
+				logger.LoggerOasparser.Errorf("Failed to initialize tracing for %s. Router tracing will be disabled. %v",
 					TracerTypeOtlp, err)
 				conf.Tracing.Enabled = false
 			}
@@ -138,7 +138,7 @@ func createListeners(conf *config.Config) []*listenerv3.Listener {
 				manager.Tracing = tracing
 				manager.GenerateRequestId = &wrappers.BoolValue{Value: conf.Tracing.Enabled}
 			} else {
-				logger.LoggerOasparser.Error("Failed to initialize tracing for %s. Router tracing will be disabled. ",
+				logger.LoggerOasparser.Errorf("Failed to initialize tracing for %s. Router tracing will be disabled. %s",
 					conf.Tracing.Type, err)
 				conf.Tracing.Enabled = false
 			}

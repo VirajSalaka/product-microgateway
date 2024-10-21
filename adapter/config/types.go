@@ -262,12 +262,13 @@ type awsLambda struct {
 // Envoy Upstream Related Configurations
 type envoyUpstream struct {
 	// UpstreamTLS related Configuration
-	TLS      upstreamTLS
-	Timeouts upstreamTimeout
-	Health   upstreamHealth
-	DNS      upstreamDNS
-	Retry    upstreamRetry
-	HTTP2    upstreamHTTP2Options
+	TLS             upstreamTLS
+	Timeouts        upstreamTimeout
+	Health          upstreamHealth
+	DNS             upstreamDNS
+	Retry           upstreamRetry
+	CircuitBreakers circuitBreakers
+	HTTP2           upstreamHTTP2Options
 }
 
 // Envoy Downstream Related Configurations
@@ -601,4 +602,13 @@ type mutualSSL struct {
 	EnableClientValidation          bool
 	ClientCertificateEncode         bool
 	EnableOutboundCertificateHeader bool
+}
+
+type circuitBreakers struct {
+	Enabled            bool
+	MaxConnections     int32
+	MaxRequests        int32
+	MaxPendingRequests int32
+	MaxConnectionPools int32
+	MaxRetries         int32
 }

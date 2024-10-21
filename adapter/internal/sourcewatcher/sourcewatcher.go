@@ -103,7 +103,7 @@ func fetchArtifacts() (repository *git.Repository, err error) {
 
 	// If a local repository exists, pull the changes from the remote repository
 	if repository != nil {
-		loggers.LoggerSourceWatcher.Info("Local repository exists, pulling changes from the remote repository %s.", repositoryURL)
+		loggers.LoggerSourceWatcher.Infof("Local repository exists, pulling changes from the remote repository %s.", repositoryURL)
 
 		pullRepositoryIfUpdated(repository)
 

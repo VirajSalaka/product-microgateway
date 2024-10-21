@@ -671,6 +671,35 @@ func processEndpoints(clusterName string, clusterDetails *model.EndpointCluster,
 				thresholds,
 			},
 		}
+	} else {
+		// Populate Circuit Breakers from Global Configuration.
+		if conf.Envoy.Upstream.CircuitBreakers.Enabled {
+			thresholds := &clusterv3.CircuitBreakers_Thresholds{}
+			if conf.Envoy.Upstream.CircuitBreakers.MaxConnections > 0 {
+				thresholds.MaxConnections = wrapperspb.UInt32(uint32(conf.Envoy.Upstream.CircuitBreakers.MaxConnections))
+			}
+			if conf.Envoy.Upstream.CircuitBreakers.MaxPendingRequests > 0 {
+				thresholds.MaxPendingRequests = wrapperspb.UInt32(uint32(conf.Envoy.Upstream.CircuitBreakers.MaxPendingRequests))
+			}
+			if conf.Envoy.Upstream.CircuitBreakers.MaxRequests > 0 {
+				thresholds.MaxRequests = wrapperspb.UInt32(uint32(conf.Envoy.Upstream.CircuitBreakers.MaxRequests))
+			}
+			if conf.Envoy.Upstream.CircuitBreakers.MaxRetries > 0 {
+				thresholds.MaxRetries = wrapperspb.UInt32(uint32(conf.Envoy.Upstream.CircuitBreakers.MaxRetries))
+			}
+			if conf.Envoy.Upstream.CircuitBreakers.MaxConnectionPools > 0 {
+				thresholds.MaxConnectionPools = wrapperspb.UInt32(uint32(conf.Envoy.Upstream.CircuitBreakers.MaxConnectionPools))
+			}
+
+			// Only add the CircuitBreakers if at least one threshold is set
+			if thresholds.MaxConnections != nil || thresholds.MaxPendingRequests != nil || 
+			   thresholds.MaxRequests != nil || thresholds.MaxRetries != nil || 
+			   thresholds.MaxConnectionPools != nil {
+				cluster.CircuitBreakers = &clusterv3.CircuitBreakers{
+					Thresholds: []*clusterv3.CircuitBreakers_Thresholds{thresholds},
+				}
+			}
+		}
 	}
 
 	// service discovery itself will be handling loadbancing etc.
@@ -1013,11 +1042,11 @@ end`
 
 			// Policies - for request flow
 			for _, requestPolicy := range operation.GetPolicies().Request {
-				logger.LoggerOasparser.Debug("Adding request flow policies for ", resourcePath, operation.GetMethod())
+				logger.LoggerOasparser.Debugf("Adding request flow policies for %s %s", resourcePath, operation.GetMethod())
 				switch requestPolicy.Action {
 
 				case constants.ActionHeaderAdd:
-					logger.LoggerOasparser.Debug("Adding %s policy to request flow for %s %s",
+					logger.LoggerOasparser.Debugf("Adding %s policy to request flow for %s %s",
 						constants.ActionHeaderAdd, resourcePath, operation.GetMethod())
 					requestHeaderToAdd, err := generateHeaderToAddRouteConfig(requestPolicy.Parameters)
 					if err != nil {
@@ -1027,7 +1056,7 @@ end`
 					requestHeadersToAdd = append(requestHeadersToAdd, requestHeaderToAdd)
 
 				case constants.ActionHeaderRemove:
-					logger.LoggerOasparser.Debug("Adding %s policy to request flow for %s %s",
+					logger.LoggerOasparser.Debugf("Adding %s policy to request flow for %s %s",
 						constants.ActionHeaderRemove, resourcePath, operation.GetMethod())
 					requestHeaderToRemove, err := generateHeaderToRemoveString(requestPolicy.Parameters)
 					if err != nil {
@@ -1037,7 +1066,7 @@ end`
 					requestHeadersToRemove = append(requestHeadersToRemove, requestHeaderToRemove)
 
 				case constants.ActionRewritePath:
-					logger.LoggerOasparser.Debug("Adding %s policy to request flow for %s %s",
+					logger.LoggerOasparser.Debugf("Adding %s policy to request flow for %s %s",
 						constants.ActionRewritePath, resourcePath, operation.GetMethod())
 					regexRewrite, err := generateRewritePathRouteConfig(routePath, resourcePath, endpointBasepath,
 						requestPolicy.Parameters)
@@ -1054,7 +1083,7 @@ end`
 					pathRewriteConfig = regexRewrite
 
 				case constants.ActionRewriteMethod:
-					logger.LoggerOasparser.Debug("Adding %s policy to request flow for %s %s",
+					logger.LoggerOasparser.Debugf("Adding %s policy to request flow for %s %s",
 						constants.ActionRewriteMethod, resourcePath, operation.GetMethod())
 					hasMethodRewritePolicy, err = isMethodRewrite(resourcePath, operation.GetMethod(), requestPolicy.Parameters)
 					if err != nil {
@@ -1072,11 +1101,11 @@ end`
 
 			// Policies - for response flow
 			for _, responsePolicy := range operation.GetPolicies().Response {
-				logger.LoggerOasparser.Debug("Adding response flow policies for ", resourcePath, operation.GetMethod())
+				logger.LoggerOasparser.Debugf("Adding response flow policies for %s %s", resourcePath, operation.GetMethod())
 				switch responsePolicy.Action {
 
 				case constants.ActionHeaderAdd:
-					logger.LoggerOasparser.Debug("Adding %s policy to response flow for %s %s",
+					logger.LoggerOasparser.Debugf("Adding %s policy to response flow for %s %s",
 						constants.ActionHeaderAdd, resourcePath, operation.GetMethod())
 					responseHeaderToAdd, err := generateHeaderToAddRouteConfig(responsePolicy.Parameters)
 					if err != nil {
@@ -1086,7 +1115,7 @@ end`
 					responseHeadersToAdd = append(responseHeadersToAdd, responseHeaderToAdd)
 
 				case constants.ActionHeaderRemove:
-					logger.LoggerOasparser.Debug("Adding %s policy to response flow for %s %s",
+					logger.LoggerOasparser.Debugf("Adding %s policy to response flow for %s %s",
 						constants.ActionHeaderRemove, resourcePath, operation.GetMethod())
 					responseHeaderToRemove, err := generateHeaderToRemoveString(responsePolicy.Parameters)
 					if err != nil {
@@ -1099,7 +1128,7 @@ end`
 
 			// TODO: (suksw) preserve header key case?
 			if hasMethodRewritePolicy {
-				logger.LoggerOasparser.Debug("Creating two routes to support method rewrite for %s %s. New method: %s",
+				logger.LoggerOasparser.Debugf("Creating two routes to support method rewrite for %s %s. New method: %s",
 					resourcePath, operation.GetMethod(), newMethod)
 				match1 := generateRouteMatch(routePath)
 				match1.Headers = generateHTTPMethodMatcher(includeOptionsMethod(operation.GetMethod()), params.isSandbox,

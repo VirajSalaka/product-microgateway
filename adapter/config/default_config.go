@@ -127,6 +127,14 @@ var defaultConfig = &Config{
 				DNSRefreshRate: 5000,
 				RespectDNSTtl:  false,
 			},
+			CircuitBreakers: circuitBreakers{
+				Enabled:            false,
+				MaxConnections:     1024,
+				MaxRequests:        1024,
+				MaxPendingRequests: 1024,
+				MaxConnectionPools: 0, // 0 means no limit
+				MaxRetries:         3,
+			},
 			HTTP2: upstreamHTTP2Options{
 				HpackTableSize:       4096,
 				MaxConcurrentStreams: 2147483647,

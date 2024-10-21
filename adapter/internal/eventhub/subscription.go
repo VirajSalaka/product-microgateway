@@ -141,7 +141,7 @@ func LoadSubscriptionData(configFile *config.Config, initialAPIUUIDListMap map[s
 					Severity:  logging.MAJOR,
 					ErrorCode: 1601,
 				})
-				go func(d response) {
+				go func(d response, urlCopy resource) {
 					// Retry fetching from control plane after a configured time interval
 					if conf.ControlPlane.RetryInterval == 0 {
 						// Assign default retry interval
@@ -150,8 +150,8 @@ func LoadSubscriptionData(configFile *config.Config, initialAPIUUIDListMap map[s
 					logger.LoggerSync.Debugf("Time Duration for retrying: %v", conf.ControlPlane.RetryInterval*time.Second)
 					time.Sleep(conf.ControlPlane.RetryInterval * time.Second)
 					logger.LoggerSync.Infof("Retrying to fetch APIs from control plane. Time Duration for the next retry: %v", conf.ControlPlane.RetryInterval*time.Second)
-					go InvokeService(url.endpoint, url.responseType, nil, responseChannel, 0)
-				}(data)
+					go InvokeService(urlCopy.endpoint, urlCopy.responseType, nil, responseChannel, 0)
+				}(data, url)
 			}
 		}
 	}
