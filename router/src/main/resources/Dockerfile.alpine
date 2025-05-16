@@ -16,10 +16,28 @@
 FROM envoyproxy/envoy:v1.34.1
 LABEL maintainer="WSO2 Docker Maintainers <wso2.com>"
 
-RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y gettext
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install --no-install-recommends --no-install-suggests -y gettext-base
 
 ENV LANG=C.UTF-8
+
+ARG MG_USER=wso2
+ARG MG_USER_ID=10500
+ARG MG_USER_GROUP=wso2
+ARG MG_USER_GROUP_ID=10500
+ARG MG_USER_HOME=/home/${MG_USER}
+
+ARG MOTD="\n\
+ Welcome to WSO2 Docker Resources \n\
+ --------------------------------- \n\
+ This Docker container comprises of a WSO2 product, running with its latest GA release \n\
+ which is under the Apache License, Version 2.0. \n\
+ Read more about Apache License, Version 2.0 here @ http://www.apache.org/licenses/LICENSE-2.0.\n"
+
+RUN \
+    groupadd --system -g ${MG_USER_GROUP_ID} ${MG_USER_GROUP} \
+    && useradd --system --create-home --home-dir ${MG_USER_HOME} --no-log-init -g ${MG_USER_GROUP_ID} -u ${MG_USER_ID} ${MG_USER} \
+    && echo '[ ! -z "${TERM}" -a -r /etc/motd ] && cat /etc/motd' >> /etc/bash.bashrc; echo "${MOTD}" > /etc/motd
 
 ENV ROUTER_ADMIN_HOST=0.0.0.0
 ENV ROUTER_ADMIN_PORT=9000
@@ -48,24 +66,6 @@ ENV CONCURRENCY=2
 ENV FILE_FLUSH_INTERVAL_MSEC=""
 ENV TRAILING_ARGS=""
 
-ARG MG_USER=wso2
-ARG MG_USER_ID=10500
-ARG MG_USER_GROUP=wso2
-ARG MG_USER_GROUP_ID=10500
-ARG MG_USER_HOME=/home/${MG_USER}
-
-ARG MOTD="\n\
- Welcome to WSO2 Docker Resources \n\
- --------------------------------- \n\
- This Docker container comprises of a WSO2 product, running with its latest GA release \n\
- which is under the Apache License, Version 2.0. \n\
- Read more about Apache License, Version 2.0 here @ http://www.apache.org/licenses/LICENSE-2.0.\n"
-
-RUN \
-    groupadd --system -g ${MG_USER_GROUP_ID} ${MG_USER_GROUP} \
-    && useradd --system --create-home --home-dir ${MG_USER_HOME} --no-log-init -g ${MG_USER_GROUP_ID} -u ${MG_USER_ID} ${MG_USER} \
-    && echo '[ ! -z "${TERM}" -a -r /etc/motd ] && cat /etc/motd' >> /etc/bash.bashrc; echo "${MOTD}" > /etc/motd
-
 USER ${MG_USER}
 ENV ENVOY_UID=0
 ENV ENVOY_GID=0
@@ -77,4 +77,7 @@ COPY maven/envoy.yaml /etc/envoy/envoy.yaml
 COPY maven/envoy.yaml.template /home/wso2/envoy.yaml.template
 COPY maven/docker-entrypoint.sh /home/wso2/docker-entrypoint.sh
 
-ENTRYPOINT ["sh", "/home/wso2/docker-entrypoint.sh"]
+EXPOSE 9000 9090 9095
+
+# initiate container and start Router.
+ENTRYPOINT ["/home/wso2/docker-entrypoint.sh"]
